@@ -22,7 +22,7 @@ async function run() {
     if (result === null) { return 1; }
     if (result !== 0) { error = true; break; }
 
-    result = await runCommand(yarn, ["run", "package"]);
+    result = await runCommand(yarn, ["run", "package:raw"]);
     if (result === null) { return 1; }
     if (result !== 0) { error = true; break; }
 

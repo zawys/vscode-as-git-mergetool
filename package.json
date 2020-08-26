@@ -171,8 +171,8 @@
 		"index_is_clean": "git diff --staged --quiet && git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
 		"pre-commit": "ts-node ./tools/pre-commit.ts",
 		"check_dependencies": "yarn upgrade && yarn audit && yarn outdated",
-		"preversion": "yarn run check_dependencies && yarn install && yarn run test && yarn run package:raw && yarn run index_is_clean",
-		"postversion": "yarn run recompile && yarn run package:raw && git push && git push --tags"
+		"preversion": "yarn run check_dependencies && yarn run index_is_clean",
+		"postversion": "yarn run package && git push && git push --tags"
 	},
 	"husky": {
 		"hooks": {
