@@ -247,8 +247,10 @@ export class SplitDiffLayouter implements DiffLayouter {
     // leads to false negatives.
     // Comparing by document leads to false positives, however.
     // Is there a solution without VS Code API change?
-    const activeEditor = vscode.window.activeTextEditor;
-    if (this.editors.some(editor => editor === activeEditor)) {
+    const activeDoc = vscode.window.activeTextEditor?.document;
+    if (activeDoc !== undefined
+      && this.editors.some(editor => editor.document === activeDoc)
+    ) {
       await vscode.commands.executeCommand(closeActiveEditorCommandID);
       this.remainingEditors--;
       return true;

@@ -39,8 +39,10 @@ to report any compatibility issues. See [Contribute](#Contribute).
   when previously covered by other editors and
   then there is no reliable way to find out who the editor belongs to.
 
-  **TLDR**: Use the command “Deactivate diff layout” or `Ctrl+W`
+  **TLDR**: Use the command “Deactivate diff layout”,
+  “Stop mergetool” or `Ctrl+W`
   to stop the diff editor layout.
+  Auto save is useful, too.
 
 ## Build
 
