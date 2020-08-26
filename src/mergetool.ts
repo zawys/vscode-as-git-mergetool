@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { defaultVSCodeConfigurator, VSCodeConfigurator } from './vSCodeConfigurator';
+import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
 import { getWorkingDirectoryUri, getGitPath } from "./getPaths";
 import { DiffLayoutManager } from './diffLayoutManager';
 import { DiffedURIs, uRIsEqual } from './diffedURIs';
