@@ -12,6 +12,8 @@ and this project adheres to
 ### Added
 - Reset merge file command is now always available
   when a diff layout is opened.
+- Warn when closing a diff layout with a file containing conflict markers
+  opened from outside of VS Code.
 
 ### Fixed
 - Fix crash when starting a merge layout without opened workspace.

@@ -1,13 +1,14 @@
+import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { getDiffedURIs, occursIn, parseBaseFileNameRE, DiffedURIs, filesExist } from './diffedURIs';
-import { DiffLayouter, DiffLayouterFactory, SearchType, focusPreviousConflictCommandID, focusNextConflictCommandID } from './diffLayouter';
-import { defaultTemporarySideBySideSettingsManager } from './temporarySettingsManager';
+import { DiffedURIs, filesExist, getDiffedURIs, occursIn } from './diffedURIs';
+import { DiffLayouter, DiffLayouterFactory, focusNextConflictCommandID, focusPreviousConflictCommandID, SearchType } from './diffLayouter';
 import { FourTransferDownLayouterFactory } from './fourTransferDownLayouter';
 import { FourTransferRightLayouterFactory } from './fourTransferRightLayouter';
+import { containsMergeConflictIndicators } from './mergeConflictDetector';
 import { Monitor } from './monitor';
+import { defaultTemporarySideBySideSettingsManager } from './temporarySettingsManager';
 import { ThreeDiffToBaseLayouterFactory } from './threeDiffToBaseLayouter';
 import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
-import * as fs from 'fs';
 
 export class DiffLayoutManager {
   public async register(): Promise<void> {
@@ -66,11 +67,11 @@ export class DiffLayoutManager {
     return result;
   }
 
-  public get onDidLayoutDeactivate(): vscode.Event<void> {
+  public get onDidLayoutDeactivate(): vscode.Event<DiffLayouter> {
     return this.didLayoutDeactivate.event;
   }
 
-  public get onDidLayoutActivate(): vscode.Event<void> {
+  public get onDidLayoutActivate(): vscode.Event<DiffLayouter> {
     return this.didLayoutActivate.event;
   }
 
@@ -124,18 +125,24 @@ export class DiffLayoutManager {
   private readonly layouterManagerMonitor = new Monitor();
   private disposables: vscode.Disposable[] = [];
   private readonly defaultFactory: DiffLayouterFactory;
-  private readonly didLayoutDeactivate = new vscode.EventEmitter<void>();
-  private readonly didLayoutActivate = new vscode.EventEmitter<void>();
+  private readonly didLayoutDeactivate =
+    new vscode.EventEmitter<DiffLayouter>();
+  private readonly didLayoutActivate =
+    new vscode.EventEmitter<DiffLayouter>();
 
   /**
    *
    * @param doc opened TextDocument
    * @returns whether a layouter is active afterwards
    */
-  private async handleDidOpenTextDocument(
+  private handleDidOpenTextDocument(
     doc: vscode.TextDocument
   ): Promise<boolean> {
-    const diffedURIs = getDiffedURIs(doc.uri);
+    return this.handleDidOpenURI(doc.uri);
+  }
+
+  private async handleDidOpenURI(uRI: vscode.Uri): Promise<boolean> {
+    const diffedURIs = getDiffedURIs(uRI);
     if (diffedURIs === undefined || !(await filesExist(diffedURIs))) {
       return false;
     }
@@ -145,7 +152,7 @@ export class DiffLayoutManager {
       if (
         (this.layouter?.isActivating || this.layouter?.isActive) === true &&
         activeDiffedURIs !== undefined &&
-        occursIn(activeDiffedURIs, doc.uri)
+        occursIn(activeDiffedURIs, uRI)
       ) { return true; }
 
       const oldLayouter = this.layouter;
@@ -160,15 +167,45 @@ export class DiffLayoutManager {
       await oldLayouter?.deactivate();
 
       this.layouter = newLayouterFactory.create(
-        this.layouterMonitor, this.temporarySideBySideSettingsManager, diffedURIs,
+        this.layouterMonitor,
+        this.temporarySideBySideSettingsManager,
+        diffedURIs,
       );
-      this.layouter.onDidDeactivate(() => this.didLayoutDeactivate.fire());
+      this.layouter.onDidDeactivate(
+        this.handleLayouterDidDeactivate.bind(this)
+      );
       await this.layouter.tryActivate();
     } finally {
       await this.layouterManagerMonitor.leave();
     }
-    this.didLayoutActivate.fire();
+    this.didLayoutActivate.fire(this.layouter);
     return true;
+  }
+
+  private async handleLayouterDidDeactivate(layouter: DiffLayouter) {
+    this.didLayoutDeactivate.fire(layouter);
+    if (!layouter.wasInitiatedByMergetool) {
+      const text = await new Promise<string | undefined>((resolve, reject) =>
+        fs.readFile(layouter.diffedURIs.merged.fsPath, 'utf8', (err, data) => {
+          if (err) { reject(err); } else { resolve(data); }
+        })
+      );
+      if (text !== undefined && containsMergeConflictIndicators(text)) {
+        const reopen = "Reopen";
+        const keepClosed = "Keep closed";
+        const result = await vscode.window.showWarningMessage(
+          "Merge conflict markers are included in closed file.",
+          reopen, keepClosed,
+        );
+        if (result === reopen) {
+          if (!await this.handleDidOpenURI(layouter.diffedURIs.base)) {
+            vscode.window.showErrorMessage(
+              "Opening failed, probably because the file was removed."
+            );
+          }
+        }
+      }
+    }
   }
 
   private async getLayoutFactory(): Promise<DiffLayouterFactory | undefined> {

@@ -4,7 +4,7 @@ import { getWorkingDirectoryUri, getGitPath } from "./getPaths";
 import { DiffLayoutManager } from './diffLayoutManager';
 import { DiffedURIs, uRIsEqual } from './diffedURIs';
 import { labelsInStatusbarSettingID } from './statusBarSetting';
-import { SearchType } from './diffLayouter';
+import { DiffLayouter, SearchType } from './diffLayouter';
 
 export class MergetoolProcess {
   public register() {
@@ -240,9 +240,10 @@ export class MergetoolProcess {
     if (this.mergeSituation !== undefined) { this.updateStatusBarItems(); }
   }
 
-  private handleDidLayoutActivate() {
+  private handleDidLayoutActivate(layouter: DiffLayouter) {
     if (this.mergeSituation === undefined) {
       this.mergeSituation = this.diffLayoutManager.diffedURIs;
+      layouter.setWasInitiatedByMergetool();
       if (this.mergeSituation !== undefined) { this.updateStatusBarItems(); }
     } else { this.updateStatusBarItems(); }
   }

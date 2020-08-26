@@ -122,7 +122,7 @@ export class SplitDiffLayouter implements DiffLayouter {
     } finally {
       await this.monitor.leave();
     }
-    this.didDeactivate.fire();
+    this.didDeactivate.fire(this);
   }
 
   public async save(): Promise<void> {
@@ -135,8 +135,15 @@ export class SplitDiffLayouter implements DiffLayouter {
   public get isActive() { return this._isActive; }
   public get isActivating() { return this._isActivating; }
 
-  public get onDidDeactivate(): vscode.Event<void> {
+  public get onDidDeactivate(): vscode.Event<DiffLayouter> {
     return this.didDeactivate.event;
+  }
+
+  public get wasInitiatedByMergetool(): boolean {
+    return this._wasInitiatedByMergetool;
+  }
+  public setWasInitiatedByMergetool() {
+    this._wasInitiatedByMergetool = true;
   }
 
   public focusMergeConflict(type: SearchType.first): boolean | undefined {
@@ -160,10 +167,12 @@ export class SplitDiffLayouter implements DiffLayouter {
   private _isEmployed: boolean = false;
   private _isActive: boolean = false;
   private _isActivating: boolean = true;
-  private readonly didDeactivate = new vscode.EventEmitter<void>();
+  private readonly didDeactivate =
+    new vscode.EventEmitter<DiffLayouter>();
   private mergeEditor: vscode.TextEditor | undefined;
   private mergeEditorIndex: number | undefined;
   private remainingEditors = 0;
+  private _wasInitiatedByMergetool = false;
 
   private createStatusBarItems(): vscode.StatusBarItem[] {
     let priority = 10;

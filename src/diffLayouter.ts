@@ -47,7 +47,11 @@ export interface DiffLayouter {
   /**
    * Fired when the layout was deactivated.
    */
-  readonly onDidDeactivate: vscode.Event<void>;
+  readonly onDidDeactivate: vscode.Event<DiffLayouter>;
+
+  readonly wasInitiatedByMergetool: boolean;
+
+  setWasInitiatedByMergetool(): void;
 }
 
 export interface DiffLayouterFactory {
