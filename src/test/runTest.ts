@@ -1,7 +1,9 @@
 import * as path from 'path';
 import * as process from 'process';
-
+import * as dotenv from 'dotenv';
 import { runTests } from 'vscode-test';
+
+dotenv.config();
 
 async function main() {
 	try {
@@ -23,6 +25,7 @@ async function main() {
         // eslint-disable-next-line @typescript-eslint/naming-convention
 				"ELECTRON_RUN_AS_NODE": undefined,
 			},
+			vscodeExecutablePath: process.env["stable_code_path"]
 		});
 	} catch (err) {
 		console.error('Failed to run tests');

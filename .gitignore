@@ -3,3 +3,4 @@
 /.vscode-test/
 /packages/
 yarn-error.log
+.env
