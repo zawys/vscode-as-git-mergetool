@@ -244,7 +244,7 @@ export class MergetoolProcess {
   private statusBarItems: vscode.StatusBarItem[] | undefined = undefined;
   private stopMergetoolListener: vscode.Disposable | undefined = undefined;
   private static readonly statusBarItemColor =
-    new vscode.ThemeColor("statusBarItem.prominentForeground");
+    new vscode.ThemeColor("statusBar.foreground");
   private mergeSituation: DiffedURIs | undefined = undefined;
   private registeredDisposables: vscode.Disposable[] = [];
 
