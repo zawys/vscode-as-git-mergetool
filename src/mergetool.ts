@@ -382,7 +382,7 @@ export class MergetoolProcess {
           "Consider current file merged and continue"
         ));
         this.statusBarItems.push(this.createStatusBarItem(
-          "$(debug-step-over)" + (showLabel ? " Skip file" : ""),
+          "$(live-share)" + (showLabel ? " Skip file" : ""),
           13, gitMergetoolSkipCommandID,
           "Leave current file as is and continue merging other files"
         ));

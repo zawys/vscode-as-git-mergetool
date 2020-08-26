@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More aggressively match editors when deactivating a diff layout.
   Recommended setting: autoa save on.
 - Use default foreground color for status bar items.
+- Use colorless icon for skip command status bar item.
 
 ### Changed
 - Use current Code executable path for Git config `mergetool.code.cmd`
