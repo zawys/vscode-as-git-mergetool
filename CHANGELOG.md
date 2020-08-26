@@ -1,11 +1,18 @@
 # Change Log
 
-All notable changes to the "VS Code as Git Mergetool" extension will be documented in this file.
+All notable changes to the "VS Code as Git Mergetool"
+extension will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Reset merge file command is now always available
+  when a diff layout is opened.
+
 ### Fixed
 - Fix crash when starting a merge layout without opened workspace.
 - More aggressively match editors when deactivating a diff layout.
@@ -22,7 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scroll position synchronization using the NPM package `diff`
 - Settings configuration assistant
 - Provides commands for launching/continuing/stopping `git mergetool`
-- Optionally opens the Git commit message for committing after a successful `git mergetool` execution (as a workaround for some Git extension bugs).
+- Optionally opens the Git commit message for committing
+  after a successful `git mergetool` execution
+  (as a workaround for some Git extension bugs).
 - Provides a command for `git merge --abort` and `git merge --quit`.
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active

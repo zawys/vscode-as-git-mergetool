@@ -31,7 +31,12 @@ export interface DiffLayouter {
    /**
    * If layout is currently applied.
    */
-  readonly isEmployed: boolean;
+  readonly isActive: boolean;
+
+  /**
+   * If layout going to be activated.
+   */
+  readonly isActivating: boolean;
 
   /**
    * Passed to `tryStartMerge`. Used to find out if layout switch needed.

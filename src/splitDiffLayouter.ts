@@ -13,6 +13,7 @@ export class SplitDiffLayouter implements DiffLayouter {
     try {
       if (this.monitor.someoneIsWaiting || this._isEmployed) { return false; }
       this._isEmployed = true;
+      this._isActivating = true;
       this.watchingDisposables.push(
         ...watchDiffedURIs(this.diffedURIs, () => this.deactivate())
       );
@@ -67,6 +68,7 @@ export class SplitDiffLayouter implements DiffLayouter {
         focusMergeConflict(this.mergeEditor, SearchType.first);
         await focusColumn(this.mergeEditorIndex);
       }
+      this._isActivating = false;
       this._isActive = true;
       this.watchingDisposables.push(
         vscode.window.onDidChangeVisibleTextEditors(
@@ -130,6 +132,8 @@ export class SplitDiffLayouter implements DiffLayouter {
   }
 
   public get isEmployed() { return this._isEmployed; }
+  public get isActive() { return this._isActive; }
+  public get isActivating() { return this._isActivating; }
 
   public get onDidDeactivate(): vscode.Event<void> {
     return this.didDeactivate.event;
@@ -155,6 +159,7 @@ export class SplitDiffLayouter implements DiffLayouter {
   private editorsToSave: vscode.TextEditor[] = [];
   private _isEmployed: boolean = false;
   private _isActive: boolean = false;
+  private _isActivating: boolean = true;
   private readonly didDeactivate = new vscode.EventEmitter<void>();
   private mergeEditor: vscode.TextEditor | undefined;
   private mergeEditorIndex: number | undefined;

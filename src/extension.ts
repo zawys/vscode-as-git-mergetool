@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as mergetool from './mergetool';
 import { SettingsAssistantCreator } from './settingsAssistant';
-import { DiffLayoutManager } from './diffLayouterManager';
+import { DiffLayoutManager } from './diffLayoutManager';
 
 let extension: Extension | undefined;
 

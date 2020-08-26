@@ -7,6 +7,7 @@ import { FourTransferRightLayouterFactory } from './fourTransferRightLayouter';
 import { Monitor } from './monitor';
 import { ThreeDiffToBaseLayouterFactory } from './threeDiffToBaseLayouter';
 import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
+import * as fs from 'fs';
 
 export class DiffLayoutManager {
   public async register(): Promise<void> {
@@ -23,6 +24,9 @@ export class DiffLayoutManager {
       ),
       vscode.commands.registerCommand(deactivateLayoutCommandID,
         this.deactivateLayout.bind(this),
+      ),
+      vscode.commands.registerCommand(resetMergedFileCommandID,
+        this.resetMergedFile.bind(this),
       ),
     ];
     for (const editor of vscode.window.visibleTextEditors) {
@@ -45,7 +49,7 @@ export class DiffLayoutManager {
   }
 
   public focusMergeConflict(type: SearchType): undefined | boolean {
-    return this.layouter?.isEmployed === true ?
+    return this.layouter?.isActive === true ?
       this.layouter.focusMergeConflict(type) :
       undefined;
   }
@@ -71,7 +75,9 @@ export class DiffLayoutManager {
   }
 
   public get diffedURIs(): DiffedURIs | undefined {
-    return this.layouter?.isEmployed ? this.layouter.diffedURIs : undefined;
+    return (this.layouter?.isActivating
+      || this.layouter?.isActive
+    ) ? this.layouter.diffedURIs : undefined;
   }
 
   public async dispose(): Promise<void> {
@@ -92,6 +98,25 @@ export class DiffLayoutManager {
   ) {
     if (factories.length === 0) { throw new Error(); }
     this.defaultFactory = factories[0];
+  }
+
+  public async resetMergedFile() {
+    await new Promise((resolve, reject) => {
+      const diffedURIs = this.diffedURIs;
+      if (this.layouter?.isActive === undefined
+        || diffedURIs === undefined
+      ) {
+        vscode.window.showErrorMessage(
+          "Reset not applicable; no merge situation opened."
+        );
+        return;
+      }
+      fs.copyFile(
+        diffedURIs.backup.fsPath,
+        diffedURIs.merged.fsPath,
+        err => (err ? reject(err) : resolve()),
+      );
+    });
   }
 
   private layouter: DiffLayouter | undefined;
@@ -118,7 +143,7 @@ export class DiffLayoutManager {
     try {
       const activeDiffedURIs = this.layouter?.diffedURIs;
       if (
-        this.layouter?.isEmployed === true &&
+        (this.layouter?.isActivating || this.layouter?.isActive) === true &&
         activeDiffedURIs !== undefined &&
         occursIn(activeDiffedURIs, doc.uri)
       ) { return true; }
@@ -176,3 +201,4 @@ export class DiffLayoutManager {
 
 const layoutSettingID = "vscode-as-git-mergetool.layout";
 const deactivateLayoutCommandID = "vscode-as-git-mergetool.deactivateLayout";
+const resetMergedFileCommandID = "vscode-as-git-mergetool.resetMergedFile";

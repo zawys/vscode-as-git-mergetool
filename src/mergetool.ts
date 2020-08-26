@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { defaultVSCodeConfigurator, VSCodeConfigurator } from './vSCodeConfigurator';
 import { getWorkingDirectoryUri, getGitPath } from "./getPaths";
-import { DiffLayoutManager } from './diffLayouterManager';
+import { DiffLayoutManager } from './diffLayoutManager';
 import { DiffedURIs, uRIsEqual } from './diffedURIs';
-import * as fs from 'fs';
 import { labelsInStatusbarSettingID } from './statusBarSetting';
 import { SearchType } from './diffLayouter';
 
@@ -13,7 +12,6 @@ export class MergetoolProcess {
       [gitMergetoolStartCommandID, this.startMergetool],
       [gitMergetoolContinueCommandID, this.continueMergetool],
       [gitMergetoolSkipCommandID, this.skipFile],
-      [resetMergedFileCommandID, this.resetMergedFile],
       [gitMergetoolStopCommandID, this.stopMergetoolInteractively],
       [gitMergetoolMergeSituationCommandID, this.reopenMergeSituation],
       [gitMergeAbortCommandID, this.abortMerge],
@@ -106,20 +104,6 @@ export class MergetoolProcess {
     await this.diffLayoutManager.deactivateLayout();
     this.mergeSituation = undefined;
     this.mergetoolTerm!.sendText("n\ny\n");
-  }
-
-  public async resetMergedFile() {
-    if (!this.assertMergetoolActiveInteractively() ||
-      !this.assertMergeSituationOpenedInteractively()
-    ) { return; }
-    await new Promise((resolve, reject) => {
-      if (this.mergeSituation === undefined) { return; }
-      fs.copyFile(
-        this.mergeSituation.backup.fsPath,
-        this.mergeSituation.merged.fsPath,
-        err => (err ? reject(err) : resolve()),
-      );
-    });
   }
 
   public async stopMergetoolInteractively() {
@@ -424,8 +408,6 @@ const gitMergetoolContinueCommandID =
   "vscode-as-git-mergetool.gitMergetoolContinue";
 const gitMergetoolSkipCommandID =
   "vscode-as-git-mergetool.gitMergetoolSkip";
-const resetMergedFileCommandID =
-  "vscode-as-git-mergetool.resetMergedFile";
 const gitMergetoolStopCommandID =
   "vscode-as-git-mergetool.gitMergetoolStop";
 const gitMergetoolMergeSituationCommandID =
