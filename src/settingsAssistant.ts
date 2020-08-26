@@ -86,7 +86,7 @@ export class SettingsAssistant {
     new GitOptionAssistant(
       this.gitConfigurator,
       "mergetool.code.cmd",
-      'code "$BASE"',
+      `"${process.execPath}" "$BASE"`,
       "Make VS Code available as merge tool.",
     ),
     new GitOptionAssistant(
