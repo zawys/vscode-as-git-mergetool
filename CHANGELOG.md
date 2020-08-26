@@ -9,6 +9,8 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.1.0] - 2020-08-27
 ### Added
 - Reset merge file command is now always available
   when a diff layout is opened.
@@ -39,5 +41,6 @@ and this project adheres to
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.1.0
 [0.0.1]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.0.1
