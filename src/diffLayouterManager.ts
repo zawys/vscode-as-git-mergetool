@@ -82,9 +82,9 @@ export class DiffLayoutManager {
 
   public constructor(
     private readonly factories: DiffLayouterFactory[] = [
-      new FourTransferDownLayouterFactory(),
-      new ThreeDiffToBaseLayouterFactory(),
       new FourTransferRightLayouterFactory(),
+      new ThreeDiffToBaseLayouterFactory(),
+      new FourTransferDownLayouterFactory(),
     ],
     private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
     private readonly temporarySideBySideSettingsManager =
