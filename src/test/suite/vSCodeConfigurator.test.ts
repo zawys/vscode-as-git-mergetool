@@ -31,7 +31,7 @@ suite('VSCodeConfigurator', () => {
       const end = hrtime.bigint();
       console.warn(`1. took: ${end - start}`);
       assert(end - start < 1*1000*1000, `1. took: ${end - start}ns`);
-      assert.equal(actual, "3DiffToBase");
+      assert.strictEqual(actual, "3DiffToBase");
     }
     {
       await sut.set(key, "4TransferDown");
@@ -40,7 +40,7 @@ suite('VSCodeConfigurator', () => {
       const end = hrtime.bigint();
       console.warn(`2. took: ${end - start}`);
       assert(end - start < 1*1000*1000, `2. took: ${end - start}ns`);
-      assert.equal(actual, "4TransferDown");
+      assert.strictEqual(actual, "4TransferDown");
     }
   });
 });

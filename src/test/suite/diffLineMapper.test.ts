@@ -31,7 +31,7 @@ suite('DiffLineMapper', () => {
         testCase.new.split("")
       );
       const actual = sut.map(testCase.from);
-      assert.equal(
+      assert.strictEqual(
         actual, testCase.expectedTo,
         `{ old: "${testCase.old}", new: "${testCase.new}", from: ${testCase.from}, expectedTo: ${testCase.expectedTo} }`
       );

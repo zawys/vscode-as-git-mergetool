@@ -29,16 +29,16 @@ suite('parseBaseFileNameRE', () => {
 		const input = vscode.Uri.file("/example/changed_BASE_9.xml");
 		const actual = sut.exec(input.path);
 		assert(actual, "matches");
-		assert.equal(actual[3], "9.xml", "restWOGit group value");
-		assert.equal(actual[4], ".xml", "extension group value");
+		assert.strictEqual(actual[3], "9.xml", "restWOGit group value");
+		assert.strictEqual(actual[4], ".xml", "extension group value");
 	});
 
 	test('parses base file URI with 6 digits correctly', () => {
 		const input = vscode.Uri.file("/example/changed_BASE_123456.xml");
 		const actual = sut.exec(input.path);
 		assert(actual, "matches");
-		assert.equal(actual[3], "123456.xml", "restWOGit group value");
-		assert.equal(actual[4], ".xml", "extension group value");
+		assert.strictEqual(actual[3], "123456.xml", "restWOGit group value");
+		assert.strictEqual(actual[4], ".xml", "extension group value");
 	});
 
 	test('parses base file URI with other capitals part correctly', () => {
@@ -86,11 +86,11 @@ suite('getDiffedURIs', () => {
 		const input = vscode.Uri.file("/somewhere/to_merge_BASE_12345.txt.git")
 			.with({ scheme: "git" });
 		const actual = sut(input);
-		assert.equal(actual?.base.scheme, "file", "base");
-		assert.equal(actual?.local.scheme, "file", "local");
-		assert.equal(actual?.remote.scheme, "file", "remote");
-		assert.equal(actual?.merged.scheme, "file", "merged");
-		assert.equal(actual?.backup.scheme, "file", "merged");
+		assert.strictEqual(actual?.base.scheme, "file", "base");
+		assert.strictEqual(actual?.local.scheme, "file", "local");
+		assert.strictEqual(actual?.remote.scheme, "file", "remote");
+		assert.strictEqual(actual?.merged.scheme, "file", "merged");
+		assert.strictEqual(actual?.backup.scheme, "file", "merged");
 	});
 
 	test('return valid paths when other capitals part is input', () => {

@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as process from 'process';
 
 import { runTests } from 'vscode-test';
 
@@ -17,6 +18,11 @@ async function main() {
 			extensionDevelopmentPath,
 			extensionTestsPath,
 			launchArgs: ["--disable-extensions"],
+			extensionTestsEnv: {
+				...process.env,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+				"ELECTRON_RUN_AS_NODE": undefined,
+			},
 		});
 	} catch (err) {
 		console.error('Failed to run tests');
