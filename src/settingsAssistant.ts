@@ -39,25 +39,30 @@ export class SettingsAssistant {
         if (!await assistant.needsChange()) {
           continue;
         }
-        const items = await assistant.provideQuickPickItems();
-        items.push(this.skipOptionItem, this.abortItem, this.restartItem);
-        const pickedItem = await this.showQuickPick(items);
-        if (pickedItem === undefined || pickedItem === this.abortItem) {
+        const question = await assistant.provideQuestionData();
+        question.options.push(
+          this.skipOptionItem,
+          this.abortItem,
+          this.restartItem
+        );
+        const pickedOption = await this.ask(question);
+        if (pickedOption === undefined || pickedOption === this.abortItem) {
           abort = true;
           break;
-        } else if (pickedItem === this.skipOptionItem) {
-        } else if (pickedItem === this.restartItem) {
+        } else if (pickedOption === this.skipOptionItem) {
+        } else if (pickedOption === this.restartItem) {
           restart = true;
           break;
         } else {
-          await assistant.handlePickedItem(pickedItem);
+          await assistant.handlePickedOption(pickedOption);
         }
       }
       if (abort) { break; }
       if (restart) { continue; }
-      const pickedItem = await this.showQuickPick(
-        [this.completeItem, this.restartItem]
-      );
+      const pickedItem = await this.ask({
+        question: "Settings assistant finished.",
+        options: [this.completeItem, this.restartItem],
+      });
       if (pickedItem !== this.restartItem) {
         await this.vSCodeConfigurator.set(settingsAssistantOnStartupID, false);
         break;
@@ -120,39 +125,25 @@ export class SettingsAssistant {
       "Show the merge conflict code lens in diff editors.",
     )
   ];
-  private readonly skipOptionItem: ExtendedQuickPickItem = {
-    label: "Keep option unchanged",
-  };
-  private readonly abortItem: ExtendedQuickPickItem = {
-    label: "Abort the assistant",
-  };
-  private readonly completeItem: ExtendedQuickPickItem = {
-    label: "Complete the assistant",
-  };
-  private readonly restartItem: ExtendedQuickPickItem = {
-    label: "Restart the assistant",
-  };
-  private showQuickPick(
-    items: ExtendedQuickPickItem[]
-  ): Thenable<ExtendedQuickPickItem | undefined> {
-    return vscode.window.showQuickPick(
-      items,
-      {
-        ignoreFocusOut: true,
-        placeHolder: "Select an action"
-      }
+  private readonly skipOptionItem = new Option("Skip");
+  private readonly abortItem = new Option("Abort");
+  private readonly completeItem = new Option("Complete");
+  private readonly restartItem = new Option("Restart");
+
+  private ask(
+    question: QuestionData
+  ): Thenable<Option | undefined> {
+    return vscode.window.showInformationMessage(
+      question.question,
+      ...question.options,
     );
   }
 }
 
 interface OptionAssistant {
   needsChange(): Promise<boolean>;
-  provideQuickPickItems(): Promise<ExtendedQuickPickItem[]>;
-  handlePickedItem(item: ExtendedQuickPickItem): Promise<void>;
-}
-
-interface ExtendedQuickPickItem extends vscode.QuickPickItem {
-  value?: unknown
+  provideQuestionData(): Promise<QuestionData>;
+  handlePickedOption(item: Option): Promise<void>;
 }
 
 class GitOptionAssistant implements OptionAssistant {
@@ -167,23 +158,26 @@ class GitOptionAssistant implements OptionAssistant {
       this.targetValue;
   }
 
-  async provideQuickPickItems(): Promise<ExtendedQuickPickItem[]> {
+  async provideQuestionData(): Promise<QuestionData> {
     const currentValue = await this.gitConfigurator.get(this.key);
-    const detail = `${this.description}\nCurrent value: ${currentValue}`;
-    return [
-      {
-        label: `Set git option \`${this.key}\` to \`${this.targetValue}\` globally.`,
-        detail,
-        value: GitOptionAssistant.globalValue,
-      },
-      {
-        label: `Set git option \`${this.key}\` to \`${this.targetValue}\` in repository.`,
-        detail,
-        value: GitOptionAssistant.repositoryValue
-      },
-    ];
+    return {
+      question: `Change Git option \`${this.key}\`. \n`
+        + `Reason: ${this.description} \n`
+        + `Current value: \`${currentValue}\`. \n`
+        + `New value: ${this.targetValue}.`,
+      options: [
+        new Option(
+          `Globally`,
+          GitOptionAssistant.globalValue,
+        ),
+        new Option(
+          `In repository`,
+          GitOptionAssistant.repositoryValue
+        ),
+      ]
+    };
   }
-  async handlePickedItem(item: ExtendedQuickPickItem): Promise<void> {
+  async handlePickedOption(item: Option): Promise<void> {
     let global: boolean;
     if (item.value === GitOptionAssistant.repositoryValue) {
       global = false;
@@ -263,23 +257,27 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
   async needsChange(): Promise<boolean> {
     return this.configurator.get<T>(this.section) !== this.targetValue;
   }
-  async provideQuickPickItems(): Promise<ExtendedQuickPickItem[]> {
+  async provideQuestionData(): Promise<QuestionData> {
     const currentValue = this.configurator.get(this.section);
-    const detail = `${this.description}\nCurrent value: ${currentValue}`;
-    return [
-      {
-        label: `Set VS Code option \`${this.section}\` to \`${this.targetValue}\` globally.`,
-        detail,
-        value: VSCodeOptionAssistant.globalValue,
-      },
-      {
-        label: `Set VS Code option \`${this.section}\` to \`${this.targetValue}\` in workspace.`,
-        detail,
-        value: VSCodeOptionAssistant.workspaceValue,
-      }
-    ];
+    return {
+      question:
+        `Change VS Code option \`${this.section}\`. \n`
+        + `Reason: ${this.description} \n`
+        + `Current value: \`${currentValue}\`. \n`
+        + `New value: ${this.targetValue}.`,
+      options: [
+        new Option(
+          `Globally`,
+          VSCodeOptionAssistant.globalValue,
+        ),
+        new Option(
+          `In workspace`,
+          VSCodeOptionAssistant.workspaceValue,
+        )
+      ],
+    };
   }
-  async handlePickedItem(item: ExtendedQuickPickItem): Promise<void> {
+  async handlePickedOption(item: Option): Promise<void> {
     let global: boolean;
     if (item.value === VSCodeOptionAssistant.globalValue) {
       global = true;
@@ -321,4 +319,16 @@ export class SettingsAssistantCreator {
   constructor(
     private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
   ) { }
+}
+
+class Option implements vscode.MessageItem {
+  constructor(
+    public readonly title: string,
+    public readonly value?: unknown,
+  ) { }
+}
+
+interface QuestionData {
+  question: string;
+  options: Option[];
 }
