@@ -12,6 +12,8 @@ export class VSCodeConfigurator {
     section: string, value: unknown, global: boolean = true
   ): Promise<void> {
     const [parent, key] = separateSmallestKey(section);
+    global ||= vscode.workspace.workspaceFolders === undefined
+      || vscode.workspace.workspaceFolders.length === 0;
     await vscode.workspace.getConfiguration(parent).update(
       key,
       value,
