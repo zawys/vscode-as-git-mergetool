@@ -22,6 +22,7 @@ and this project adheres to
 
 ### Changed
 - Use current Code executable path for Git config `mergetool.code.cmd`
+- Some error message were improved.
 
 ## [0.0.1] - 2020-08-26
 ### Added

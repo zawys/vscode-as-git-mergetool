@@ -45,12 +45,7 @@ export class MergetoolProcess {
         "LANG": "POSIX",
       }
     });
-    if (this.mergetoolTerm === undefined) {
-      vscode.window.showErrorMessage(
-        "Could create no terminal for Git Mergetool."
-      );
-      return;
-    }
+    if (this.mergetoolTerm === undefined) { return; }
     this.termCloseListener = vscode.window.onDidCloseTerminal(
       this.handleMergetoolTerminalClose.bind(this)
     );
@@ -331,7 +326,7 @@ export class MergetoolProcess {
     const workingDir = getWorkingDirectoryUri();
     if (workingDir === undefined) {
       vscode.window.showErrorMessage(
-        "Could not find a suitable working directory."
+        "You need need to have a workspace opened."
       );
       return;
     }
@@ -340,12 +335,17 @@ export class MergetoolProcess {
       vscode.window.showErrorMessage("Could not find path to git binary.");
       return;
     }
-    return vscode.window.createTerminal({
+    const term = vscode.window.createTerminal({
       name: ["git", ...(terminalOptions.shellArgs || [])].join(" "),
       cwd: workingDir,
       shellPath: gitPath,
       ...terminalOptions
     });
+    if (term === undefined) {
+      vscode.window.showErrorMessage("Failed to create a terminal.");
+      return;
+    }
+    return term;
   }
 
   private updateStatusBarItems() {
