@@ -18,10 +18,10 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.watchingDisposables.push(
         ...watchDiffedURIs(this.diffedURIs, () => this.deactivate())
       );
+      await this.temporarySideBySideSettingsManager.activateSettings();
       const layoutDescription = this.createLayoutDescription(this.diffedURIs);
       await vscode.commands.executeCommand("workbench.action.closeSidebar");
       await vscode.commands.executeCommand("workbench.action.closePanel");
-      await this.temporarySideBySideSettingsManager.activateSettings();
       await vscode.commands.executeCommand(
         "vscode.setEditorLayout", layoutDescription,
       );
