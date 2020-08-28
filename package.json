@@ -193,7 +193,7 @@
 		"check_dependencies": "yarn upgrade && yarn audit && yarn outdated",
 		"preversion": "yarn run check_dependencies && yarn run index_is_clean",
 		"sign_package": "cd packages && sha256sum vscode-as-git-mergetool-$npm_package_version.vsix > SHA256SUMS && gpg --detach-sign --sign-with=$npm_package_publisher --sign SHA256SUMS",
-		"upload": "cd packages && hub create release --attach=vscode-as-git-mergetool-$npm_package_version.vsix --attach=SHA256SUMS --attach=SHA256SUMS.sig --message=v$npm_package_version --edit v$npm_package_version",
+		"upload": "cd packages && hub release create --attach=vscode-as-git-mergetool-$npm_package_version.vsix --attach=SHA256SUMS --attach=SHA256SUMS.sig --message=v$npm_package_version --edit v$npm_package_version",
 		"postversion": "yarn run build && yarn run sign_package && git push && git push --tags && yarn run upload"
 	},
 	"husky": {
