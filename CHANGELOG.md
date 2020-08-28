@@ -16,6 +16,7 @@ and this project adheres to
 
 ### Fixed
 - Check for MERGE_MSG existence before opening it
+- Spelling
 
 ## [0.1.0] - 2020-08-27
 ### Added
@@ -27,13 +28,13 @@ and this project adheres to
 ### Fixed
 - Fix crash when starting a merge layout without opened workspace.
 - More aggressively match editors when deactivating a diff layout.
-  Recommended setting: autoa save on.
+  Recommended setting: auto save on.
 - Use default foreground color for status bar items.
 - Use colorless icon for skip command status bar item.
 
 ### Changed
 - Use current Code executable path for Git config `mergetool.code.cmd`
-- Some error message were improved.
+- Some error messages were improved.
 
 ## [0.0.1] - 2020-08-26
 ### Added

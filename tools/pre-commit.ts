@@ -60,7 +60,7 @@ async function runCommand(
 function asyncWhich(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
     which(command, (err, path) => err ? reject(err) : resolve(path));
-  })
+  });
 }
 
 run().then(rc => {

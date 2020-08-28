@@ -78,7 +78,7 @@ There is also a 3-column layout available.
   when previously covered by other editors and
   then there is no reliable way to find out who the editor belongs to.
 
-  **TLDR**: Use the command “Deactivate diff layout”,
+  **TL;DR**: Use the command “Deactivate diff layout”,
   “Stop mergetool” or `Ctrl+W`
   to stop the diff editor layout.
   Auto save is useful, too.

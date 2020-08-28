@@ -102,7 +102,7 @@ export class MultiFileSelector {
       alwaysShow: true,
     },
     private readonly unsetAll: vscode.QuickPickItem = {
-      label: "Clear seletion",
+      label: "Clear selection",
       alwaysShow: true,
     },
     private readonly abortItem: vscode.QuickPickItem = {

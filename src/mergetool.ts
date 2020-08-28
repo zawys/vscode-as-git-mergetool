@@ -5,7 +5,7 @@ import { DiffLayouter, SearchType } from './diffLayouter';
 import { DiffLayoutManager } from './diffLayoutManager';
 import { FileType, getFileType } from './fsAsync';
 import { getWorkingDirectoryUri } from "./getPaths";
-import { labelsInStatusbarSettingID } from './statusBarSetting';
+import { labelsInStatusBarSettingID } from './statusBarSetting';
 import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
 
 export class MergetoolProcess {
@@ -176,7 +176,7 @@ export class MergetoolProcess {
     this.diffLayoutManager.deactivateLayout();
     this.termCloseListener?.dispose();
     this.termCloseListener = undefined;
-    this.disposeStatusbarItems();
+    this.disposeStatusBarItems();
     this.mergeSituation = undefined;
     if (this.mergetoolTerm !== undefined) {
       const stopStatusMessage = vscode.window.createStatusBarItem(
@@ -320,15 +320,15 @@ export class MergetoolProcess {
     return true;
   }
 
-  private disposeStatusbarItems() {
+  private disposeStatusBarItems() {
     this.statusBarItems?.forEach(item => item.dispose());
     this.statusBarItems = undefined;
   }
 
   private updateStatusBarItems() {
-    this.disposeStatusbarItems();
+    this.disposeStatusBarItems();
     const showLabel =
-      this.vSCodeConfigurator.get<boolean>(labelsInStatusbarSettingID);
+      this.vSCodeConfigurator.get<boolean>(labelsInStatusBarSettingID);
     this.statusBarItems = [];
     if (!this.mergetoolRunning || this.mergetoolStopping) { return; }
     this.statusBarItems.push(this.createStatusBarItem(
@@ -388,7 +388,7 @@ const gitMergetoolSkipCommandID =
 const gitMergetoolStopCommandID =
   "vscode-as-git-mergetool.gitMergetoolStop";
 const gitMergetoolMergeSituationCommandID =
-  "vscode-as-git-mergetool.gitMergetoolReopenMergeSitutation";
+  "vscode-as-git-mergetool.gitMergetoolReopenMergeSituation";
 const gitMergeAbortCommandID =
   "vscode-as-git-mergetool.gitMergeAbort";
 const gitCommitCommandID =

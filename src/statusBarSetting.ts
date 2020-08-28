@@ -1,2 +1,2 @@
-export const labelsInStatusbarSettingID =
-  "vscode-as-git-mergetool.labelsInStatusbar";
+export const labelsInStatusBarSettingID =
+  "vscode-as-git-mergetool.labelsInStatusBar";

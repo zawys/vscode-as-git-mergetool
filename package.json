@@ -54,7 +54,7 @@
 				"category": "Git Mergetool"
 			},
 			{
-				"command": "vscode-as-git-mergetool.gitMergetoolReopenMergeSitutation",
+				"command": "vscode-as-git-mergetool.gitMergetoolReopenMergeSituation",
 				"title": "Reopen current merge situation in diff layout",
 				"enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
 				"category": "Git Mergetool"
@@ -134,7 +134,7 @@
 					"description": "Workaround: Speed layout deactivation up by switching the grid to a single column before closing every editor. Causes the previous editor groups to be merged into one. Necessary because of [VS Code issue #15178](https://github.com/microsoft/vscode/issues/15178).",
 					"scope": "machine-overridable"
 				},
-				"vscode-as-git-mergetool.labelsInStatusbar": {
+				"vscode-as-git-mergetool.labelsInStatusBar": {
 					"type": "boolean",
 					"default": false,
 					"description": "Add a text label to each status bar item.",
