@@ -3,6 +3,7 @@ import { createBackgroundGitTerminal } from './backgroundGitTerminal';
 import { DiffedURIs, uRIsOrUndefEqual } from './diffedURIs';
 import { DiffLayouter, SearchType } from './diffLayouter';
 import { DiffLayoutManager } from './diffLayoutManager';
+import { FileType, getFileType } from './fsAsync';
 import { getWorkingDirectoryUri } from "./getPaths";
 import { labelsInStatusbarSettingID } from './statusBarSetting';
 import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
@@ -285,7 +286,9 @@ export class MergetoolProcess {
         const commitMsgPath = vscode.Uri.joinPath(
           workspaceRoot, ".git/MERGE_MSG"
         );
-        await vscode.commands.executeCommand("vscode.open", commitMsgPath);
+        if ((await getFileType(commitMsgPath.fsPath)) === FileType.regular) {
+          await vscode.commands.executeCommand("vscode.open", commitMsgPath);
+        }
       }
     }
   }

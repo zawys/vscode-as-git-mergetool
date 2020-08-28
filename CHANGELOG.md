@@ -14,6 +14,9 @@ and this project adheres to
 - Short explanation for installation and usage in README.md
 - More automated release process
 
+### Fixed
+- Check for MERGE_MSG existence before opening it
+
 ## [0.1.0] - 2020-08-27
 ### Added
 - Reset merge file command is now always available
