@@ -10,7 +10,8 @@ and this project adheres to
 
 ## [Unreleased]
 ### Added
-- Command "Merge arbitrary files" showing a quick pick for file selection
+- Command "Merge arbitrary files" showing a quick pick for file selection.
+  This is available in the SCM panel title menu.
 - Restoring of previous “line numbers” and “inline diff” settings
   even if VS Code was closed abruptly
 - Short explanation for installation and usage in README.md

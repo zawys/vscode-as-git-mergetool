@@ -158,6 +158,10 @@
 				{
 					"command": "vscode-as-git-mergetool.gitMergeAbort",
 					"group": "Merge@2"
+				},
+				{
+					"command": "vscode-as-git-mergetool.mergeArbitraryFiles",
+					"group": "Merge@3"
 				}
 			],
 			"editor/title": [
