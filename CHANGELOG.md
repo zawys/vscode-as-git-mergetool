@@ -14,6 +14,9 @@ and this project adheres to
 - Short explanation for installation and usage in README.md
 - More automated release process
 
+### Changed
+- `yarn run package` → `yarn run build`
+
 ### Fixed
 - Check for MERGE_MSG existence before opening it
 - Spelling

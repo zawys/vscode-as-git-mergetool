@@ -170,20 +170,22 @@
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"pretest": "yarn install && yarn run recompile && yarn run lint",
 		"test": "node ./out/src/test/runTest.js",
-		"package:raw": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
-		"package": "yarn run recompile && yarn run package:raw",
+		"package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
+		"build": "yarn run recompile && yarn run package",
 		"working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
 		"index_is_clean": "git diff --staged --quiet && git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
 		"pre-commit": "ts-node ./tools/pre-commit.ts",
+		"post-commit": "ts-node ./tools/post-commit.ts",
 		"check_dependencies": "yarn upgrade && yarn audit && yarn outdated",
 		"preversion": "yarn run check_dependencies && yarn run index_is_clean",
 		"sign_package": "cd packages && sha256sum vscode-as-git-mergetool-$npm_package_version.vsix > SHA256SUMS && gpg --detach-sign --sign-with=$npm_package_publisher --sign SHA256SUMS",
 		"upload": "cd packages && hub create release --attach=vscode-as-git-mergetool-$npm_package_version.vsix --attach=SHA256SUMS --attach=SHA256SUMS.sig --message=v$npm_package_version --edit v$npm_package_version",
-		"postversion": "yarn run package && yarn run sign_package && git push && git push --tags && yarn run upload"
+		"postversion": "yarn run build && yarn run sign_package && git push && git push --tags && yarn run upload"
 	},
 	"husky": {
 		"hooks": {
-			"pre-commit": "yarn run pre-commit"
+			"pre-commit": "yarn run pre-commit",
+			"post-commit": "yarn run post-commit"
 		}
 	},
 	"devDependencies": {

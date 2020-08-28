@@ -87,7 +87,7 @@ There is also a 3-column layout available.
 
 1. [Install Yarn globally](https://classic.yarnpkg.com/en/docs/install)
 2. `yarn`
-3. `yarn run package`
+3. `yarn run build`
 
   The generated VSIX should then be in `packages/`.
 
