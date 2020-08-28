@@ -17,6 +17,22 @@ export async function runCommand(
   });
 }
 
+export function spawnAndCapture(
+  file: string,
+  args: string[],
+  options?: cp.SpawnOptions
+): cp.SpawnSyncReturns<string> {
+  console.log(`+${file} ${args.join(" ")}`);
+  const child = cp.spawnSync(file, args, {
+    ...options,
+    stdio: 'pipe',
+    encoding: 'utf-8',
+  });
+  console.log(child.stdout);
+  console.error(child.error);
+  return child;
+}
+
 export function asyncWhich(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
     which(command, (err, path) => err ? reject(err) : resolve(path));
