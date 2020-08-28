@@ -28,6 +28,45 @@ At time of release this has been tested only on my Linux machine,
 so especially Windows and MacOS users are welcomed
 to report any compatibility issues. See [Contribute](#Contribute).
 
+## Installation
+
+- Go to the
+  [latest Release](https://github.com/zawys/vscode-as-git-mergetool/releases/latest)
+  and download the VSIX.
+- Skip this if you do not want to verify the signature:
+  - Download the other files into the same directory.
+  - `sha256sum -c SHA256SUMS`
+  - `gpg --recv-keys '4A5D 4A5F B953 7A3A B931  6463 41B3 FBF3 7F23 3754'`
+  - `gpg --verify SHA256SUMS.sig SHA256SUMS`
+- Run the command “Install from VSIX…” inside VS Code and select the VSIX.
+
+Currently, the extension is not available on the Visual Studio Marketplace,
+but that will hopefully change in a few days.
+
+## Usage
+
+When you have a merge conflict in an opened repo,
+you can run the command “Start `git mergetool`” from the command palette
+or the command menu in the SCM panel.
+Then the layout should change and new buttons in the status bar should appear.
+
+When you start `git mergetool` from the command line,
+that process is not controlled by the extension
+but still a diff layout in VS Code should open.
+
+## Layout
+
+The default layout `4TransferRight` has 4 panes
+showing the changes distributed over two dimensions:
+
+- Top vs. bottom panes: local vs. remote changes
+- Left vs. right panes: changes applied starting from base vs. ending in merged
+
+In the right panes you can edit the (same) merged file
+and the goal of the game is to make the right side
+semantically equal the left side. 😅
+
+There is also a 3-column layout available.
 
 ## Known issues
 

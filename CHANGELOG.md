@@ -11,6 +11,7 @@ and this project adheres to
 ## [Unreleased]
 ### Added
 - New command "Merge arbitrary files"
+- Short explanation for installation and usage in README.md
 - More automated release process
 
 ## [0.1.0] - 2020-08-27
