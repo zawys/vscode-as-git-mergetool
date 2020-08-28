@@ -10,13 +10,14 @@ and this project adheres to
 
 ## [Unreleased]
 ### Added
-- Command "Merge arbitrary files"
+- Command "Merge arbitrary files" showing a quick pick for file selection
 - Restoring of previous “line numbers” and “inline diff” settings
   even if VS Code was closed abruptly
 - Short explanation for installation and usage in README.md
 - More automated release process
 
 ### Changed
+- Synchronize the scroll position vertically at the center
 - Change temporary settings globally, not in workspace
 - `yarn run package` → `yarn run build`
 

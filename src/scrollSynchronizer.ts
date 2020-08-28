@@ -1,8 +1,9 @@
-import { Disposable } from "vscode";
-import * as vscode from 'vscode';
 import * as diff from 'diff';
-import { defaultVSCodeConfigurator, VSCodeConfigurator } from "./vSCodeConfigurator";
+import * as vscode from 'vscode';
+import { Disposable } from "vscode";
 import { getStats } from "./fsAsync";
+import { extensionID } from "./iDs";
+import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class ScrollSynchronizer implements Disposable {
   public dispose() {
@@ -13,6 +14,7 @@ export class ScrollSynchronizer implements Disposable {
     editors: vscode.TextEditor[],
     synchronizationSourceOnStartIndex?: number,
     vSCodeConfigurator = defaultVSCodeConfigurator,
+    synchronizedAtCenter?: boolean,
   ): Promise<ScrollSynchronizer> {
     const ignoreEditor = new Array<number>(editors.length).fill(
       synchronizationSourceOnStartIndex === undefined ? 0 : 1
@@ -20,8 +22,18 @@ export class ScrollSynchronizer implements Disposable {
     if (synchronizationSourceOnStartIndex !== undefined) {
       ignoreEditor[synchronizationSourceOnStartIndex] = 0;
     }
+    if (synchronizedAtCenter === undefined) {
+      const setting =
+        vSCodeConfigurator.get(scrollingSynchronizedAtSettingID);
+      synchronizedAtCenter = setting === "top" ? false : true;
+    }
+    const surroundingLines =
+      vSCodeConfigurator.get(cursorSurroundingLinesSettingID);
     const scrollSynchronizer = new ScrollSynchronizer(
-      editors, vSCodeConfigurator, ignoreEditor,
+      editors,
+      ignoreEditor,
+      synchronizedAtCenter,
+      typeof surroundingLines === 'number' ? surroundingLines : 0,
     );
     if (synchronizationSourceOnStartIndex !== undefined) {
       await scrollSynchronizer.syncVisibleRanges(
@@ -33,9 +45,10 @@ export class ScrollSynchronizer implements Disposable {
   }
 
   private readonly disposables: Disposable[] = [];
-  private lastScrollTime: number = 0;
-  private surroundingLines: number;
   private readonly documents: vscode.TextDocument[];
+  /**
+   * When was the respective `ignoreEditor` index updated last?
+   */
   private readonly lastIgnoreChange: number[];
   private readonly editorLinesCache: (undefined | string[])[];
   private readonly mappersCache: {
@@ -46,18 +59,14 @@ export class ScrollSynchronizer implements Disposable {
 
   private constructor(
     private readonly editors: vscode.TextEditor[],
-    private readonly vSCodeConfigurator: VSCodeConfigurator,
     private readonly ignoreEditor: number[],
+    private readonly synchronizedAtCenter: boolean,
+    private surroundingLines: number,
   ) {
     this.editorLinesCache =
       new Array<undefined>(editors.length).fill(undefined);
     this.lastIgnoreChange = new Array<number>(editors.length).fill(0);
     this.documents = this.editors.map(editor => editor.document);
-    const surroundingLinesConfig =
-      this.vSCodeConfigurator.get(cursorSurroundingLinesSettingID);
-    this.surroundingLines = typeof surroundingLinesConfig === 'number' ?
-      surroundingLinesConfig :
-      0;
 
     this.disposables.push(vscode.window.onDidChangeTextEditorVisibleRanges(
       this.handleDidChangeTextEditorVisibleRanges.bind(this)
@@ -65,22 +74,25 @@ export class ScrollSynchronizer implements Disposable {
     this.disposables.push(vscode.workspace.onDidChangeTextDocument(
       this.handleDidChangeTextDocument.bind(this)
     ));
-    // this.channel.show();
-    // this.channel.appendLine("-----");
   }
 
   private async syncVisibleRanges(
     sourceEditor: vscode.TextEditor,
     sourceEditorIndex: number,
   ): Promise<void> {
-    // this.channel.appendLine(`start sync ${sourceEditorIndex}`);
     if (this.editors[sourceEditorIndex] !== sourceEditor) {
       vscode.window.showErrorMessage("internal assumption violated");
       return;
     }
 
     const visibleRanges = sourceEditor.visibleRanges;
-    const sourcePosition = visibleRanges[0].start.line;
+    const sourcePosition =
+      this.synchronizedAtCenter ?
+        Math.round(
+          visibleRanges[0].start.line
+          + visibleRanges[visibleRanges.length - 1].end.line
+        ) / 2 :
+        visibleRanges[0].start.line;
     const sourceFraction =
       sourcePosition / Math.max(1, sourceEditor.document.lineCount);
 
@@ -99,34 +111,32 @@ export class ScrollSynchronizer implements Disposable {
       if (targetPosition === undefined) {
         targetPosition = sourceFraction * targetEditor.document.lineCount;
       }
-      const targetLine = Math.max(this.surroundingLines,
-        Math.min(targetEditor.document.lineCount - 1,
-          Math.round(targetPosition + this.surroundingLines - 0.3),
-        )
-      );
-      const targetEditorActualLine =
-        targetEditor.visibleRanges[0].start.line;
-      // DEBUG
-      // if (targetEditorIndex === 0) {
-      //   this.channel.appendLine(
-      //     `[${sourceEditorIndex} -> ${targetEditorIndex}`
-      //     + `(${targetEditorActualLine}, `
-      //     + `${this.ignoreEditor[targetEditorIndex]})] -> `
-      //     + `[${sourcePosition} -> ${targetLine}]`
-      //   );
-      // }
-      if (targetEditorActualLine === targetLine - this.surroundingLines) {
-        continue;
+      const targetLine = this.synchronizedAtCenter ?
+        Math.max(0, Math.min(targetEditor.document.lineCount - 1,
+          Math.round(targetPosition - 0.25)
+        )) :
+        Math.max(this.surroundingLines,
+          Math.min(targetEditor.document.lineCount - 1,
+            Math.round(targetPosition + this.surroundingLines - 0.3),
+          )
+        );
+      if (!this.synchronizedAtCenter) {
+        const targetEditorActualLine =
+          targetEditor.visibleRanges[0].start.line;
+        if (targetEditorActualLine === targetLine - this.surroundingLines) {
+          continue;
+        }
       }
       const targetVSCPosition = new vscode.Position(targetLine, 0);
       this.updatedIgnore(targetEditorIndex);
       this.ignoreEditor[targetEditorIndex]++;
       targetEditor.revealRange(
         new vscode.Range(targetVSCPosition, targetVSCPosition),
-        vscode.TextEditorRevealType.AtTop
+        this.synchronizedAtCenter ?
+          vscode.TextEditorRevealType.InCenter :
+          vscode.TextEditorRevealType.AtTop
       );
     }
-    // this.channel.appendLine(`end sync ${sourceEditorIndex}`);
   }
 
   private updatedIgnore(index: number): number {
@@ -140,16 +150,12 @@ export class ScrollSynchronizer implements Disposable {
     return result;
   }
 
-  // DEBUG
-  //private channel = vscode.window.createOutputChannel("scroll");
-
   private async handleDidChangeTextEditorVisibleRanges(
     { textEditor /*, visibleRanges */ }:
       vscode.TextEditorVisibleRangesChangeEvent,
   ): Promise<void> {
     const editorIndex = this.editors.indexOf(textEditor);
     if (editorIndex === -1) { return; }
-    // this.channel.appendLine(`${editorIndex}, ${this.ignoreEditor}`)
     if (this.updatedIgnore(editorIndex) > 0.5) {
       this.ignoreEditor[editorIndex]--;
       return;
@@ -398,4 +404,7 @@ interface MappingEntry {
   newLine: number;
 }
 
-const cursorSurroundingLinesSettingID = "editor.cursorSurroundingLines";
+const cursorSurroundingLinesSettingID =
+  "editor.cursorSurroundingLines";
+const scrollingSynchronizedAtSettingID =
+  `${extensionID}.scrollingSynchronizedAt`;
