@@ -9,6 +9,9 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Disable tabs during editor layout
+
 ### Fixed
 - Automatic upload of releases
 
