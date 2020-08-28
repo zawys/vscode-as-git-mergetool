@@ -25,6 +25,7 @@ suite('VSCodeConfigurator', () => {
 
   test('persists settings', async () => {
     const key = `${extensionID}.layout`;
+    const original = sut.get(key);
     {
       await sut.set(key, "3DiffToBase");
       const start = hrtime.bigint();
@@ -43,5 +44,6 @@ suite('VSCodeConfigurator', () => {
       assert(end - start < 1*1000*1000, `2. took: ${end - start}ns`);
       assert.strictEqual(actual, "4TransferDown");
     }
+    sut.set(key, original);
   });
 });
