@@ -90,7 +90,7 @@ suite('getDiffedURIs', () => {
 		assert.strictEqual(actual?.local.scheme, "file", "local");
 		assert.strictEqual(actual?.remote.scheme, "file", "remote");
 		assert.strictEqual(actual?.merged.scheme, "file", "merged");
-		assert.strictEqual(actual?.backup.scheme, "file", "merged");
+		assert.strictEqual(actual?.backup?.scheme, "file", "merged");
 	});
 
 	test('return valid paths when other capitals part is input', () => {

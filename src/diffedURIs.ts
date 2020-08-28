@@ -26,32 +26,37 @@ export function getDiffedURIs(baseURI: vscode.Uri): DiffedURIs | undefined {
 export const parseBaseFileNameRE =
   /\/([^\/]*)_(BASE|REMOTE|LOCAL)_([0-9]{1,6}(.*?))(\.git)?$/;
 
-export function occursIn(diffedURIs: DiffedURIs, containedURI: vscode.Uri) {
-  const containedURIPath = containedURI.path;
-  return asURIList(diffedURIs).some(diffedURI => {
-    const diffedURIPath = diffedURI.path;
-    return pathsRoughlyEqual(containedURIPath, diffedURIPath);
-  });
-}
 export function asURIList(uRIs: DiffedURIs): vscode.Uri[] {
-  return [uRIs.base, uRIs.local, uRIs.merged, uRIs.remote, uRIs.backup];
+  const result = [uRIs.base, uRIs.local, uRIs.merged, uRIs.remote];
+  if (uRIs.backup !== undefined) { result.push(uRIs.backup); }
+  return result;
 }
-export function uRIsEqual(first: vscode.Uri, second: vscode.Uri) {
+export function uRIsOrUndefEqual(
+  first: vscode.Uri | undefined,
+  second: vscode.Uri | undefined
+): boolean {
+  if (first === undefined) { return second === undefined; }
+  if (second === undefined) { return false; }
+  return uRIsEqual(first, second);
+}
+export function uRIsEqual(first: vscode.Uri, second: vscode.Uri): boolean {
   return pathsRoughlyEqual(first.path, second.path);
 }
-export function pathsRoughlyEqual(first: string, second: string) {
+export function pathsRoughlyEqual(first: string, second: string): boolean {
   return first === second ||
     first + ".git" === second ||
     first === second + ".git";
 }
 export async function filesExist(diffedURIs: DiffedURIs): Promise<boolean> {
   return (await Promise.all(
-    asURIList(diffedURIs).map(uRI => new Promise((resolve) => {
+    asURIList(diffedURIs).map(async uRI => {
       if (uRI.fsPath.endsWith(".git")) {
         vscode.window.showErrorMessage("path ends with .git");
       }
-      fs.exists(uRI.fsPath, resolve);
-    }))
+      const stats = await getStats(uRI.fsPath);
+      if (stats === undefined) { return false; }
+      return stats.isFile();
+    })
   )).every(exists => exists);
 }
 
@@ -62,7 +67,16 @@ export class DiffedURIs {
       uRIsEqual(this.local, other.local) &&
       uRIsEqual(this.remote, other.remote) &&
       uRIsEqual(this.merged, other.merged) &&
-      uRIsEqual(this.backup, other.backup)
+      uRIsOrUndefEqual(this.backup, other.backup)
+    );
+  }
+
+  public equalsWithoutBackup(other: DiffedURIs) {
+    return (
+      uRIsEqual(this.base, other.base) &&
+      uRIsEqual(this.local, other.local) &&
+      uRIsEqual(this.remote, other.remote) &&
+      uRIsEqual(this.merged, other.merged)
     );
   }
 
@@ -71,6 +85,6 @@ export class DiffedURIs {
     public readonly local: vscode.Uri,
     public readonly remote: vscode.Uri,
     public readonly merged: vscode.Uri,
-    public readonly backup: vscode.Uri,
+    public readonly backup?: vscode.Uri,
   ) { }
 }

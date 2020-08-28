@@ -85,6 +85,11 @@
 				"icon": "$(check)",
 				"enablement": "resourceLangId == git-commit",
 				"category": "Git"
+			},
+			{
+				"command": "vscode-as-git-mergetool.mergeArbitraryFiles",
+				"title": "Merge arbitrary files",
+				"category": "Git Mergetool"
 			}
 		],
 		"configuration": {

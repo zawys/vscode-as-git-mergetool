@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
-import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
-import { getWorkingDirectoryUri, getGitPath } from "./getPaths";
-import { DiffLayoutManager } from './diffLayoutManager';
-import { DiffedURIs, uRIsEqual } from './diffedURIs';
-import { labelsInStatusbarSettingID } from './statusBarSetting';
+import { createBackgroundGitTerminal } from './backgroundGitTerminal';
+import { DiffedURIs, uRIsOrUndefEqual } from './diffedURIs';
 import { DiffLayouter, SearchType } from './diffLayouter';
+import { DiffLayoutManager } from './diffLayoutManager';
+import { getWorkingDirectoryUri } from "./getPaths";
+import { labelsInStatusbarSettingID } from './statusBarSetting';
+import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
 
 export class MergetoolProcess {
   public register() {
@@ -38,7 +39,7 @@ export class MergetoolProcess {
       return;
     }
     this.mergetoolRunning = true;
-    this.mergetoolTerm = await this.createBackgroundGitTerminal({
+    this.mergetoolTerm = await createBackgroundGitTerminal({
       shellArgs: ["mergetool"],
       env: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -132,7 +133,7 @@ export class MergetoolProcess {
     if (this.mergetoolRunning && !this.mergetoolStopping) {
       await this.stopMergetool();
     }
-    await this.createBackgroundGitTerminal({
+    await createBackgroundGitTerminal({
       shellArgs: ["merge", pickedItem === abortMerge ? "--abort" : "--quit"],
     });
   }
@@ -141,7 +142,7 @@ export class MergetoolProcess {
     const doc = vscode.window.activeTextEditor?.document;
     if (doc?.languageId !== "git-commit") { return; }
     doc.save();
-    const term = await this.createBackgroundGitTerminal({
+    const term = await createBackgroundGitTerminal({
       shellArgs: ["commit", "--no-edit", `--file=${doc.fileName}`],
     });
     term?.show(true);
@@ -230,7 +231,7 @@ export class MergetoolProcess {
   private get mergeSituationInLayout(): boolean {
     return this.mergeSituation !== undefined &&
       this.diffLayoutManager.diffedURIs !== undefined &&
-      uRIsEqual(
+      uRIsOrUndefEqual(
         this.mergeSituation.base,
         this.diffLayoutManager.diffedURIs.base
       );
@@ -319,34 +320,6 @@ export class MergetoolProcess {
   private disposeStatusbarItems() {
     this.statusBarItems?.forEach(item => item.dispose());
     this.statusBarItems = undefined;
-  }
-
-  private async createBackgroundGitTerminal(
-    terminalOptions: vscode.TerminalOptions
-  ): Promise<vscode.Terminal | undefined> {
-    const workingDir = getWorkingDirectoryUri();
-    if (workingDir === undefined) {
-      vscode.window.showErrorMessage(
-        "You need need to have a workspace opened."
-      );
-      return;
-    }
-    const gitPath = await getGitPath();
-    if (!gitPath) {
-      vscode.window.showErrorMessage("Could not find path to git binary.");
-      return;
-    }
-    const term = vscode.window.createTerminal({
-      name: ["git", ...(terminalOptions.shellArgs || [])].join(" "),
-      cwd: workingDir,
-      shellPath: gitPath,
-      ...terminalOptions
-    });
-    if (term === undefined) {
-      vscode.window.showErrorMessage("Failed to create a terminal.");
-      return;
-    }
-    return term;
   }
 
   private updateStatusBarItems() {

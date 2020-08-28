@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
-import { VSCodeConfigurator, defaultVSCodeConfigurator } from './vSCodeConfigurator';
-import { getWorkingDirectoryUri, getGitPath } from "./getPaths";
 import * as cp from 'child_process';
+import * as vscode from 'vscode';
+import { getGitPathInteractively, getWorkingDirectoryUri } from "./getPaths";
+import { defaultVSCodeConfigurator, VSCodeConfigurator } from './vSCodeConfigurator';
 
 export const settingsAssistantOnStartupID =
   "vscode-as-git-mergetool.settingsAssistantOnStartup";
@@ -198,7 +198,11 @@ class GitOptionAssistant implements OptionAssistant {
 export class GitConfigurator {
   public get(key: string): Promise<string | undefined> {
     return new Promise((resolve) => {
-      cp.execFile(this.gitPath, ["config", "--get", key], (err, stdout) => {
+      cp.execFile(
+        this.gitPath,
+        ["config", "--get", key],
+        { windowsHide: true, timeout: 5000 },
+        (err, stdout) => {
         if (err) {
           resolve(undefined);
         } else if (stdout.endsWith("\n")) {
@@ -298,7 +302,7 @@ export class SettingsAssistantCreator {
     if (!this.vSCodeConfigurator.get(settingsAssistantOnStartupID)) {
       return;
     }
-    const gitPath = await getGitPath();
+    const gitPath = await getGitPathInteractively();
     const workingDirectory = getWorkingDirectoryUri();
     if (gitPath === undefined || workingDirectory === undefined) {
       return;

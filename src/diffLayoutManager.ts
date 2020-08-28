@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { DiffedURIs, filesExist, getDiffedURIs, occursIn } from './diffedURIs';
+import * as cp from 'child_process';
+import * as path from 'path';
+import { DiffedURIs, filesExist, getDiffedURIs } from './diffedURIs';
+import { DiffFileSelector } from './diffFileSelector';
 import { DiffLayouter, DiffLayouterFactory, focusNextConflictCommandID, focusPreviousConflictCommandID, SearchType } from './diffLayouter';
 import { FourTransferDownLayouterFactory } from './fourTransferDownLayouter';
 import { FourTransferRightLayouterFactory } from './fourTransferRightLayouter';
@@ -9,6 +12,7 @@ import { Monitor } from './monitor';
 import { defaultTemporarySideBySideSettingsManager } from './temporarySettingsManager';
 import { ThreeDiffToBaseLayouterFactory } from './threeDiffToBaseLayouter';
 import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
+import { getGitPath, getGitPathInteractively } from './getPaths';
 
 export class DiffLayoutManager {
   public async register(): Promise<void> {
@@ -28,6 +32,9 @@ export class DiffLayoutManager {
       ),
       vscode.commands.registerCommand(resetMergedFileCommandID,
         this.resetMergedFile.bind(this),
+      ),
+      vscode.commands.registerCommand(mergeArbitraryFilesCommandID,
+        this.mergeArbitraryFiles.bind(this),
       ),
     ];
     for (const editor of vscode.window.visibleTextEditors) {
@@ -112,6 +119,10 @@ export class DiffLayoutManager {
         );
         return;
       }
+      if (diffedURIs?.backup === undefined) {
+        vscode.window.showErrorMessage("Backup file is unknown.");
+        return;
+      }
       fs.copyFile(
         diffedURIs.backup.fsPath,
         diffedURIs.merged.fsPath,
@@ -129,6 +140,7 @@ export class DiffLayoutManager {
     new vscode.EventEmitter<DiffLayouter>();
   private readonly didLayoutActivate =
     new vscode.EventEmitter<DiffLayouter>();
+  private diffFileSelector: DiffFileSelector | undefined;
 
   /**
    *
@@ -146,13 +158,17 @@ export class DiffLayoutManager {
     if (diffedURIs === undefined || !(await filesExist(diffedURIs))) {
       return false;
     }
+    return await this.openDiffedURIs(diffedURIs);
+  }
+
+  private async openDiffedURIs(diffedURIs: DiffedURIs): Promise<boolean> {
     await this.layouterManagerMonitor.enter();
     try {
       const activeDiffedURIs = this.layouter?.diffedURIs;
       if (
-        (this.layouter?.isActivating || this.layouter?.isActive) === true &&
-        activeDiffedURIs !== undefined &&
-        occursIn(activeDiffedURIs, uRI)
+        (this.layouter?.isActivating || this.layouter?.isActive) === true
+        && activeDiffedURIs !== undefined
+        && diffedURIs.equalsWithoutBackup(activeDiffedURIs)
       ) { return true; }
 
       const oldLayouter = this.layouter;
@@ -198,9 +214,9 @@ export class DiffLayoutManager {
           reopen, keepClosed,
         );
         if (result === reopen) {
-          if (!await this.handleDidOpenURI(layouter.diffedURIs.base)) {
+          if (!await this.openDiffedURIs(layouter.diffedURIs)) {
             vscode.window.showErrorMessage(
-              "Opening failed, probably because the file was removed."
+              "Opening failed, probably because one of the files was removed."
             );
           }
         }
@@ -234,8 +250,57 @@ export class DiffLayoutManager {
       layoutSetting = this.defaultFactory.settingValue;
     }
   }
+
+  private async mergeArbitraryFiles(): Promise<boolean> {
+    if (this.diffFileSelector === undefined) {
+      this.diffFileSelector = new DiffFileSelector();
+    }
+    const diffedURIs = await this.diffFileSelector.doSelection();
+    if (diffedURIs === undefined) { return false; }
+    const gitPath = await getGitPathInteractively();
+    if (gitPath === undefined) { return false; }
+    const mergedPath = diffedURIs.merged.fsPath;
+    const gitResult = await new Promise<{
+      err: cp.ExecException | null,
+      stdout: string,
+      stderr: string,
+    }>(resolve =>
+      cp.execFile(
+        gitPath,
+        [
+          "merge-file",
+          "--stdout",
+          diffedURIs.local.fsPath,
+          diffedURIs.base.fsPath,
+          diffedURIs.remote.fsPath,
+        ],
+        {
+          cwd: path.dirname(mergedPath),
+          timeout: 10000,
+          windowsHide: true,
+        },
+        (err, stdout, stderr) => resolve({ err, stdout, stderr })
+      )
+    );
+    const error = gitResult.err;
+    if (error !== null && (
+      error.code === undefined
+      || (error.code < 0 || error.code > 127)
+    )) {
+      vscode.window.showErrorMessage(
+        `Error when merging files by Git: ${gitResult.stderr}.`
+      );
+      return false;
+    }
+    if (!await new Promise(resolve => fs.writeFile(
+      mergedPath, gitResult.stdout, err => resolve(err === null),
+    ))) { return false; }
+    return await this.openDiffedURIs(diffedURIs);
+  }
 }
 
 const layoutSettingID = "vscode-as-git-mergetool.layout";
 const deactivateLayoutCommandID = "vscode-as-git-mergetool.deactivateLayout";
 const resetMergedFileCommandID = "vscode-as-git-mergetool.resetMergedFile";
+const mergeArbitraryFilesCommandID =
+  "vscode-as-git-mergetool.mergeArbitraryFiles";

@@ -31,13 +31,25 @@ export function getWorkingDirectoryUri(): vscode.Uri | undefined {
   return vscode.workspace.workspaceFolders![0].uri;
 }
 
+let gitPathPromise: Promise<string | undefined> | undefined;
+
 export function getGitPath(): Promise<string | undefined> {
-  return new Promise<string | undefined>(
-    (resolve, reject) => {
-      which("git", (error, path) => {
-        if (error) { reject(error); }
-        else { resolve(path); }
-      });
-    }
-  );
+  if (gitPathPromise === undefined) {
+    gitPathPromise = new Promise<string | undefined>(
+      (resolve, reject) => {
+        which("git", (error, path) => {
+          if (error) { reject(error); }
+          else { resolve(path); }
+        });
+      }
+    );
+  }
+  return gitPathPromise;
+}
+
+export async function getGitPathInteractively(): Promise<string | undefined> {
+  const gitPath = await getGitPath();
+  if (gitPath) { return gitPath; }
+  vscode.window.showErrorMessage("Could not find path to git binary.");
+  return undefined;
 }

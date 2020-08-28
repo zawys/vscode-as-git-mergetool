@@ -2,10 +2,12 @@ import * as vscode from 'vscode';
 import * as mergetool from './mergetool';
 import { SettingsAssistantCreator } from './settingsAssistant';
 import { DiffLayoutManager } from './diffLayoutManager';
+import { defaultExtensionContextManager } from './extensionContextManager';
 
 let extension: Extension | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
+	defaultExtensionContextManager.value = context;
 	extension = new Extension();
 	await extension.activate();
 }
