@@ -260,7 +260,7 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
   ) { }
 
   async needsChange(): Promise<boolean> {
-    return this.configurator.get<T>(this.section) !== this.targetValue;
+    return this.configurator.get(this.section) !== this.targetValue;
   }
   async provideQuestionData(): Promise<QuestionData> {
     const currentValue = this.configurator.get(this.section);

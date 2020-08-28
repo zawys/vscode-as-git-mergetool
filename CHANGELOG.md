@@ -11,10 +11,13 @@ and this project adheres to
 ## [Unreleased]
 ### Added
 - Command "Merge arbitrary files"
+- Restoring of previous “line numbers” and “inline diff” settings
+  even if VS Code was closed abruptly
 - Short explanation for installation and usage in README.md
 - More automated release process
 
 ### Changed
+- Change temporary settings globally, not in workspace
 - `yarn run package` → `yarn run build`
 
 ### Fixed

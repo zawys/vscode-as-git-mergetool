@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { createBackgroundGitTerminal } from './backgroundGitTerminal';
 import { DiffedURIs, uRIsOrUndefEqual } from './diffedURIs';
-import { DiffLayouter, SearchType } from './diffLayouter';
+import { DiffLayouter, SearchType } from './layouters/diffLayouter';
 import { DiffLayoutManager } from './diffLayoutManager';
 import { extensionID, labelsInStatusBarSettingID } from './iDs';
 import { FileType, getFileType } from './fsAsync';
@@ -328,7 +328,7 @@ export class MergetoolProcess {
   private updateStatusBarItems() {
     this.disposeStatusBarItems();
     const showLabel =
-      this.vSCodeConfigurator.get<boolean>(labelsInStatusBarSettingID);
+      this.vSCodeConfigurator.get(labelsInStatusBarSettingID) === true;
     this.statusBarItems = [];
     if (!this.mergetoolRunning || this.mergetoolStopping) { return; }
     this.statusBarItems.push(this.createStatusBarItem(

@@ -1,16 +1,17 @@
 import * as vscode from 'vscode';
-import { Monitor } from './monitor';
+import { Monitor } from '../monitor';
 import { DiffLayouter, DiffLayouterFactory } from './diffLayouter';
-import { defaultTemporarySideBySideSettingsManager } from './temporarySettingsManager';
+import { defaultTemporarySideBySideSettingsManagerLazy } from '../temporarySettingsManager';
 import { SplitDiffLayouter, GroupOrientation, diffEditorSymbol } from './splitDiffLayouter';
-import { DiffedURIs } from './diffedURIs';
+import { DiffedURIs } from '../diffedURIs';
 
 export class FourTransferRightLayouterFactory implements DiffLayouterFactory {
   public readonly settingValue = "4TransferRight";
 
   public create(
     monitor: Monitor,
-    temporarySideBySideSettingsManager = defaultTemporarySideBySideSettingsManager,
+    temporarySideBySideSettingsManager =
+      defaultTemporarySideBySideSettingsManagerLazy.value,
     diffedURIs: DiffedURIs,
   ): DiffLayouter {
     const leftSize = 0.5;
@@ -60,8 +61,6 @@ export class FourTransferRightLayouterFactory implements DiffLayouterFactory {
           ]
         },
       ]
-    }),
-      temporarySideBySideSettingsManager,
-    );
+    }), temporarySideBySideSettingsManager);
   }
 }

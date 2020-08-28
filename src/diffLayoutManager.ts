@@ -1,19 +1,19 @@
-import * as fs from 'fs';
-import * as vscode from 'vscode';
 import * as cp from 'child_process';
+import * as fs from 'fs';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { DiffedURIs, filesExist, getDiffedURIs } from './diffedURIs';
 import { DiffFileSelector } from './diffFileSelector';
-import { DiffLayouter, DiffLayouterFactory, focusNextConflictCommandID, focusPreviousConflictCommandID, SearchType } from './diffLayouter';
-import { FourTransferDownLayouterFactory } from './fourTransferDownLayouter';
-import { FourTransferRightLayouterFactory } from './fourTransferRightLayouter';
+import { getGitPathInteractively } from './getPaths';
+import { extensionID } from './iDs';
+import { DiffLayouter, DiffLayouterFactory, focusNextConflictCommandID, focusPreviousConflictCommandID, SearchType } from './layouters/diffLayouter';
+import { FourTransferDownLayouterFactory } from './layouters/fourTransferDownLayouter';
+import { FourTransferRightLayouterFactory } from './layouters/fourTransferRightLayouter';
+import { ThreeDiffToBaseLayouterFactory } from './layouters/threeDiffToBaseLayouter';
 import { containsMergeConflictIndicators } from './mergeConflictDetector';
 import { Monitor } from './monitor';
-import { defaultTemporarySideBySideSettingsManager } from './temporarySettingsManager';
-import { ThreeDiffToBaseLayouterFactory } from './threeDiffToBaseLayouter';
+import { defaultTemporarySideBySideSettingsManagerLazy } from './temporarySettingsManager';
 import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
-import { getGitPath, getGitPathInteractively } from './getPaths';
-import { extensionID } from './iDs';
 
 export class DiffLayoutManager {
   public async register(): Promise<void> {
@@ -103,7 +103,7 @@ export class DiffLayoutManager {
     ],
     private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
     private readonly temporarySideBySideSettingsManager =
-      defaultTemporarySideBySideSettingsManager,
+      defaultTemporarySideBySideSettingsManagerLazy,
   ) {
     if (factories.length === 0) { throw new Error(); }
     this.defaultFactory = factories[0];
@@ -185,7 +185,7 @@ export class DiffLayoutManager {
 
       this.layouter = newLayouterFactory.create(
         this.layouterMonitor,
-        this.temporarySideBySideSettingsManager,
+        this.temporarySideBySideSettingsManager.value,
         diffedURIs,
       );
       this.layouter.onDidDeactivate(

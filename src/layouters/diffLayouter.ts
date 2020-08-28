@@ -1,8 +1,8 @@
-import { DiffedURIs, asURIList } from "./diffedURIs";
+import { DiffedURIs, asURIList } from "../diffedURIs";
 import * as vscode from 'vscode';
-import { Monitor } from "./monitor";
-import { TemporarySideBySideSettingsManager } from "./temporarySettingsManager";
-import { extensionID } from "./iDs";
+import { Monitor } from "../monitor";
+import { TemporarySideBySideSettingsManager } from "../temporarySettingsManager";
+import { extensionID } from "../iDs";
 
 export interface DiffLayouter {
   /**

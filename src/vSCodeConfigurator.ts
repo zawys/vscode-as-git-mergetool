@@ -3,9 +3,10 @@ import * as vscode from 'vscode';
 export class VSCodeConfigurator {
   constructor() { }
 
-  public get<T>(section: string): T | undefined {
+  public get(section: string): unknown | undefined {
     const [parent, key] = separateSmallestKey(section);
-    return vscode.workspace.getConfiguration(parent).get(key);
+    const result = vscode.workspace.getConfiguration(parent).get(key);
+    return result;
   }
 
   public async set(
@@ -22,6 +23,11 @@ export class VSCodeConfigurator {
         vscode.ConfigurationTarget.Workspace,
     );
   }
+
+  public inspect(section: string): InspectResult<unknown> | undefined {
+    const [parent, key] = separateSmallestKey(section);
+    return vscode.workspace.getConfiguration(parent).inspect(key);
+  }
 }
 
 export const defaultVSCodeConfigurator = new VSCodeConfigurator();
@@ -34,5 +40,21 @@ export function separateSmallestKey(section: string): [string | undefined, strin
     return [match[1], match[2]];
   }
 }
+
+export interface InspectResult<T> {
+  key: string;
+
+  defaultValue?: T;
+  globalValue?: T;
+  workspaceValue?: T,
+  workspaceFolderValue?: T,
+
+  defaultLanguageValue?: T;
+  globalLanguageValue?: T;
+  workspaceLanguageValue?: T;
+  workspaceFolderLanguageValue?: T;
+
+  languageIds?: string[];
+};
 
 const smallestKeyRE = /^(.+)\.([^.]+)$/;

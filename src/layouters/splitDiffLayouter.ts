@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { DiffedURIs } from './diffedURIs';
-import { Monitor } from './monitor';
+import { DiffedURIs } from '../diffedURIs';
+import { Monitor } from '../monitor';
 import { DiffLayouter, watchDiffedURIs, SearchType, focusPreviousConflictCommandID, focusNextConflictCommandID } from './diffLayouter';
-import { ScrollSynchronizer } from './scrollSynchronizer';
-import { defaultTemporarySideBySideSettingsManager } from './temporarySettingsManager';
-import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
-import { mergeConflictIndicatorRE } from './mergeConflictDetector';
-import { extensionID } from './iDs';
+import { ScrollSynchronizer } from '../scrollSynchronizer';
+import { defaultTemporarySideBySideSettingsManagerLazy } from '../temporarySettingsManager';
+import { defaultVSCodeConfigurator } from '../vSCodeConfigurator';
+import { mergeConflictIndicatorRE } from '../mergeConflictDetector';
+import { extensionID } from '../iDs';
 
 export class SplitDiffLayouter implements DiffLayouter {
   public async tryActivate(): Promise<boolean> {
@@ -21,10 +21,10 @@ export class SplitDiffLayouter implements DiffLayouter {
       const layoutDescription = this.createLayoutDescription(this.diffedURIs);
       await vscode.commands.executeCommand("workbench.action.closeSidebar");
       await vscode.commands.executeCommand("workbench.action.closePanel");
+      await this.temporarySideBySideSettingsManager.activateSettings();
       await vscode.commands.executeCommand(
         "vscode.setEditorLayout", layoutDescription,
       );
-      await this.temporarySideBySideSettingsManager.activateSettings();
 
       // iterate through editors in depth-first manner
       const stack: [EditorGroupDescription, number][] = [];
@@ -100,9 +100,9 @@ export class SplitDiffLayouter implements DiffLayouter {
         // focus sidebar to have it open
         await vscode.commands.executeCommand("workbench.action.focusSideBar");
 
-        if (this.vSCodeConfigurator.get<boolean>(
+        if (this.vSCodeConfigurator.get(
           quickLayoutDeactivationSettingID
-        )) {
+        ) === true) {
           await vscode.commands.executeCommand(
             "vscode.setEditorLayout", { groups: [{}] }
           );
@@ -158,7 +158,7 @@ export class SplitDiffLayouter implements DiffLayouter {
     private readonly createLayoutDescription:
       (diffedURIs: DiffedURIs) => LayoutDescription,
     private readonly temporarySideBySideSettingsManager =
-      defaultTemporarySideBySideSettingsManager,
+      defaultTemporarySideBySideSettingsManagerLazy.value,
     private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
   ) { }
 
@@ -218,11 +218,12 @@ export class SplitDiffLayouter implements DiffLayouter {
     pauseAtBeginning = true
   ) {
     if (switchGroups && pauseAtBeginning) {
+      const pauseLength = this.vSCodeConfigurator.get(
+        focusPauseLengthOnCloseSettingID
+      );
       await this.pause(
         "Workaround: Waiting for focus switch",
-        this.vSCodeConfigurator.get<number>(
-          focusPauseLenghtOnCloseSettingID
-        ) || 500
+        (typeof pauseLength === 'number' ? pauseLength : 500)
       );
     }
     if (switchGroups) {
@@ -397,7 +398,7 @@ const focusEditorGroupCommandIDs:
   7: "workbench.action.focusEighthEditorGroup",
 };
 
-const focusPauseLenghtOnCloseSettingID =
+const focusPauseLengthOnCloseSettingID =
   `${extensionID}.workaroundFocusPauseLengthOnClose`;
 const quickLayoutDeactivationSettingID =
   `${extensionID}.workaroundQuickLayoutDeactivation`;

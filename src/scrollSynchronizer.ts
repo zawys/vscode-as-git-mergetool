@@ -53,9 +53,11 @@ export class ScrollSynchronizer implements Disposable {
       new Array<undefined>(editors.length).fill(undefined);
     this.lastIgnoreChange = new Array<number>(editors.length).fill(0);
     this.documents = this.editors.map(editor => editor.document);
-    this.surroundingLines = this.vSCodeConfigurator.get<number>(
-      cursorSurroundingLinesSettingID
-    ) || 0;
+    const surroundingLinesConfig =
+      this.vSCodeConfigurator.get(cursorSurroundingLinesSettingID);
+    this.surroundingLines = typeof surroundingLinesConfig === 'number' ?
+      surroundingLinesConfig :
+      0;
 
     this.disposables.push(vscode.window.onDidChangeTextEditorVisibleRanges(
       this.handleDidChangeTextEditorVisibleRanges.bind(this)
@@ -116,11 +118,11 @@ export class ScrollSynchronizer implements Disposable {
       if (targetEditorActualLine === targetLine - this.surroundingLines) {
         continue;
       }
-      const targetVSCPositon = new vscode.Position(targetLine, 0);
+      const targetVSCPosition = new vscode.Position(targetLine, 0);
       this.updatedIgnore(targetEditorIndex);
       this.ignoreEditor[targetEditorIndex]++;
       targetEditor.revealRange(
-        new vscode.Range(targetVSCPositon, targetVSCPositon),
+        new vscode.Range(targetVSCPosition, targetVSCPosition),
         vscode.TextEditorRevealType.AtTop
       );
     }
