@@ -2,7 +2,7 @@
 	"name": "vscode-as-git-mergetool",
 	"displayName": "VS Code as Git Mergetool",
 	"description": "Provides diff editor layouts for performing three-way merges.",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"engines": {
 		"vscode": "^1.48.0"
 	},
