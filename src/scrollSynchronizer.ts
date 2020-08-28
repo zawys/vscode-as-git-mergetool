@@ -321,15 +321,15 @@ export class DiffLineMapper implements LineMapper {
       } else {
         for (
           minIndex = nextIndex - 1;
-          this.getMappingFromLine(minIndex) >= line
-          && minIndex >= 0;
+          minIndex >= 0
+          && this.getMappingFromLine(minIndex) >= line;
           minIndex--
         ) { }
         minIndex++;
         for (
           maxIndex = nextIndex + 1;
-          this.getMappingFromLine(maxIndex) <= line
-          && maxIndex <= mappingMaxIndex;
+          maxIndex <= mappingMaxIndex
+          && this.getMappingFromLine(maxIndex) <= line;
           maxIndex++
         ) { }
         maxIndex--;

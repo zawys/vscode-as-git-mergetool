@@ -24,6 +24,9 @@ suite('DiffLineMapper', () => {
       { old: "abcdef", new: "ce", from: 3.5, expectedTo: 1 },
       { old: "abcdef", new: "ce", from: 4.5, expectedTo: 1.5 },
       { old: "abcdef", new: "ce", from: 5.5, expectedTo: 2 },
+      { old: "", new: "b", from: 0, expectedTo: 0.5 },
+      { old: "a", new: "ba", from: 0, expectedTo: 0.5 },
+      { old: "a", new: "ab", from: 1, expectedTo: 1.5 },
     ];
     for (const testCase of testCases) {
       const sut = DiffLineMapper.create(

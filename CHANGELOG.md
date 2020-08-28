@@ -17,6 +17,7 @@ and this project adheres to
 ### Fixed
 - Check for MERGE_MSG existence before opening it
 - Spelling
+- Null reference exception in DiffLineMapper
 
 ## [0.1.0] - 2020-08-27
 ### Added
