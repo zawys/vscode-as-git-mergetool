@@ -19,6 +19,7 @@ and this project adheres to
 
 ### Changed
 - Synchronize the scroll position vertically at the center
+  instead of at the top (configurable)
 - Change temporary settings globally, not in workspace
 - `yarn run package` → `yarn run build`
 

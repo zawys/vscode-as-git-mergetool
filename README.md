@@ -22,6 +22,8 @@ directly in VS Code.
 - Optionally opens the Git commit message in an editor
   after a successful `git mergetool` execution
   (as a workaround for few Git extension bugs).
+- Allows to select arbitrary files for merging,
+  invoking `git merge-files` and the diff layout.
 - Provides a command for `git merge --abort` and `git merge --quit`.
 
 At time of release this has been tested only on my Linux machine,
