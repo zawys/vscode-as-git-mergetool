@@ -14,12 +14,11 @@ and this project adheres to
   This is available in the SCM panel title menu.
 - Restoring of previous “line numbers” and “inline diff” settings
   even if VS Code was closed abruptly
+- Option to synchronize the scroll position vertically at the center
 - Short explanation for installation and usage in README.md
 - More automated release process
 
 ### Changed
-- Synchronize the scroll position vertically at the center
-  instead of at the top (configurable)
 - Change temporary settings globally, not in workspace
 - `yarn run package` → `yarn run build`
 

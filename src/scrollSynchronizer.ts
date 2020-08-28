@@ -25,7 +25,7 @@ export class ScrollSynchronizer implements Disposable {
     if (synchronizedAtCenter === undefined) {
       const setting =
         vSCodeConfigurator.get(scrollingSynchronizedAtSettingID);
-      synchronizedAtCenter = setting === "top" ? false : true;
+      synchronizedAtCenter = setting === "center";
     }
     const surroundingLines =
       vSCodeConfigurator.get(cursorSurroundingLinesSettingID);
