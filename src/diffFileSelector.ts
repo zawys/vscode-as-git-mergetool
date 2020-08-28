@@ -6,6 +6,7 @@ import { getRealPath, getFileType, FileType, testFile } from './fsAsync';
 import { R_OK, W_OK } from 'constants';
 import { getWorkingDirectoryUri } from './getPaths';
 import { defaultExtensionContextManager } from './extensionContextManager';
+import { extensionID } from './iDs';
 
 export class DiffFileSelector {
   public async doSelection(): Promise<DiffedURIs | undefined> {
@@ -19,7 +20,7 @@ export class DiffFileSelector {
   public get diffedURIs(): DiffedURIs | undefined { return this._diffedURIs; }
 
   public constructor(
-    public readonly iD: string = "vscode-as-git-mergetool.mergeFileSelector",
+    public readonly iD: string = `${extensionID}.mergeFileSelector`,
   ) {
     this.selector = new MultiFileSelector(
       this.selectableFiles,

@@ -13,6 +13,7 @@ import { defaultTemporarySideBySideSettingsManager } from './temporarySettingsMa
 import { ThreeDiffToBaseLayouterFactory } from './threeDiffToBaseLayouter';
 import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
 import { getGitPath, getGitPathInteractively } from './getPaths';
+import { extensionID } from './iDs';
 
 export class DiffLayoutManager {
   public async register(): Promise<void> {
@@ -299,8 +300,7 @@ export class DiffLayoutManager {
   }
 }
 
-const layoutSettingID = "vscode-as-git-mergetool.layout";
-const deactivateLayoutCommandID = "vscode-as-git-mergetool.deactivateLayout";
-const resetMergedFileCommandID = "vscode-as-git-mergetool.resetMergedFile";
-const mergeArbitraryFilesCommandID =
-  "vscode-as-git-mergetool.mergeArbitraryFiles";
+const layoutSettingID = `${extensionID}.layout`;
+const deactivateLayoutCommandID = `${extensionID}.deactivateLayout`;
+const resetMergedFileCommandID = `${extensionID}.resetMergedFile`;
+const mergeArbitraryFilesCommandID = `${extensionID}.mergeArbitraryFiles`;

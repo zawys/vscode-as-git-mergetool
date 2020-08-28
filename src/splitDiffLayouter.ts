@@ -6,6 +6,7 @@ import { ScrollSynchronizer } from './scrollSynchronizer';
 import { defaultTemporarySideBySideSettingsManager } from './temporarySettingsManager';
 import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
 import { mergeConflictIndicatorRE } from './mergeConflictDetector';
+import { extensionID } from './iDs';
 
 export class SplitDiffLayouter implements DiffLayouter {
   public async tryActivate(): Promise<boolean> {
@@ -397,8 +398,8 @@ const focusEditorGroupCommandIDs:
 };
 
 const focusPauseLenghtOnCloseSettingID =
-  "vscode-as-git-mergetool.workaroundFocusPauseLengthOnClose";
+  `${extensionID}.workaroundFocusPauseLengthOnClose`;
 const quickLayoutDeactivationSettingID =
-  "vscode-as-git-mergetool.workaroundQuickLayoutDeactivation";
+  `${extensionID}.workaroundQuickLayoutDeactivation`;
 const closeActiveEditorCommandID =
   "workbench.action.closeActiveEditor";

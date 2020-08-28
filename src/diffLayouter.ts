@@ -2,6 +2,7 @@ import { DiffedURIs, asURIList } from "./diffedURIs";
 import * as vscode from 'vscode';
 import { Monitor } from "./monitor";
 import { TemporarySideBySideSettingsManager } from "./temporarySettingsManager";
+import { extensionID } from "./iDs";
 
 export interface DiffLayouter {
   /**
@@ -28,7 +29,7 @@ export interface DiffLayouter {
    */
   focusMergeConflict(type: SearchType): boolean | undefined;
 
-   /**
+  /**
    * If layout is currently applied.
    */
   readonly isActive: boolean;
@@ -89,6 +90,6 @@ export enum SearchType {
 }
 
 export const focusPreviousConflictCommandID =
-  "vscode-as-git-mergetool.focusPreviousConflict";
+  `${extensionID}.focusPreviousConflict`;
 export const focusNextConflictCommandID =
-  "vscode-as-git-mergetool.focusNextConflict";
+  `${extensionID}.focusNextConflict`;

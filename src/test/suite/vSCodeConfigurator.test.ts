@@ -3,6 +3,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { defaultVSCodeConfigurator, separateSmallestKey } from '../../vSCodeConfigurator';
 import { hrtime } from 'process';
+import { extensionID } from '../../iDs';
 
 suite("separateSmallestKey", () => {
   const sut = separateSmallestKey;
@@ -23,7 +24,7 @@ suite('VSCodeConfigurator', () => {
   const sut = defaultVSCodeConfigurator;
 
   test('persists settings', async () => {
-    const key = "vscode-as-git-mergetool.layout";
+    const key = `${extensionID}.layout`;
     {
       await sut.set(key, "3DiffToBase");
       const start = hrtime.bigint();

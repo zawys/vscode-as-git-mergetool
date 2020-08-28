@@ -3,9 +3,9 @@ import { createBackgroundGitTerminal } from './backgroundGitTerminal';
 import { DiffedURIs, uRIsOrUndefEqual } from './diffedURIs';
 import { DiffLayouter, SearchType } from './diffLayouter';
 import { DiffLayoutManager } from './diffLayoutManager';
+import { extensionID, labelsInStatusBarSettingID } from './iDs';
 import { FileType, getFileType } from './fsAsync';
 import { getWorkingDirectoryUri } from "./getPaths";
-import { labelsInStatusBarSettingID } from './statusBarSetting';
 import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
 
 export class MergetoolProcess {
@@ -378,20 +378,20 @@ export class MergetoolProcess {
 }
 
 export const gitMergetoolRunningID =
-  "vscode-as-git-mergetool.gitMergetoolRunning";
+  `${extensionID}.gitMergetoolRunning`;
 const gitMergetoolStartCommandID =
-  "vscode-as-git-mergetool.gitMergetoolStart";
+  `${extensionID}.gitMergetoolStart`;
 const gitMergetoolContinueCommandID =
-  "vscode-as-git-mergetool.gitMergetoolContinue";
+  `${extensionID}.gitMergetoolContinue`;
 const gitMergetoolSkipCommandID =
-  "vscode-as-git-mergetool.gitMergetoolSkip";
+  `${extensionID}.gitMergetoolSkip`;
 const gitMergetoolStopCommandID =
-  "vscode-as-git-mergetool.gitMergetoolStop";
+  `${extensionID}.gitMergetoolStop`;
 const gitMergetoolMergeSituationCommandID =
-  "vscode-as-git-mergetool.gitMergetoolReopenMergeSituation";
+  `${extensionID}.gitMergetoolReopenMergeSituation`;
 const gitMergeAbortCommandID =
-  "vscode-as-git-mergetool.gitMergeAbort";
+  `${extensionID}.gitMergeAbort`;
 const gitCommitCommandID =
-  "vscode-as-git-mergetool.commit";
+  `${extensionID}.commit`;
 const editCommitMessageAfterMergetoolSettingID =
-  "vscode-as-git-mergetool.editCommitMessageAfterMergetool";
+  `${extensionID}.editCommitMessageAfterMergetool`;

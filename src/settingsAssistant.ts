@@ -1,10 +1,11 @@
 import * as cp from 'child_process';
 import * as vscode from 'vscode';
+import { extensionID } from './iDs';
 import { getGitPathInteractively, getWorkingDirectoryUri } from "./getPaths";
 import { defaultVSCodeConfigurator, VSCodeConfigurator } from './vSCodeConfigurator';
 
 export const settingsAssistantOnStartupID =
-  "vscode-as-git-mergetool.settingsAssistantOnStartup";
+  `${extensionID}.settingsAssistantOnStartup`;
 
 export class SettingsAssistant {
   public async launch(): Promise<void> {
