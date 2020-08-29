@@ -10,6 +10,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.3.0] - 2020-08-30
+
 ### Changed
 
 - Scroll synchronization method by default is now the new “interval” method.
@@ -22,7 +24,7 @@ and this project adheres to
 - Reset settings directly on VS Code startup
 - Also disable glyph margin and activity bar during diff layout
 - Merge arbitrary files: Allow to select an existing file for merge
-- Message when no merge conflicts exist on opening of a diff layout
+- Message when no merge conflicts exist on opening a diff layout
 
 ### Fixed
 
