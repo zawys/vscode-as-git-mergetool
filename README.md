@@ -99,6 +99,13 @@ There is also a 3-column layout available.
 Feel free to file feature requests and bug reports
 [on GitHub](https://github.com/zawys/vscode-as-git-mergetool/issues).
 
+You can support the development of new features for this extension
+by adding your 👍 to following issues.
+But DO NOT post comments there which provide no additional information:
+
+- [#105625: API for reacting to and setting horizontal scroll position](https://github.com/microsoft/vscode/issues/105625)
+- [#105487: Invoke initial command via process arguments](https://github.com/microsoft/vscode/issues/105487)
+
 ### Development environment setup
 
 Run the steps listed in [section Build](#Build).
