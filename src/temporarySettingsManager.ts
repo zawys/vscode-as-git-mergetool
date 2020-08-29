@@ -5,7 +5,7 @@ import { defaultExtensionContextManager } from "./extensionContextManager";
 import { Lazy } from "./lazy";
 
 export class TemporarySideBySideSettingsManager {
-  public async activateSettings() {
+  public async activateSettings(): Promise<void> {
     await this.monitor.enter();
     try {
       const oldOrigActual = this.getStorageState(origActualKey);
@@ -13,8 +13,9 @@ export class TemporarySideBySideSettingsManager {
       const newOrigActual: StorageState = {};
       const newOrigTarget: StorageState = {};
 
-      const obsoleteSettingKeys: Set<string> =
-        new Set(Object.keys(oldOrigActual));
+      const obsoleteSettingKeys: Set<string> = new Set(
+        Object.keys(oldOrigActual)
+      );
 
       for (const iD of this.targetIDs) {
         obsoleteSettingKeys.delete(iD);
@@ -26,23 +27,22 @@ export class TemporarySideBySideSettingsManager {
 
         // in the latter case, user did change config setting afterwards,
         // so we will restore it later to the new value
-        newOrigActual[iD] = newActual === oldOrigTarget[iD] ?
-          oldOrigActual[iD] :
-          newActual;
+        newOrigActual[iD] =
+          newActual === oldOrigTarget[iD] ? oldOrigActual[iD] : newActual;
 
         newOrigTarget[iD] = newTarget;
       }
       for (const iD of obsoleteSettingKeys) {
         await this.vSCodeConfigurator.set(iD, oldOrigActual[iD]);
       }
-      this.setStorageState(origActualKey, newOrigActual);
-      this.setStorageState(origTargetKey, newOrigTarget);
+      await this.setStorageState(origActualKey, newOrigActual);
+      await this.setStorageState(origTargetKey, newOrigTarget);
     } finally {
       await this.monitor.leave();
     }
   }
 
-  public async resetSettings() {
+  public async resetSettings(): Promise<void> {
     await this.monitor.enter();
     try {
       const origActual = this.getStorageState(origActualKey);
@@ -54,8 +54,8 @@ export class TemporarySideBySideSettingsManager {
           await this.vSCodeConfigurator.set(iD, origActual[iD]);
         }
       }
-      this.setStorageState(origActualKey, undefined);
-      this.setStorageState(origTargetKey, undefined);
+      await this.setStorageState(origActualKey, undefined);
+      await this.setStorageState(origTargetKey, undefined);
     } finally {
       await this.monitor.leave();
     }
@@ -71,8 +71,8 @@ export class TemporarySideBySideSettingsManager {
       "editor.glyphMargin": false,
       "workbench.activityBar.visible": false,
     },
-    private readonly storageState =
-      defaultExtensionContextManager.value.globalState,
+    private readonly storageState = defaultExtensionContextManager.value
+      .globalState
   ) {
     this.targetIDs = Object.keys(targetSettings);
   }
@@ -88,13 +88,17 @@ export class TemporarySideBySideSettingsManager {
     return {};
   }
 
-  private setStorageState(key: string, value: StorageState | undefined) {
-    this.storageState.update(key, value);
+  private async setStorageState(
+    key: string,
+    value: StorageState | undefined
+  ): Promise<void> {
+    await this.storageState.update(key, value);
   }
 }
 
-export const defaultTemporarySideBySideSettingsManagerLazy =
-  new Lazy(() => new TemporarySideBySideSettingsManager());
+export const defaultTemporarySideBySideSettingsManagerLazy = new Lazy(
+  () => new TemporarySideBySideSettingsManager()
+);
 
 type StorageState = { [k: string]: unknown };
 

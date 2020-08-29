@@ -1,0 +1,36 @@
+module.exports = {
+  root: true,
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    ecmaVersion: 6,
+    sourceType: "module",
+    tsconfigRootDir: __dirname,
+    project: ["./tsconfig.json"],
+  },
+  plugins: [
+    "@typescript-eslint",
+    "eslint-comments",
+    "promise",
+    "unicorn",
+    "prettier",
+  ],
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:eslint-comments/recommended",
+    "plugin:promise/recommended",
+    "plugin:unicorn/recommended",
+    "plugin:prettier/recommended",
+    "prettier/@typescript-eslint",
+    "prettier/standard",
+  ],
+  rules: {
+    "@typescript-eslint/naming-convention": "error",
+    "@typescript-eslint/semi": ["error", "always"],
+    "unicorn/filename-case": "off",
+    "unicorn/no-useless-undefined": "off",
+    "unicorn/no-nested-ternary": "off",
+    "unicorn/no-null": "off",
+  },
+};

@@ -1,20 +1,22 @@
-import * as diff from 'diff';
-import * as vscode from 'vscode';
+import * as diff from "diff";
+import * as vscode from "vscode";
 import { Disposable } from "vscode";
 import { getStats } from "./fsAsync";
 import { extensionID } from "./iDs";
 import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class ScrollSynchronizer implements Disposable {
-  public dispose() {
-    for (const disposable of this.disposables) { disposable.dispose(); }
+  public dispose(): void {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
   }
 
   public static async create(
     editors: vscode.TextEditor[],
     synchronizationSourceOnStartIndex?: number,
     vSCodeConfigurator = defaultVSCodeConfigurator,
-    synchronizationMethod?: ScrollSyncMethod,
+    synchronizationMethod?: ScrollSyncMethod
   ): Promise<ScrollSynchronizer> {
     const ignoreEditor = new Array<number>(editors.length).fill(
       synchronizationSourceOnStartIndex === undefined ? 0 : 1
@@ -32,18 +34,19 @@ export class ScrollSynchronizer implements Disposable {
         }
       }
     }
-    const surroundingLines =
-      vSCodeConfigurator.get(cursorSurroundingLinesSettingID);
+    const surroundingLines = vSCodeConfigurator.get(
+      cursorSurroundingLinesSettingID
+    );
     const scrollSynchronizer = new ScrollSynchronizer(
       editors,
       ignoreEditor,
       synchronizationMethod,
-      typeof surroundingLines === 'number' ? surroundingLines : 0,
+      typeof surroundingLines === "number" ? surroundingLines : 0
     );
     if (synchronizationSourceOnStartIndex !== undefined) {
       await scrollSynchronizer.syncVisibleRanges(
         editors[synchronizationSourceOnStartIndex],
-        synchronizationSourceOnStartIndex,
+        synchronizationSourceOnStartIndex
       );
     }
     return scrollSynchronizer;
@@ -57,9 +60,11 @@ export class ScrollSynchronizer implements Disposable {
   private readonly lastIgnoreChange: number[];
   private readonly editorLinesCache: (undefined | string[])[];
   private readonly mappersCache: {
-    [k0: number]: undefined | {
-      [k1: number]: undefined | LineMapper
-    }
+    [k0: number]:
+      | undefined
+      | {
+          [k1: number]: undefined | LineMapper;
+        };
   } = {};
 
   private constructor(
@@ -70,27 +75,32 @@ export class ScrollSynchronizer implements Disposable {
     private readonly startPosCorrection = surroundingLines - 0.5,
     private readonly centerPosCorrection = +0.25,
     private readonly endPosCorrection = 0,
-    private readonly eventDecayPerSec = 0.25,
+    private readonly eventDecayPerSec = 0.25
   ) {
-    this.editorLinesCache =
-      new Array<undefined>(editors.length).fill(undefined);
+    this.editorLinesCache = new Array<undefined>(editors.length).fill(
+      undefined
+    );
     this.lastIgnoreChange = new Array<number>(editors.length).fill(0);
-    this.documents = this.editors.map(editor => editor.document);
+    this.documents = this.editors.map((editor) => editor.document);
 
-    this.disposables.push(vscode.window.onDidChangeTextEditorVisibleRanges(
-      this.handleDidChangeTextEditorVisibleRanges.bind(this)
-    ));
-    this.disposables.push(vscode.workspace.onDidChangeTextDocument(
-      this.handleDidChangeTextDocument.bind(this)
-    ));
+    this.disposables.push(
+      vscode.window.onDidChangeTextEditorVisibleRanges(
+        this.handleDidChangeTextEditorVisibleRanges.bind(this)
+      )
+    );
+    this.disposables.push(
+      vscode.workspace.onDidChangeTextDocument(
+        this.handleDidChangeTextDocument.bind(this)
+      )
+    );
   }
 
   private async syncVisibleRanges(
     sourceEditor: vscode.TextEditor,
-    sourceEditorIndex: number,
+    sourceEditorIndex: number
   ): Promise<void> {
     if (this.editors[sourceEditorIndex] !== sourceEditor) {
-      vscode.window.showErrorMessage("internal assumption violated");
+      void vscode.window.showErrorMessage("internal assumption violated");
       return;
     }
 
@@ -98,13 +108,16 @@ export class ScrollSynchronizer implements Disposable {
     // positions are cursors, lines are indexes
     let sourceStartPos = Number.MAX_SAFE_INTEGER;
     let sourceEndPos = 0;
-    for (let i = 0; i < visibleRanges.length; i++) {
-      const range = visibleRanges[i];
+    for (const range of visibleRanges) {
       const rangeStart = range.start.line;
-      if (sourceStartPos > rangeStart) { sourceStartPos = rangeStart; }
+      if (sourceStartPos > rangeStart) {
+        sourceStartPos = rangeStart;
+      }
       if (this.syncMethod !== ScrollSyncMethod.top) {
         const rangeEnd = range.end.line + 1;
-        if (sourceEndPos < rangeEnd) { sourceEndPos = rangeEnd; }
+        if (sourceEndPos < rangeEnd) {
+          sourceEndPos = rangeEnd;
+        }
       }
     }
     let sourceSyncPos = -1;
@@ -112,41 +125,60 @@ export class ScrollSynchronizer implements Disposable {
     if (this.syncMethod !== ScrollSyncMethod.interval) {
       // duplicate below
       sourceSyncPos =
-        this.syncMethod === ScrollSyncMethod.top ?
-          sourceStartPos :
-          (sourceStartPos + sourceEndPos) / 2;
+        this.syncMethod === ScrollSyncMethod.top
+          ? sourceStartPos
+          : (sourceStartPos + sourceEndPos) / 2;
       sourceSyncFraction =
         sourceSyncPos / Math.max(1, sourceEditor.document.lineCount);
     }
     const revealType =
-      this.syncMethod === ScrollSyncMethod.top ?
-        vscode.TextEditorRevealType.AtTop :
-        vscode.TextEditorRevealType.InCenter;
+      this.syncMethod === ScrollSyncMethod.top
+        ? vscode.TextEditorRevealType.AtTop
+        : vscode.TextEditorRevealType.InCenter;
     for (
       let targetEditorIndex = 0;
       targetEditorIndex < this.editors.length;
       targetEditorIndex++
     ) {
-      if (targetEditorIndex === sourceEditorIndex) { continue; }
+      if (targetEditorIndex === sourceEditorIndex) {
+        continue;
+      }
       const targetEditor = this.editors[targetEditorIndex];
       const targetMaxLine = targetEditor.document.lineCount - 1;
       let targetRange: vscode.Range | undefined;
-      if (this.syncMethod === ScrollSyncMethod.interval
-      ) {
+      if (this.syncMethod === ScrollSyncMethod.interval) {
         const targetStartPos = await this.translatePosition(
-          sourceStartPos, sourceEditorIndex, targetEditorIndex
+          sourceStartPos,
+          sourceEditorIndex,
+          targetEditorIndex
         );
         const targetEndPos = await this.translatePosition(
-          sourceEndPos, sourceEditorIndex, targetEditorIndex
+          sourceEndPos,
+          sourceEditorIndex,
+          targetEditorIndex
         );
         if (targetStartPos !== undefined && targetEndPos !== undefined) {
           targetRange = new vscode.Range(
-            new vscode.Position(Math.min(targetMaxLine, Math.max(0, Math.round(
-              targetStartPos + this.startPosCorrection
-            ))), 0),
-            new vscode.Position(Math.min(targetMaxLine, Math.max(0, Math.round(
-              targetEndPos - 1 + this.endPosCorrection
-            ))), 0)
+            new vscode.Position(
+              Math.min(
+                targetMaxLine,
+                Math.max(
+                  0,
+                  Math.round(targetStartPos + this.startPosCorrection)
+                )
+              ),
+              0
+            ),
+            new vscode.Position(
+              Math.min(
+                targetMaxLine,
+                Math.max(
+                  0,
+                  Math.round(targetEndPos - 1 + this.endPosCorrection)
+                )
+              ),
+              0
+            )
           );
         }
       }
@@ -154,28 +186,38 @@ export class ScrollSynchronizer implements Disposable {
         if (sourceSyncFraction === -1) {
           // duplicate above
           sourceSyncPos =
-            this.syncMethod === ScrollSyncMethod.top ?
-              sourceStartPos :
-              (sourceStartPos + sourceEndPos) / 2;
+            this.syncMethod === ScrollSyncMethod.top
+              ? sourceStartPos
+              : (sourceStartPos + sourceEndPos) / 2;
           sourceSyncFraction =
             sourceSyncPos / Math.max(1, sourceEditor.document.lineCount);
         }
         let targetPos = await this.translatePosition(
-          sourceSyncPos, sourceEditorIndex, targetEditorIndex
+          sourceSyncPos,
+          sourceEditorIndex,
+          targetEditorIndex
         );
         if (targetPos === undefined) {
           console.log("targetPosition === undefined");
           targetPos = sourceSyncFraction * targetEditor.document.lineCount;
         }
         const targetLine =
-          this.syncMethod === ScrollSyncMethod.center ?
-            Math.min(targetMaxLine, Math.max(0, Math.round(
-              targetPos - 0.5 + this.centerPosCorrection
-            ))) :
-            // also for ScrollSyncMethod.interval
-            Math.min(targetMaxLine, Math.max(this.surroundingLines, Math.round(
-              targetPos + this.startPosCorrection
-            )));
+          this.syncMethod === ScrollSyncMethod.center
+            ? Math.min(
+                targetMaxLine,
+                Math.max(
+                  0,
+                  Math.round(targetPos - 0.5 + this.centerPosCorrection)
+                )
+              )
+            : // also for ScrollSyncMethod.interval
+              Math.min(
+                targetMaxLine,
+                Math.max(
+                  this.surroundingLines,
+                  Math.round(targetPos + this.startPosCorrection)
+                )
+              );
         if (this.syncMethod === ScrollSyncMethod.top) {
           const targetEditorActualLine =
             targetEditor.visibleRanges[0].start.line;
@@ -195,20 +237,22 @@ export class ScrollSynchronizer implements Disposable {
   private updatedIgnore(index: number): number {
     const time = new Date().getTime();
     const result =
-      Math.pow(this.eventDecayPerSec, Math.min(20,
-        (time - this.lastIgnoreChange[index]) / 1000
-      )) * this.ignoreEditor[index];
+      Math.pow(
+        this.eventDecayPerSec,
+        Math.min(20, (time - this.lastIgnoreChange[index]) / 1000)
+      ) * this.ignoreEditor[index];
     this.ignoreEditor[index] = result;
     this.lastIgnoreChange[index] = time;
     return result;
   }
 
-  private async handleDidChangeTextEditorVisibleRanges(
-    { textEditor /*, visibleRanges */ }:
-      vscode.TextEditorVisibleRangesChangeEvent,
-  ): Promise<void> {
+  private async handleDidChangeTextEditorVisibleRanges({
+    textEditor /*, visibleRanges */,
+  }: vscode.TextEditorVisibleRangesChangeEvent): Promise<void> {
     const editorIndex = this.editors.indexOf(textEditor);
-    if (editorIndex === -1) { return; }
+    if (editorIndex === -1) {
+      return;
+    }
     if (this.updatedIgnore(editorIndex) > 0.5) {
       this.ignoreEditor[editorIndex]--;
       return;
@@ -216,40 +260,48 @@ export class ScrollSynchronizer implements Disposable {
     await this.syncVisibleRanges(textEditor, editorIndex);
   }
 
-  private handleDidChangeTextDocument(e: vscode.TextDocumentChangeEvent) {
+  private handleDidChangeTextDocument(event: vscode.TextDocumentChangeEvent) {
     const editorCount = this.editors.length;
-    for (var index = 0; index < editorCount; index++) {
-      if (this.documents[index] !== e.document) { continue; }
+    for (let fromIndex = 0; fromIndex < editorCount; fromIndex++) {
+      if (this.documents[fromIndex] !== event.document) {
+        continue;
+      }
 
-      this.editorLinesCache[index] = undefined;
+      this.editorLinesCache[fromIndex] = undefined;
 
-      this.mappersCache[index] = undefined;
-      for (var i = 0; i < this.editors.length; i++) {
-        const cacheValue0 = this.mappersCache[i];
+      this.mappersCache[fromIndex] = undefined;
+      for (let toIndex = 0; toIndex < this.editors.length; toIndex++) {
+        const cacheValue0 = this.mappersCache[toIndex];
         if (cacheValue0 !== undefined) {
-          cacheValue0[index] = undefined;
+          cacheValue0[fromIndex] = undefined;
         }
       }
     }
   }
 
   private async getLines(
-    editorIndex: number, doc: vscode.TextDocument
+    editorIndex: number,
+    document: vscode.TextDocument
   ): Promise<string[] | undefined> {
     let cacheValue = this.editorLinesCache[editorIndex];
     if (cacheValue === undefined) {
       this.editorLinesCache[editorIndex];
-      const stats = await getStats(doc.fileName);
-      if (stats === undefined || stats.size > 500000) { return undefined; }
-      cacheValue = doc.getText().split(eolToString(doc.eol))
-        .map(line => line.trim());
+      const stats = await getStats(document.fileName);
+      if (stats === undefined || stats.size > 500000) {
+        return undefined;
+      }
+      cacheValue = document
+        .getText()
+        .split(eolToString(document.eol))
+        .map((line) => line.trim());
       this.editorLinesCache[editorIndex] = cacheValue;
     }
     return cacheValue;
   }
 
   private async getMapper(
-    oldEditorIndex: number, newEditorIndex: number
+    oldEditorIndex: number,
+    newEditorIndex: number
   ): Promise<LineMapper | undefined> {
     if (oldEditorIndex === newEditorIndex) {
       return defaultIdentityLineMapper;
@@ -261,16 +313,20 @@ export class ScrollSynchronizer implements Disposable {
 
     if (cacheValue1 === undefined) {
       let cacheValue1Symm: LineMapper;
-      const oldDoc = this.editors[oldEditorIndex].document;
-      const newDoc = this.editors[newEditorIndex].document;
-      if (oldDoc === newDoc) {
+      const oldDocument = this.editors[oldEditorIndex].document;
+      const newDocument = this.editors[newEditorIndex].document;
+      if (oldDocument === newDocument) {
         cacheValue1 = defaultIdentityLineMapper;
         cacheValue1Symm = defaultIdentityLineMapper;
       } else {
-        const oldLines = await this.getLines(oldEditorIndex, oldDoc);
-        if (oldLines === undefined) { return undefined; }
-        const newLines = await this.getLines(newEditorIndex, newDoc);
-        if (newLines === undefined) { return undefined; }
+        const oldLines = await this.getLines(oldEditorIndex, oldDocument);
+        if (oldLines === undefined) {
+          return undefined;
+        }
+        const newLines = await this.getLines(newEditorIndex, newDocument);
+        if (newLines === undefined) {
+          return undefined;
+        }
 
         if (oldEditorIndex < newEditorIndex) {
           cacheValue1 = DiffLineMapper.create(oldLines, newLines);
@@ -284,43 +340,49 @@ export class ScrollSynchronizer implements Disposable {
       if (cacheValue0 === undefined) {
         cacheValue0 = {};
         this.mappersCache[oldEditorIndex] = cacheValue0;
-      };
+      }
       cacheValue0[newEditorIndex] = cacheValue1;
 
       let cacheValue0Symm = this.mappersCache[newEditorIndex];
       if (cacheValue0Symm === undefined) {
         cacheValue0Symm = {};
         this.mappersCache[newEditorIndex] = cacheValue0Symm;
-      };
+      }
       cacheValue0Symm[oldEditorIndex] = cacheValue1Symm;
     }
     return cacheValue1;
   }
 
   private async translatePosition(
-    position: number, oldEditorIndex: number, newEditorIndex: number
+    position: number,
+    oldEditorIndex: number,
+    newEditorIndex: number
   ): Promise<number | undefined> {
     const mapper = await this.getMapper(oldEditorIndex, newEditorIndex);
-    if (mapper !== undefined) { return mapper.map(position); }
+    if (mapper === undefined) {
+      return undefined;
+    }
+    // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
+    return mapper.map(position);
   }
 }
 
 export enum ScrollSyncMethod {
   center,
   top,
-  interval
+  interval,
 }
 
-export const scrollSynchronizationMethodMap:
-  { [k: string]: ScrollSyncMethod | undefined }
-  = {
-  "center": ScrollSyncMethod.center,
-  "top": ScrollSyncMethod.top,
-  "interval": ScrollSyncMethod.interval,
+export const scrollSynchronizationMethodMap: {
+  [k: string]: ScrollSyncMethod | undefined;
+} = {
+  center: ScrollSyncMethod.center,
+  top: ScrollSyncMethod.top,
+  interval: ScrollSyncMethod.interval,
 };
 
-export function eolToString(eol: vscode.EndOfLine) {
-  return eol === vscode.EndOfLine.LF ? '\n' : '\r\n';
+export function eolToString(eol: vscode.EndOfLine): string {
+  return eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
 }
 
 export class DiffLineMapper implements LineMapper {
@@ -335,7 +397,8 @@ export class DiffLineMapper implements LineMapper {
     let noDeltaEnds = true;
     let commonStarts = false;
     let i = 0;
-    let part: diff.ArrayChange<string>;
+    let part: diff.ArrayChange<string> | undefined;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       let push: boolean;
       if (i >= linesDiff.length) {
@@ -348,17 +411,32 @@ export class DiffLineMapper implements LineMapper {
         push = noDeltaEnds || commonStarts;
       }
       if (push) {
-        mapping.push({ oldLine: currentOldIndex, newLine: currentNewIndex });
+        mapping.push({
+          oldLine: currentOldIndex,
+          newLine: currentNewIndex,
+        });
       }
-      if (i > linesDiff.length) { break; }
+      if (i > linesDiff.length) {
+        break;
+      }
       // start switching perspective
-      if (!part!.added) { currentOldIndex += part!.value.length; }
-      if (!part!.removed) { currentNewIndex += part!.value.length; }
+      if (part === undefined) {
+        throw new Error("Internal assumption failed");
+      }
+      if (!part.added) {
+        currentOldIndex += part.value.length;
+      }
+      if (!part.removed) {
+        currentNewIndex += part.value.length;
+      }
       noDeltaEnds = commonStarts;
       // end switching perspective
     }
     return new DiffLineMapper(
-      mapping, false, currentOldIndex, currentNewIndex
+      mapping,
+      false,
+      currentOldIndex,
+      currentNewIndex
     );
   }
 
@@ -372,20 +450,29 @@ export class DiffLineMapper implements LineMapper {
     let maxFromLine = this.reversed ? this.newCount : this.oldCount;
     let minToLine = 0;
     let maxToLine = this.reversed ? this.oldCount : this.newCount;
-    if (line < minFromLine) { return minToLine; }
-    if (line > maxFromLine) { return maxToLine; }
+    if (line < minFromLine) {
+      return minToLine;
+    }
+    if (line > maxFromLine) {
+      return maxToLine;
+    }
     const mappingMaxIndex = this.mapping.length - 1;
     let minIndex = 0;
     let maxIndex = mappingMaxIndex;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
-      if (minIndex + 1 >= maxIndex || minFromLine === maxFromLine) { break; }
+      if (minIndex + 1 >= maxIndex || minFromLine === maxFromLine) {
+        break;
+      }
       let nextIndex = Math.round(
-        (line - minFromLine) /
-        (maxFromLine - minFromLine) *
-        (maxIndex - minIndex)
+        ((line - minFromLine) / (maxFromLine - minFromLine)) *
+          (maxIndex - minIndex)
       );
-      if (nextIndex <= minIndex) { nextIndex = minIndex + 1; }
-      else if (nextIndex >= maxIndex) { nextIndex = maxIndex - 1; }
+      if (nextIndex <= minIndex) {
+        nextIndex = minIndex + 1;
+      } else if (nextIndex >= maxIndex) {
+        nextIndex = maxIndex - 1;
+      }
       const nextFromLine = this.getMappingFromLine(nextIndex);
       if (nextFromLine < line) {
         minIndex = nextIndex;
@@ -396,17 +483,16 @@ export class DiffLineMapper implements LineMapper {
       } else {
         for (
           minIndex = nextIndex - 1;
-          minIndex >= 0
-          && this.getMappingFromLine(minIndex) >= line;
+          minIndex >= 0 && this.getMappingFromLine(minIndex) >= line;
           minIndex--
-        ) { }
+        ) {} // eslint-disable-line no-empty
         minIndex++;
         for (
           maxIndex = nextIndex + 1;
-          maxIndex <= mappingMaxIndex
-          && this.getMappingFromLine(maxIndex) <= line;
+          maxIndex <= mappingMaxIndex &&
+          this.getMappingFromLine(maxIndex) <= line;
           maxIndex++
-        ) { }
+        ) {} // eslint-disable-line no-empty
         maxIndex--;
         minFromLine = this.getMappingFromLine(minIndex);
         maxFromLine = this.getMappingFromLine(maxIndex);
@@ -418,19 +504,23 @@ export class DiffLineMapper implements LineMapper {
     if (maxFromLine === minFromLine) {
       return (maxToLine + minToLine) / 2;
     }
-    return Math.min(maxToLine, Math.max(minToLine,
-      (
-        (line - minFromLine)
-        / (maxFromLine - minFromLine)
-        * (maxToLine - minToLine)
+    return Math.min(
+      maxToLine,
+      Math.max(
+        minToLine,
+        ((line - minFromLine) / (maxFromLine - minFromLine)) *
+          (maxToLine - minToLine) +
+          minToLine
       )
-      + minToLine
-    ));
+    );
   }
 
   public createReversed(): DiffLineMapper {
     return new DiffLineMapper(
-      this.mapping, !this.reversed, this.oldCount, this.newCount,
+      this.mapping,
+      !this.reversed,
+      this.oldCount,
+      this.newCount
     );
   }
 
@@ -438,24 +528,26 @@ export class DiffLineMapper implements LineMapper {
     private readonly mapping: MappingEntry[],
     private readonly reversed: boolean,
     private readonly oldCount: number,
-    private readonly newCount: number,
-  ) { }
+    private readonly newCount: number
+  ) {}
 
   private getMappingFromLine(index: number): number {
-    return this.reversed ?
-      this.mapping[index].newLine :
-      this.mapping[index].oldLine;
+    return this.reversed
+      ? this.mapping[index].newLine
+      : this.mapping[index].oldLine;
   }
 
   private getMappingToLine(index: number): number {
-    return this.reversed ?
-      this.mapping[index].oldLine :
-      this.mapping[index].newLine;
+    return this.reversed
+      ? this.mapping[index].oldLine
+      : this.mapping[index].newLine;
   }
 }
 
 class IdentityLineMapper implements LineMapper {
-  map(line: number): number { return line; }
+  map(line: number): number {
+    return line;
+  }
 }
 
 const defaultIdentityLineMapper = new IdentityLineMapper();
@@ -469,7 +561,5 @@ interface MappingEntry {
   newLine: number;
 }
 
-const cursorSurroundingLinesSettingID =
-  "editor.cursorSurroundingLines";
-const scrollSynchronizationMethod =
-  `${extensionID}.scrollSynchronizationMethod`;
+const cursorSurroundingLinesSettingID = "editor.cursorSurroundingLines";
+const scrollSynchronizationMethod = `${extensionID}.scrollSynchronizationMethod`;

@@ -1,230 +1,240 @@
 {
-	"name": "vscode-as-git-mergetool",
-	"displayName": "VS Code as Git Mergetool",
-	"description": "Provides diff editor layouts for performing three-way merges.",
-	"version": "0.2.2",
-	"engines": {
-		"vscode": "^1.48.0"
-	},
-	"publisher": "zawys",
-	"repository": "https://github.com/zawys/vscode-as-git-mergetool",
-	"categories": [
-		"SCM Providers",
-		"Other"
-	],
-	"activationEvents": [
-		"*"
-	],
-	"icon": "media/icon.png",
-	"main": "out/src/extension.js",
-	"bugs": {
-		"url": "https://github.com/zawys/vscode-as-git-mergetool/issues"
-	},
-	"qna": "https://github.com/zawys/vscode-as-git-mergetool/issues",
-	"contributes": {
-		"commands": [
-			{
-				"command": "vscode-as-git-mergetool.gitMergetoolStart",
-				"title": "Start `git mergetool`",
-				"enablement": "vscode-as-git-mergetool.gitMergetoolRunning == false",
-				"category": "Git Mergetool"
-			},
-			{
-				"command": "vscode-as-git-mergetool.gitMergetoolContinue",
-				"title": "Accept file contents for merge and continue `git mergetool`",
-				"enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
-				"category": "Git Mergetool"
-			},
-			{
-				"command": "vscode-as-git-mergetool.gitMergetoolSkip",
-				"title": "Skip file and continue merging other files",
-				"enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
-				"category": "Git Mergetool"
-			},
-			{
-				"command": "vscode-as-git-mergetool.resetMergedFile",
-				"title": "Discard changes made to merged file; reset",
-				"enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
-				"category": "Git Mergetool"
-			},
-			{
-				"command": "vscode-as-git-mergetool.gitMergetoolStop",
-				"title": "Stop `git mergetool`",
-				"enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
-				"category": "Git Mergetool"
-			},
-			{
-				"command": "vscode-as-git-mergetool.gitMergetoolReopenMergeSituation",
-				"title": "Reopen current merge situation in diff layout",
-				"enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
-				"category": "Git Mergetool"
-			},
-			{
-				"command": "vscode-as-git-mergetool.deactivateLayout",
-				"title": "Deactivate diff layout",
-				"category": "Git Mergetool"
-			},
-			{
-				"command": "vscode-as-git-mergetool.focusPreviousConflict",
-				"title": "Focus previous merge conflict",
-				"category": "Git Mergetool"
-			},
-			{
-				"command": "vscode-as-git-mergetool.focusNextConflict",
-				"title": "Focus next merge conflict",
-				"category": "Git Mergetool"
-			},
-			{
-				"command": "vscode-as-git-mergetool.gitMergeAbort",
-				"title": "Abort merge",
-				"category": "Git"
-			},
-			{
-				"command": "vscode-as-git-mergetool.commit",
-				"title": "Commit with opened commit message",
-				"icon": "$(check)",
-				"enablement": "resourceLangId == git-commit",
-				"category": "Git"
-			},
-			{
-				"command": "vscode-as-git-mergetool.mergeArbitraryFiles",
-				"title": "Merge arbitrary files",
-				"category": "Git Mergetool"
-			}
-		],
-		"configuration": {
-			"title": "VS Code as Git Mergetool",
-			"properties": {
-				"vscode-as-git-mergetool.settingsAssistantOnStartup": {
-					"type": "boolean",
-					"default": true,
-					"description": "If the setup assistant for the 'VS Code as Git Mergetool' extension shall be run on next VS Code startup.",
-					"scope": "application"
-				},
-				"vscode-as-git-mergetool.editCommitMessageAfterMergetool": {
-					"type": "boolean",
-					"default": true,
-					"description": "Open commit message in editor after successful `git mergetool`. This is a workaround for [VS Code issue #7989](https://github.com/microsoft/vscode/issues/7989), i.e. that VS Code does not allow to commit a merge when only local/current changes have been included in the commit; as well as [VS Code issue #30562](https://github.com/microsoft/vscode/issues/30562).",
-					"scope": "window"
-				},
-				"vscode-as-git-mergetool.layout": {
-					"type": "string",
-					"default": "4TransferRight",
-					"enum": [
-						"3DiffToBase",
-						"4TransferRight",
-						"4TransferDown"
-					],
-					"enumDescriptions": [
-						"Classical layout with diffs in 3 columns: \nBase→Local; Base→Merged; Base→Remote.",
-						"Layout with 4 tiles: \nBase→Local; Remote→Merged | \nBase→Remote; Local→Merged. \nThe idea is to see local changes on the top, remote changes on the bottom; and to try to align the right edits to the ones on the left.",
-						"Layout with 4 tiles: \nBase→Local; Base→Remote | \nRemote→Merged; Local→Merged. \nThe idea is to see local changes on the left; remote changes on the right; and to try to align the bottom edits to the ones on the top."
-					],
-					"scope": "window"
-				},
-				"vscode-as-git-mergetool.workaroundFocusPauseLengthOnClose": {
-					"type": "number",
-					"default": 500,
-					"description": "Workaround: Increase this if you experience diff editors kept open after deactivating the diff layout or git mergetool. Length of the pause before deactivating the layout in milliseconds. Vote for [VS Code issue #15178](https://github.com/microsoft/vscode/issues/15178). Has only effect when “Workaround Quick Layout Deactivation” is off.",
-					"scope": "machine"
-				},
-				"vscode-as-git-mergetool.workaroundQuickLayoutDeactivation": {
-					"type": "boolean",
-					"default": true,
-					"description": "Workaround: Speed layout deactivation up by switching the grid to a single column before closing every editor. Causes the previous editor groups to be merged into one. Necessary because of [VS Code issue #15178](https://github.com/microsoft/vscode/issues/15178).",
-					"scope": "machine-overridable"
-				},
-				"vscode-as-git-mergetool.labelsInStatusBar": {
-					"type": "boolean",
-					"default": false,
-					"description": "Add a text label to each status bar item.",
-					"scope": "machine-overridable"
-				},
-				"vscode-as-git-mergetool.scrollSynchronizationMethod": {
-					"type": "string",
-					"default": "interval",
-					"enum": [
-						"interval",
-						"top",
-						"center"
-					],
-					"description": "Vertical position in the editor at which the extension shall try to align the contents such that corresponding lines match.",
-					"scope": "window"
-				}
-			}
-		},
-		"menus": {
-			"scm/title": [
-				{
-					"command": "vscode-as-git-mergetool.gitMergetoolStart",
-					"group": "Merge@1"
-				},
-				{
-					"command": "vscode-as-git-mergetool.gitMergeAbort",
-					"group": "Merge@2"
-				},
-				{
-					"command": "vscode-as-git-mergetool.mergeArbitraryFiles",
-					"group": "Merge@3"
-				}
-			],
-			"editor/title": [
-				{
-					"command": "vscode-as-git-mergetool.commit",
-					"when": "resourceLangId == git-commit",
-					"group": "navigation"
-				}
-			]
-		}
-	},
-	"scripts": {
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"clean": "rm -rf out packages",
-		"recompile": "yarn run clean && yarn run compile",
-		"lint": "eslint src --ext ts --max-warnings=0",
-		"pretest": "yarn install && yarn run recompile && yarn run lint",
-		"test": "node ./out/src/test/runTest.js",
-		"package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
-		"build": "yarn run recompile && yarn run package",
-		"working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
-		"index_is_clean": "git diff --staged --quiet && git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
-		"pre-commit": "ts-node ./tools/pre-commit.ts",
-		"post-commit": "ts-node ./tools/post-commit.ts",
-		"check_dependencies": "yarn upgrade && yarn audit && yarn outdated",
-		"preversion": "yarn run check_dependencies && yarn run index_is_clean",
-		"sign_package": "cd packages && sha256sum vscode-as-git-mergetool-$npm_package_version.vsix > SHA256SUMS && gpg --detach-sign --sign-with=$npm_package_publisher --sign SHA256SUMS",
-		"upload": "cd packages && hub release create --attach=vscode-as-git-mergetool-$npm_package_version.vsix --attach=SHA256SUMS --attach=SHA256SUMS.sig --message=v$npm_package_version --edit v$npm_package_version",
-		"postversion": "yarn run build && yarn run sign_package && git push && git push --tags && yarn run upload"
-	},
-	"husky": {
-		"hooks": {
-			"pre-commit": "yarn run pre-commit",
-			"post-commit": "yarn run post-commit"
-		}
-	},
-	"devDependencies": {
-		"@types/diff": "^4.0.2",
-		"@types/glob": "^7.1.3",
-		"@types/mocha": "^8.0.3",
-		"@types/node": "^14.6.0",
-		"@types/vscode": "^1.48.0",
-		"@types/which": "^1.3.2",
-		"@typescript-eslint/eslint-plugin": "^3.10.1",
-		"@typescript-eslint/parser": "^3.10.1",
-		"dotenv": "^8.2.0",
-		"eslint": "^7.7.0",
-		"glob": "^7.1.6",
-		"husky": "^4.2.5",
-		"mocha": "^8.1.2",
-		"ts-node": "^9.0.0",
-		"typescript": "^4.0.2",
-		"vsce": "^1.79.3",
-		"vscode-test": "^1.4.0"
-	},
-	"license": "AGPL-3.0-or-later",
-	"dependencies": {
-		"diff": "^4.0.2",
-		"which": "^2.0.2"
-	}
+  "name": "vscode-as-git-mergetool",
+  "displayName": "VS Code as Git Mergetool",
+  "description": "Provides diff editor layouts for performing three-way merges.",
+  "version": "0.2.2",
+  "engines": {
+    "vscode": "^1.48.0"
+  },
+  "publisher": "zawys",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zawys/vscode-as-git-mergetool"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "icon": "media/icon.png",
+  "main": "out/src/extension.js",
+  "bugs": {
+    "url": "https://github.com/zawys/vscode-as-git-mergetool/issues"
+  },
+  "qna": "https://github.com/zawys/vscode-as-git-mergetool/issues",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-as-git-mergetool.gitMergetoolStart",
+        "title": "Start `git mergetool`",
+        "enablement": "vscode-as-git-mergetool.gitMergetoolRunning == false",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.gitMergetoolContinue",
+        "title": "Accept file contents for merge and continue `git mergetool`",
+        "enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.gitMergetoolSkip",
+        "title": "Skip file and continue merging other files",
+        "enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.resetMergedFile",
+        "title": "Discard changes made to merged file; reset",
+        "enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.gitMergetoolStop",
+        "title": "Stop `git mergetool`",
+        "enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.gitMergetoolReopenMergeSituation",
+        "title": "Reopen current merge situation in diff layout",
+        "enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.deactivateLayout",
+        "title": "Deactivate diff layout",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.focusPreviousConflict",
+        "title": "Focus previous merge conflict",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.focusNextConflict",
+        "title": "Focus next merge conflict",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.gitMergeAbort",
+        "title": "Abort merge",
+        "category": "Git"
+      },
+      {
+        "command": "vscode-as-git-mergetool.commit",
+        "title": "Commit with opened commit message",
+        "icon": "$(check)",
+        "enablement": "resourceLangId == git-commit",
+        "category": "Git"
+      },
+      {
+        "command": "vscode-as-git-mergetool.mergeArbitraryFiles",
+        "title": "Merge arbitrary files",
+        "category": "Git Mergetool"
+      }
+    ],
+    "configuration": {
+      "title": "VS Code as Git Mergetool",
+      "properties": {
+        "vscode-as-git-mergetool.settingsAssistantOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "If the setup assistant for the 'VS Code as Git Mergetool' extension shall be run on next VS Code startup.",
+          "scope": "application"
+        },
+        "vscode-as-git-mergetool.editCommitMessageAfterMergetool": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open commit message in editor after successful `git mergetool`. This is a workaround for [VS Code issue #7989](https://github.com/microsoft/vscode/issues/7989), i.e. that VS Code does not allow to commit a merge when only local/current changes have been included in the commit; as well as [VS Code issue #30562](https://github.com/microsoft/vscode/issues/30562).",
+          "scope": "window"
+        },
+        "vscode-as-git-mergetool.layout": {
+          "type": "string",
+          "default": "4TransferRight",
+          "enum": [
+            "3DiffToBase",
+            "4TransferRight",
+            "4TransferDown"
+          ],
+          "enumDescriptions": [
+            "Classical layout with diffs in 3 columns: \nBase→Local; Base→Merged; Base→Remote.",
+            "Layout with 4 tiles: \nBase→Local; Remote→Merged | \nBase→Remote; Local→Merged. \nThe idea is to see local changes on the top, remote changes on the bottom; and to try to align the right edits to the ones on the left.",
+            "Layout with 4 tiles: \nBase→Local; Base→Remote | \nRemote→Merged; Local→Merged. \nThe idea is to see local changes on the left; remote changes on the right; and to try to align the bottom edits to the ones on the top."
+          ],
+          "scope": "window"
+        },
+        "vscode-as-git-mergetool.workaroundFocusPauseLengthOnClose": {
+          "type": "number",
+          "default": 500,
+          "description": "Workaround: Increase this if you experience diff editors kept open after deactivating the diff layout or git mergetool. Length of the pause before deactivating the layout in milliseconds. Vote for [VS Code issue #15178](https://github.com/microsoft/vscode/issues/15178). Has only effect when “Workaround Quick Layout Deactivation” is off.",
+          "scope": "machine"
+        },
+        "vscode-as-git-mergetool.workaroundQuickLayoutDeactivation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Workaround: Speed layout deactivation up by switching the grid to a single column before closing every editor. Causes the previous editor groups to be merged into one. Necessary because of [VS Code issue #15178](https://github.com/microsoft/vscode/issues/15178).",
+          "scope": "machine-overridable"
+        },
+        "vscode-as-git-mergetool.labelsInStatusBar": {
+          "type": "boolean",
+          "default": false,
+          "description": "Add a text label to each status bar item.",
+          "scope": "machine-overridable"
+        },
+        "vscode-as-git-mergetool.scrollSynchronizationMethod": {
+          "type": "string",
+          "default": "interval",
+          "enum": [
+            "interval",
+            "top",
+            "center"
+          ],
+          "description": "Vertical position in the editor at which the extension shall try to align the contents such that corresponding lines match.",
+          "scope": "window"
+        }
+      }
+    },
+    "menus": {
+      "scm/title": [
+        {
+          "command": "vscode-as-git-mergetool.gitMergetoolStart",
+          "group": "Merge@1"
+        },
+        {
+          "command": "vscode-as-git-mergetool.gitMergeAbort",
+          "group": "Merge@2"
+        },
+        {
+          "command": "vscode-as-git-mergetool.mergeArbitraryFiles",
+          "group": "Merge@3"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "vscode-as-git-mergetool.commit",
+          "when": "resourceLangId == git-commit",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "clean": "rm -rf out packages",
+    "recompile": "yarn run clean && yarn run compile",
+    "lint": "eslint src --ext ts --max-warnings=0",
+    "pretest": "yarn install && yarn run recompile && yarn run lint",
+    "test": "node ./out/src/test/runTest.js",
+    "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
+    "build": "yarn run recompile && yarn run package",
+    "working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
+    "index_is_clean": "git diff --staged --quiet && git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
+    "format": "prettier --ignore-path .gitignore --write .",
+    "pre-commit": "ts-node ./tools/pre-commit.ts",
+    "post-commit": "ts-node ./tools/post-commit.ts",
+    "check_dependencies": "yarn upgrade && yarn audit && yarn outdated",
+    "preversion": "yarn run check_dependencies && yarn run index_is_clean",
+    "sign_package": "cd packages && sha256sum vscode-as-git-mergetool-$npm_package_version.vsix > SHA256SUMS && gpg --detach-sign --sign-with=$npm_package_publisher --sign SHA256SUMS",
+    "upload": "cd packages && hub release create --attach=vscode-as-git-mergetool-$npm_package_version.vsix --attach=SHA256SUMS --attach=SHA256SUMS.sig --message=v$npm_package_version --edit v$npm_package_version",
+    "postversion": "yarn run build && yarn run sign_package && git push && git push --tags && yarn run upload"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn run pre-commit",
+      "post-commit": "yarn run post-commit"
+    }
+  },
+  "devDependencies": {
+    "@types/diff": "^4.0.2",
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^14.6.0",
+    "@types/vscode": "^1.48.0",
+    "@types/which": "^1.3.2",
+    "@typescript-eslint/eslint-plugin": "^3.10.1",
+    "@typescript-eslint/parser": "^3.10.1",
+    "dotenv": "^8.2.0",
+    "eslint": "^7.7.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-unicorn": "^21.0.0",
+    "glob": "^7.1.6",
+    "husky": "^4.2.5",
+    "mocha": "^8.1.2",
+    "prettier": "^2.1.1",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.2",
+    "vsce": "^1.79.3",
+    "vscode-test": "^1.4.0"
+  },
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "diff": "^4.0.2",
+    "which": "^2.0.2"
+  }
 }

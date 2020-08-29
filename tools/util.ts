@@ -1,15 +1,15 @@
 import { exit } from "process";
-import * as which from 'which';
-import * as cp from 'child_process';
+import * as which from "which";
+import * as cp from "child_process";
 
 export async function runCommand(
   command: string,
-  args: string[],
+  args: string[]
 ): Promise<number | null> {
-  return await new Promise(resolve => {
+  return await new Promise((resolve) => {
     console.log(`+${command} ${args.join(" ")}`);
     const process = cp.spawn(command, args, {
-      stdio: 'inherit'
+      stdio: "inherit",
     });
     process.on("exit", (code) => {
       resolve(code);
@@ -25,8 +25,8 @@ export function spawnAndCapture(
   console.log(`+${file} ${args.join(" ")}`);
   const child = cp.spawnSync(file, args, {
     ...options,
-    stdio: 'pipe',
-    encoding: 'utf-8',
+    stdio: "pipe",
+    encoding: "utf-8",
   });
   console.log(child.stdout);
   console.error(child.error);
@@ -35,7 +35,7 @@ export function spawnAndCapture(
 
 export function asyncWhich(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    which(command, (err, path) => err ? reject(err) : resolve(path));
+    which(command, (err, path) => (err ? reject(err) : resolve(path)));
   });
 }
 

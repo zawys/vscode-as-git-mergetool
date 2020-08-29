@@ -2,28 +2,28 @@
  * FIFO-1-Semaphore
  */
 export class Monitor {
-  public async enter() {
-    const prevLastIndex = this.pendingOperations.length - 1;
+  public async enter(): Promise<void> {
+    const previousLastIndex = this.pendingOperations.length - 1;
     const thisOperation: PendingOperation = {};
-    thisOperation.promise = new Promise((r) => {
-      thisOperation.resolver = r;
+    thisOperation.promise = new Promise((resolve) => {
+      thisOperation.resolver = resolve;
     });
     this.pendingOperations.push(thisOperation);
-    if (prevLastIndex >= 0) {
-      await this.pendingOperations[prevLastIndex].promise;
+    if (previousLastIndex >= 0) {
+      await this.pendingOperations[previousLastIndex].promise;
     }
   }
 
-  public async leave() {
+  public async leave(): Promise<void> {
     const thisOperation = this.pendingOperations[0];
     this.pendingOperations.splice(0, 1);
     while (thisOperation.resolver === undefined) {
-      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
     thisOperation.resolver();
   }
 
-  public get inUse() {
+  public get inUse(): boolean {
     return this.pendingOperations.length > 0;
   }
 
@@ -35,6 +35,6 @@ export class Monitor {
 }
 
 interface PendingOperation {
-  promise?: Promise<void>,
-  resolver?: () => void,
+  promise?: Promise<void>;
+  resolver?: () => void;
 }

@@ -1,23 +1,25 @@
-import * as vscode from 'vscode';
-import { createBackgroundGitTerminal } from './backgroundGitTerminal';
-import { DiffedURIs, uRIsOrUndefEqual } from './diffedURIs';
-import { DiffLayouter, SearchType } from './layouters/diffLayouter';
-import { DiffLayoutManager } from './diffLayoutManager';
-import { extensionID, labelsInStatusBarSettingID } from './iDs';
-import { FileType, getFileType } from './fsAsync';
+import * as vscode from "vscode";
+import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
+import { DiffedURIs, uRIsOrUndefEqual } from "./diffedURIs";
+import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
+import { DiffLayoutManager } from "./diffLayoutManager";
+import { extensionID, labelsInStatusBarSettingID } from "./iDs";
+import { FileType, getFileType } from "./fsAsync";
 import { getWorkingDirectoryUri } from "./getPaths";
-import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
+import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class MergetoolProcess {
-  public register() {
+  public register(): void {
     const commands: [string, () => unknown][] = [
+      /* eslint-disable @typescript-eslint/unbound-method */
       [gitMergetoolStartCommandID, this.startMergetool],
       [gitMergetoolContinueCommandID, this.continueMergetool],
       [gitMergetoolSkipCommandID, this.skipFile],
       [gitMergetoolStopCommandID, this.stopMergetoolInteractively],
       [gitMergetoolMergeSituationCommandID, this.reopenMergeSituation],
       [gitMergeAbortCommandID, this.abortMerge],
-      [gitCommitCommandID, this.commitActiveCommitMsg],
+      [gitCommitCommandID, this.commitActiveCommitMessage],
+      /* eslint-enable @typescript-eslint/unbound-method */
     ];
     for (const [commandID, handler] of commands) {
       this.registeredDisposables.push(
@@ -34,7 +36,7 @@ export class MergetoolProcess {
     );
   }
 
-  public async startMergetool() {
+  public async startMergetool(): Promise<void> {
     if (this.mergetoolRunning) {
       await this.reopenMergeSituation();
       return;
@@ -44,30 +46,39 @@ export class MergetoolProcess {
       shellArgs: ["mergetool"],
       env: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        "LANG": "POSIX",
-      }
+        LANG: "POSIX",
+      },
     });
-    if (this.mergetoolTerm === undefined) { return; }
+    if (this.mergetoolTerm === undefined) {
+      return;
+    }
     this.termCloseListener = vscode.window.onDidCloseTerminal(
       this.handleMergetoolTerminalClose.bind(this)
     );
-    vscode.commands.executeCommand(
-      "setContext", gitMergetoolRunningID, true
+    await vscode.commands.executeCommand(
+      "setContext",
+      gitMergetoolRunningID,
+      true
     );
     this.updateStatusBarItems();
     // layout launches automatically by detecting an opened *_BASE_* file
   }
 
-  public async continueMergetool() {
+  public async continueMergetool(): Promise<void> {
     let acceptIndicators = false;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
-      if (!this.assertMergetoolActiveInteractively() ||
+      if (
+        !this.assertMergetoolActiveInteractively() ||
         !this.assertMergeSituationOpenedInteractively()
-      ) { return; }
-      const focusResult =
-        this.diffLayoutManager.focusMergeConflict(SearchType.first);
+      ) {
+        return;
+      }
+      const focusResult = this.diffLayoutManager.focusMergeConflict(
+        SearchType.first
+      );
       if (focusResult === undefined) {
-        vscode.window.showErrorMessage(
+        void vscode.window.showErrorMessage(
           "Cannot retrieve merged file contents."
         );
         return;
@@ -77,10 +88,12 @@ export class MergetoolProcess {
         const acceptIncludedIndicators = "Accept included indicators";
         const result = await vscode.window.showErrorMessage(
           "Merged file contains Git merge conflict indicators.",
-          cancel, acceptIncludedIndicators,
+          cancel,
+          acceptIncludedIndicators
         );
-        if (result !== acceptIncludedIndicators) { return; }
-        else {
+        if (result !== acceptIncludedIndicators) {
+          return;
+        } else {
           acceptIndicators = true;
           continue;
         }
@@ -90,27 +103,30 @@ export class MergetoolProcess {
     await this.diffLayoutManager.save();
     await this.diffLayoutManager.deactivateLayout();
     this.mergeSituation = undefined;
-    this.mergetoolTerm!.sendText("y\n");
+    this.mergetoolTerm?.sendText("y\n");
   }
 
-  public async skipFile() {
-    if (!this.assertMergetoolActiveInteractively() ||
+  public async skipFile(): Promise<void> {
+    if (
+      !this.assertMergetoolActiveInteractively() ||
       !this.assertMergeSituationOpenedInteractively()
-    ) { return; }
+    ) {
+      return;
+    }
     await this.diffLayoutManager.save();
     await this.diffLayoutManager.deactivateLayout();
     this.mergeSituation = undefined;
-    this.mergetoolTerm!.sendText("n\ny\n");
+    this.mergetoolTerm?.sendText("n\ny\n");
   }
 
-  public async stopMergetoolInteractively() {
+  public async stopMergetoolInteractively(): Promise<void> {
     if (!this.assertMergetoolActiveInteractively()) {
       return;
     }
     await this.stopMergetool();
   }
 
-  public async abortMerge() {
+  public async abortMerge(): Promise<void> {
     const quitMerge: vscode.QuickPickItem = {
       label: "Keep working directory and index",
       detail: "runs `git merge --quit`",
@@ -120,7 +136,7 @@ export class MergetoolProcess {
       detail: "runs `git merge --abort`",
     };
     const nothing: vscode.QuickPickItem = {
-      label: "Do nothing"
+      label: "Do nothing",
     };
     const pickedItem = await vscode.window.showQuickPick(
       [quitMerge, abortMerge, nothing],
@@ -130,7 +146,9 @@ export class MergetoolProcess {
         placeHolder: "Select an action",
       }
     );
-    if (pickedItem === nothing || pickedItem === undefined) { return; }
+    if (pickedItem === nothing || pickedItem === undefined) {
+      return;
+    }
     if (this.mergetoolRunning && !this.mergetoolStopping) {
       await this.stopMergetool();
     }
@@ -139,22 +157,24 @@ export class MergetoolProcess {
     });
   }
 
-  public async commitActiveCommitMsg() {
-    const doc = vscode.window.activeTextEditor?.document;
-    if (doc?.languageId !== "git-commit") { return; }
-    doc.save();
+  public async commitActiveCommitMessage(): Promise<void> {
+    const document = vscode.window.activeTextEditor?.document;
+    if (document?.languageId !== "git-commit") {
+      return;
+    }
+    await document.save();
     const term = await createBackgroundGitTerminal({
-      shellArgs: ["commit", "--no-edit", `--file=${doc.fileName}`],
+      shellArgs: ["commit", "--no-edit", `--file=${document.fileName}`],
     });
     term?.show(true);
     await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
   }
 
-  public async reopenMergeSituation() {
+  public async reopenMergeSituation(): Promise<void> {
     if (this.mergeSituation === undefined) {
-      vscode.window.showErrorMessage(
+      void vscode.window.showErrorMessage(
         "No merge situation registered. " +
-        "Try to open the *_BASE_* file manually."
+          "Try to open the *_BASE_* file manually."
       );
       return;
     }
@@ -166,14 +186,19 @@ export class MergetoolProcess {
       return;
     }
     await vscode.commands.executeCommand(
-      "vscode.open", this.mergeSituation.base
+      "vscode.open",
+      this.mergeSituation.base
     );
   }
 
   public async stopMergetool(): Promise<void> {
     this.mergetoolStopping = true;
-    vscode.commands.executeCommand("setContext", gitMergetoolRunningID, false);
-    this.diffLayoutManager.deactivateLayout();
+    await vscode.commands.executeCommand(
+      "setContext",
+      gitMergetoolRunningID,
+      false
+    );
+    await this.diffLayoutManager.deactivateLayout();
     this.termCloseListener?.dispose();
     this.termCloseListener = undefined;
     this.disposeStatusBarItems();
@@ -190,8 +215,10 @@ export class MergetoolProcess {
       this.mergetoolTerm.show();
       const term = this.mergetoolTerm;
       await new Promise((resolve) => {
-        this.stopMergetoolListener = vscode.window.onDidCloseTerminal(t => {
-          if (term === t) { resolve(); }
+        this.stopMergetoolListener = vscode.window.onDidCloseTerminal((t) => {
+          if (term === t) {
+            resolve();
+          }
         });
       });
       this.mergetoolTerm.dispose();
@@ -206,14 +233,14 @@ export class MergetoolProcess {
 
   public async dispose(): Promise<void> {
     await this.stopMergetool();
-    this.registeredDisposables.forEach(item => item.dispose());
+    this.registeredDisposables.forEach((item) => void item.dispose());
     this.registeredDisposables = [];
   }
 
   public constructor(
     private readonly diffLayoutManager: DiffLayoutManager,
-    private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
-  ) { }
+    private readonly vSCodeConfigurator = defaultVSCodeConfigurator
+  ) {}
 
   private mergetoolRunning = false;
   /**
@@ -224,30 +251,39 @@ export class MergetoolProcess {
   private termCloseListener: vscode.Disposable | undefined = undefined;
   private statusBarItems: vscode.StatusBarItem[] | undefined = undefined;
   private stopMergetoolListener: vscode.Disposable | undefined = undefined;
-  private static readonly statusBarItemColor =
-    new vscode.ThemeColor("statusBar.foreground");
+  private static readonly statusBarItemColor = new vscode.ThemeColor(
+    "statusBar.foreground"
+  );
   private mergeSituation: DiffedURIs | undefined = undefined;
   private registeredDisposables: vscode.Disposable[] = [];
 
   private get mergeSituationInLayout(): boolean {
-    return this.mergeSituation !== undefined &&
+    return (
+      this.mergeSituation !== undefined &&
       this.diffLayoutManager.diffedURIs !== undefined &&
       uRIsOrUndefEqual(
         this.mergeSituation.base,
         this.diffLayoutManager.diffedURIs.base
-      );
+      )
+    );
   }
 
   private handleDidLayoutDeactivate() {
-    if (this.mergeSituation !== undefined) { this.updateStatusBarItems(); }
+    if (this.mergeSituation !== undefined) {
+      this.updateStatusBarItems();
+    }
   }
 
   private handleDidLayoutActivate(layouter: DiffLayouter) {
     if (this.mergeSituation === undefined) {
       this.mergeSituation = this.diffLayoutManager.diffedURIs;
       layouter.setWasInitiatedByMergetool();
-      if (this.mergeSituation !== undefined) { this.updateStatusBarItems(); }
-    } else { this.updateStatusBarItems(); }
+      if (this.mergeSituation !== undefined) {
+        this.updateStatusBarItems();
+      }
+    } else {
+      this.updateStatusBarItems();
+    }
   }
 
   private async handleMergetoolTerminalClose(closedTerminal: vscode.Terminal) {
@@ -255,19 +291,16 @@ export class MergetoolProcess {
       return;
     }
     if (closedTerminal.exitStatus?.code === undefined) {
-      vscode.window.showWarningMessage(
+      void vscode.window.showWarningMessage(
         `\`git mergetool\` exited with unknown exit status.`
       );
     } else if (closedTerminal.exitStatus?.code !== 0) {
       const returnCode = closedTerminal.exitStatus?.code;
-      vscode.window.showErrorMessage(
+      void vscode.window.showErrorMessage(
         `\`git mergetool\` returned ${returnCode}`
       );
     } else {
-      vscode.window.setStatusBarMessage(
-        "\`git mergetool\` succeeded.",
-        15000
-      );
+      vscode.window.setStatusBarMessage("`git mergetool` succeeded.", 15000);
       await this.diffLayoutManager.deactivateLayout();
       await this.jumpToCommitMsg();
     }
@@ -278,16 +311,22 @@ export class MergetoolProcess {
 
   private async jumpToCommitMsg() {
     await vscode.commands.executeCommand("workbench.scm.focus");
-    if (defaultVSCodeConfigurator.get(
-      editCommitMessageAfterMergetoolSettingID
-    )) {
+    if (
+      defaultVSCodeConfigurator.get(editCommitMessageAfterMergetoolSettingID)
+    ) {
       const workspaceRoot = getWorkingDirectoryUri();
       if (workspaceRoot !== undefined) {
-        const commitMsgPath = vscode.Uri.joinPath(
-          workspaceRoot, ".git/MERGE_MSG"
+        const commitMessagePath = vscode.Uri.joinPath(
+          workspaceRoot,
+          ".git/MERGE_MSG"
         );
-        if ((await getFileType(commitMsgPath.fsPath)) === FileType.regular) {
-          await vscode.commands.executeCommand("vscode.open", commitMsgPath);
+        if (
+          (await getFileType(commitMessagePath.fsPath)) === FileType.regular
+        ) {
+          await vscode.commands.executeCommand(
+            "vscode.open",
+            commitMessagePath
+          );
         }
       }
     }
@@ -295,14 +334,14 @@ export class MergetoolProcess {
 
   private assertMergetoolActiveInteractively(): boolean {
     if (!this.mergetoolRunning) {
-      vscode.window.showErrorMessage(
+      void vscode.window.showErrorMessage(
         "There is no running `git mergetool` process which " +
-        "is controlled by VS Code."
+          "is controlled by VS Code."
       );
       return false;
     }
     if (this.mergetoolStopping) {
-      vscode.window.showErrorMessage(
+      void vscode.window.showErrorMessage(
         "The `git mergetool` process is currently stopping."
       );
       return false;
@@ -312,7 +351,7 @@ export class MergetoolProcess {
 
   private assertMergeSituationOpenedInteractively(): boolean {
     if (!this.mergeSituationInLayout || this.mergeSituation === undefined) {
-      vscode.window.showErrorMessage(
+      void vscode.window.showErrorMessage(
         "You need to have the merge situation opened."
       );
       return false;
@@ -321,7 +360,7 @@ export class MergetoolProcess {
   }
 
   private disposeStatusBarItems() {
-    this.statusBarItems?.forEach(item => item.dispose());
+    this.statusBarItems?.forEach((item) => item.dispose());
     this.statusBarItems = undefined;
   }
 
@@ -330,43 +369,60 @@ export class MergetoolProcess {
     const showLabel =
       this.vSCodeConfigurator.get(labelsInStatusBarSettingID) === true;
     this.statusBarItems = [];
-    if (!this.mergetoolRunning || this.mergetoolStopping) { return; }
-    this.statusBarItems.push(this.createStatusBarItem(
-      "$(git-merge) Git Mergetool:",
-      15
-    ));
+    if (!this.mergetoolRunning || this.mergetoolStopping) {
+      return;
+    }
+    this.statusBarItems.push(
+      this.createStatusBarItem("$(git-merge) Git Mergetool:", 15)
+    );
     if (this.mergeSituation !== undefined) {
       if (this.mergeSituationInLayout) {
-        this.statusBarItems.push(this.createStatusBarItem(
-          "$(check)" + (showLabel ? " Accept file" : ""),
-          14, gitMergetoolContinueCommandID,
-          "Consider current file merged and continue"
-        ));
-        this.statusBarItems.push(this.createStatusBarItem(
-          "$(live-share)" + (showLabel ? " Skip file" : ""),
-          13, gitMergetoolSkipCommandID,
-          "Leave current file as is and continue merging other files"
-        ));
+        this.statusBarItems.push(
+          this.createStatusBarItem(
+            "$(check)" + (showLabel ? " Accept file" : ""),
+            14,
+            gitMergetoolContinueCommandID,
+            "Consider current file merged and continue"
+          )
+        );
+        this.statusBarItems.push(
+          this.createStatusBarItem(
+            "$(live-share)" + (showLabel ? " Skip file" : ""),
+            13,
+            gitMergetoolSkipCommandID,
+            "Leave current file as is and continue merging other files"
+          )
+        );
       } else {
-        this.statusBarItems.push(this.createStatusBarItem(
-          "$(diff)" + (showLabel ? " Reopen" : ""),
-          14, gitMergetoolMergeSituationCommandID,
-          "Reopen the merge situation"
-        ));
+        this.statusBarItems.push(
+          this.createStatusBarItem(
+            "$(diff)" + (showLabel ? " Reopen" : ""),
+            14,
+            gitMergetoolMergeSituationCommandID,
+            "Reopen the merge situation"
+          )
+        );
       }
     }
-    this.statusBarItems.push(this.createStatusBarItem(
-      "$(stop)" + (showLabel ? " Stop" : ""),
-      12, gitMergetoolStopCommandID,
-      "Stop `git mergetool`"
-    ));
+    this.statusBarItems.push(
+      this.createStatusBarItem(
+        "$(stop)" + (showLabel ? " Stop" : ""),
+        12,
+        gitMergetoolStopCommandID,
+        "Stop `git mergetool`"
+      )
+    );
   }
 
   private createStatusBarItem(
-    text: string, priority: number, command?: string, tooltip?: string,
+    text: string,
+    priority: number,
+    command?: string,
+    tooltip?: string
   ) {
     const result = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Left, priority
+      vscode.StatusBarAlignment.Left,
+      priority
     );
     result.text = text;
     result.command = command;
@@ -374,24 +430,15 @@ export class MergetoolProcess {
     result.tooltip = tooltip;
     result.show();
     return result;
-  };
+  }
 }
 
-export const gitMergetoolRunningID =
-  `${extensionID}.gitMergetoolRunning`;
-const gitMergetoolStartCommandID =
-  `${extensionID}.gitMergetoolStart`;
-const gitMergetoolContinueCommandID =
-  `${extensionID}.gitMergetoolContinue`;
-const gitMergetoolSkipCommandID =
-  `${extensionID}.gitMergetoolSkip`;
-const gitMergetoolStopCommandID =
-  `${extensionID}.gitMergetoolStop`;
-const gitMergetoolMergeSituationCommandID =
-  `${extensionID}.gitMergetoolReopenMergeSituation`;
-const gitMergeAbortCommandID =
-  `${extensionID}.gitMergeAbort`;
-const gitCommitCommandID =
-  `${extensionID}.commit`;
-const editCommitMessageAfterMergetoolSettingID =
-  `${extensionID}.editCommitMessageAfterMergetool`;
+export const gitMergetoolRunningID = `${extensionID}.gitMergetoolRunning`;
+const gitMergetoolStartCommandID = `${extensionID}.gitMergetoolStart`;
+const gitMergetoolContinueCommandID = `${extensionID}.gitMergetoolContinue`;
+const gitMergetoolSkipCommandID = `${extensionID}.gitMergetoolSkip`;
+const gitMergetoolStopCommandID = `${extensionID}.gitMergetoolStop`;
+const gitMergetoolMergeSituationCommandID = `${extensionID}.gitMergetoolReopenMergeSituation`;
+const gitMergeAbortCommandID = `${extensionID}.gitMergeAbort`;
+const gitCommitCommandID = `${extensionID}.commit`;
+const editCommitMessageAfterMergetoolSettingID = `${extensionID}.editCommitMessageAfterMergetool`;

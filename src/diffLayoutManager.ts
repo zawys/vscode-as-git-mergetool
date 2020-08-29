@@ -1,41 +1,54 @@
-import * as cp from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { DiffedURIs, filesExist, getDiffedURIs } from './diffedURIs';
-import { DiffFileSelector } from './diffFileSelector';
-import { getGitPathInteractively } from './getPaths';
-import { extensionID } from './iDs';
-import { DiffLayouter, DiffLayouterFactory, focusNextConflictCommandID, focusPreviousConflictCommandID, SearchType } from './layouters/diffLayouter';
-import { FourTransferDownLayouterFactory } from './layouters/fourTransferDownLayouter';
-import { FourTransferRightLayouterFactory } from './layouters/fourTransferRightLayouter';
-import { ThreeDiffToBaseLayouterFactory } from './layouters/threeDiffToBaseLayouter';
-import { containsMergeConflictIndicators } from './mergeConflictDetector';
-import { Monitor } from './monitor';
-import { defaultTemporarySideBySideSettingsManagerLazy } from './temporarySettingsManager';
-import { defaultVSCodeConfigurator } from './vSCodeConfigurator';
+import * as cp from "child_process";
+import * as fs from "fs";
+import * as path from "path";
+import * as vscode from "vscode";
+import { DiffedURIs, filesExist, getDiffedURIs } from "./diffedURIs";
+import { DiffFileSelector } from "./diffFileSelector";
+import { getGitPathInteractively } from "./getPaths";
+import { extensionID } from "./iDs";
+import {
+  DiffLayouter,
+  DiffLayouterFactory,
+  focusNextConflictCommandID,
+  focusPreviousConflictCommandID,
+  SearchType,
+} from "./layouters/diffLayouter";
+import { FourTransferDownLayouterFactory } from "./layouters/fourTransferDownLayouter";
+import { FourTransferRightLayouterFactory } from "./layouters/fourTransferRightLayouter";
+import { ThreeDiffToBaseLayouterFactory } from "./layouters/threeDiffToBaseLayouter";
+import { containsMergeConflictIndicators } from "./mergeConflictDetector";
+import { Monitor } from "./monitor";
+import { defaultTemporarySideBySideSettingsManagerLazy } from "./temporarySettingsManager";
+import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class DiffLayoutManager {
   public async register(): Promise<void> {
-    for (const disposabe of this.disposables) { disposabe.dispose(); }
+    for (const disposabe of this.disposables) {
+      disposabe.dispose();
+    }
     this.disposables = [
       vscode.workspace.onDidOpenTextDocument(
-        this.handleDidOpenTextDocument.bind(this),
+        this.handleDidOpenTextDocument.bind(this)
       ),
-      vscode.commands.registerCommand(focusPreviousConflictCommandID,
-        this.focusMergeConflictInteractively.bind(this, SearchType.previous),
+      vscode.commands.registerCommand(
+        focusPreviousConflictCommandID,
+        this.focusMergeConflictInteractively.bind(this, SearchType.previous)
       ),
-      vscode.commands.registerCommand(focusNextConflictCommandID,
+      vscode.commands.registerCommand(
+        focusNextConflictCommandID,
         this.focusMergeConflictInteractively.bind(this, SearchType.next)
       ),
-      vscode.commands.registerCommand(deactivateLayoutCommandID,
-        this.deactivateLayout.bind(this),
+      vscode.commands.registerCommand(
+        deactivateLayoutCommandID,
+        this.deactivateLayout.bind(this)
       ),
-      vscode.commands.registerCommand(resetMergedFileCommandID,
-        this.resetMergedFile.bind(this),
+      vscode.commands.registerCommand(
+        resetMergedFileCommandID,
+        this.resetMergedFile.bind(this)
       ),
-      vscode.commands.registerCommand(mergeArbitraryFilesCommandID,
-        this.mergeArbitraryFiles.bind(this),
+      vscode.commands.registerCommand(
+        mergeArbitraryFilesCommandID,
+        this.mergeArbitraryFiles.bind(this)
       ),
     ];
     for (const editor of vscode.window.visibleTextEditors) {
@@ -43,10 +56,10 @@ export class DiffLayoutManager {
         return;
       }
     }
-    this.temporarySideBySideSettingsManager.value.resetSettings();
+    await this.temporarySideBySideSettingsManager.value.resetSettings();
   }
 
-  public async deactivateLayout() {
+  public async deactivateLayout(): Promise<void> {
     await this.layouterManagerMonitor.enter();
     try {
       await this.layouter?.deactivate();
@@ -56,14 +69,14 @@ export class DiffLayoutManager {
     }
   }
 
-  public async save() {
+  public async save(): Promise<void> {
     await this.layouter?.save();
   }
 
   public focusMergeConflict(type: SearchType): undefined | boolean {
-    return this.layouter?.isActive === true ?
-      this.layouter.focusMergeConflict(type) :
-      undefined;
+    return this.layouter?.isActive === true
+      ? this.layouter.focusMergeConflict(type)
+      : undefined;
   }
 
   public focusMergeConflictInteractively(
@@ -71,9 +84,9 @@ export class DiffLayoutManager {
   ): undefined | boolean {
     const result = this.focusMergeConflict(type);
     if (result === undefined) {
-      vscode.window.showErrorMessage("No diff layout active.");
+      void vscode.window.showErrorMessage("No diff layout active.");
     } else if (result === false) {
-      vscode.window.showInformationMessage("No merge conflict found.");
+      void vscode.window.showInformationMessage("No merge conflict found.");
     }
     return result;
   }
@@ -87,13 +100,15 @@ export class DiffLayoutManager {
   }
 
   public get diffedURIs(): DiffedURIs | undefined {
-    return (this.layouter?.isActivating
-      || this.layouter?.isActive
-    ) ? this.layouter.diffedURIs : undefined;
+    return this.layouter?.isActivating || this.layouter?.isActive
+      ? this.layouter.diffedURIs
+      : undefined;
   }
 
   public async dispose(): Promise<void> {
-    for (const disposable of this.disposables) { disposable.dispose(); }
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
     this.disposables = [];
     await this.deactivateLayout();
   }
@@ -105,32 +120,31 @@ export class DiffLayoutManager {
       new FourTransferDownLayouterFactory(),
     ],
     private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
-    private readonly temporarySideBySideSettingsManager =
-      defaultTemporarySideBySideSettingsManagerLazy,
+    private readonly temporarySideBySideSettingsManager = defaultTemporarySideBySideSettingsManagerLazy
   ) {
-    if (factories.length === 0) { throw new Error(); }
+    if (factories.length === 0) {
+      throw new Error("internal error: no factory registered");
+    }
     this.defaultFactory = factories[0];
   }
 
-  public async resetMergedFile() {
+  public async resetMergedFile(): Promise<void> {
     await new Promise((resolve, reject) => {
       const diffedURIs = this.diffedURIs;
-      if (this.layouter?.isActive === undefined
-        || diffedURIs === undefined
-      ) {
-        vscode.window.showErrorMessage(
+      if (this.layouter?.isActive === undefined || diffedURIs === undefined) {
+        void vscode.window.showErrorMessage(
           "Reset not applicable; no merge situation opened."
         );
         return;
       }
       if (diffedURIs?.backup === undefined) {
-        vscode.window.showErrorMessage("Backup file is unknown.");
+        void vscode.window.showErrorMessage("Backup file is unknown.");
         return;
       }
       fs.copyFile(
         diffedURIs.backup.fsPath,
         diffedURIs.merged.fsPath,
-        err => (err ? reject(err) : resolve()),
+        (error) => (error ? reject(error) : resolve())
       );
     });
   }
@@ -140,21 +154,21 @@ export class DiffLayoutManager {
   private readonly layouterManagerMonitor = new Monitor();
   private disposables: vscode.Disposable[] = [];
   private readonly defaultFactory: DiffLayouterFactory;
-  private readonly didLayoutDeactivate =
-    new vscode.EventEmitter<DiffLayouter>();
-  private readonly didLayoutActivate =
-    new vscode.EventEmitter<DiffLayouter>();
+  private readonly didLayoutDeactivate = new vscode.EventEmitter<
+    DiffLayouter
+  >();
+  private readonly didLayoutActivate = new vscode.EventEmitter<DiffLayouter>();
   private diffFileSelector: DiffFileSelector | undefined;
 
   /**
    *
-   * @param doc opened TextDocument
+   * @param document opened TextDocument
    * @returns whether a layouter is active afterwards
    */
   private handleDidOpenTextDocument(
-    doc: vscode.TextDocument
+    document: vscode.TextDocument
   ): Promise<boolean> {
-    return this.handleDidOpenURI(doc.uri);
+    return this.handleDidOpenURI(document.uri);
   }
 
   private async handleDidOpenURI(uRI: vscode.Uri): Promise<boolean> {
@@ -170,14 +184,18 @@ export class DiffLayoutManager {
     try {
       const activeDiffedURIs = this.layouter?.diffedURIs;
       if (
-        (this.layouter?.isActivating || this.layouter?.isActive) === true
-        && activeDiffedURIs !== undefined
-        && diffedURIs.equalsWithoutBackup(activeDiffedURIs)
-      ) { return true; }
+        (this.layouter?.isActivating || this.layouter?.isActive) === true &&
+        activeDiffedURIs !== undefined &&
+        diffedURIs.equalsWithoutBackup(activeDiffedURIs)
+      ) {
+        return true;
+      }
 
       const oldLayouter = this.layouter;
       const newLayouterFactory = await this.getLayoutFactory();
-      if (newLayouterFactory === undefined) { return false; }
+      if (newLayouterFactory === undefined) {
+        return false;
+      }
 
       // point of no return
 
@@ -189,7 +207,7 @@ export class DiffLayoutManager {
       this.layouter = newLayouterFactory.create(
         this.layouterMonitor,
         this.temporarySideBySideSettingsManager.value,
-        diffedURIs,
+        diffedURIs
       );
       this.layouter.onDidDeactivate(
         this.handleLayouterDidDeactivate.bind(this)
@@ -205,21 +223,22 @@ export class DiffLayoutManager {
   private async handleLayouterDidDeactivate(layouter: DiffLayouter) {
     this.didLayoutDeactivate.fire(layouter);
     if (!layouter.wasInitiatedByMergetool) {
-      const text = await new Promise<string | undefined>((resolve, reject) =>
-        fs.readFile(layouter.diffedURIs.merged.fsPath, 'utf8', (err, data) => {
-          if (err) { reject(err); } else { resolve(data); }
-        })
+      const text = await new Promise<string | undefined>((resolve) =>
+        fs.readFile(layouter.diffedURIs.merged.fsPath, "utf8", (error, data) =>
+          resolve(error ? undefined : data)
+        )
       );
       if (text !== undefined && containsMergeConflictIndicators(text)) {
         const reopen = "Reopen";
         const keepClosed = "Keep closed";
         const result = await vscode.window.showWarningMessage(
           "Merge conflict markers are included in closed file.",
-          reopen, keepClosed,
+          reopen,
+          keepClosed
         );
         if (result === reopen) {
-          if (!await this.openDiffedURIs(layouter.diffedURIs)) {
-            vscode.window.showErrorMessage(
+          if (!(await this.openDiffedURIs(layouter.diffedURIs))) {
+            void vscode.window.showErrorMessage(
               "Opening failed, probably because one of the files was removed."
             );
           }
@@ -230,25 +249,33 @@ export class DiffLayoutManager {
 
   private async getLayoutFactory(): Promise<DiffLayouterFactory | undefined> {
     let layoutSetting = this.vSCodeConfigurator.get(layoutSettingID);
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       for (const factory of this.factories) {
         if (factory.settingValue === layoutSetting) {
           return factory;
         }
       }
-      const restoreItem: vscode.MessageItem = { title: "Restore default" };
-      const onceItem: vscode.MessageItem = { title: "Use default once" };
+      const restoreItem: vscode.MessageItem = {
+        title: "Restore default",
+      };
+      const onceItem: vscode.MessageItem = {
+        title: "Use default once",
+      };
       const cancelItem: vscode.MessageItem = { title: "Cancel" };
       const selectedItem = await vscode.window.showErrorMessage(
         "Diff layout setting has an unknown value.",
-        restoreItem, onceItem, cancelItem,
+        restoreItem,
+        onceItem,
+        cancelItem
       );
       if (selectedItem === cancelItem || selectedItem === undefined) {
         return;
       }
       if (selectedItem === restoreItem) {
         await this.vSCodeConfigurator.set(
-          layoutSettingID, this.defaultFactory.settingValue
+          layoutSettingID,
+          this.defaultFactory.settingValue
         );
       }
       layoutSetting = this.defaultFactory.settingValue;
@@ -260,16 +287,20 @@ export class DiffLayoutManager {
       this.diffFileSelector = new DiffFileSelector();
     }
     const selectionResult = await this.diffFileSelector.doSelection();
-    if (selectionResult === undefined) { return false; }
+    if (selectionResult === undefined) {
+      return false;
+    }
     const gitPath = await getGitPathInteractively();
-    if (gitPath === undefined) { return false; }
+    if (gitPath === undefined) {
+      return false;
+    }
     const mergedPath = selectionResult.merged.fsPath;
     if (selectionResult.merged.validationResult?.emptyLoc === true) {
       const gitResult = await new Promise<{
-        err: cp.ExecException | null,
-        stdout: string,
-        stderr: string,
-      }>(resolve =>
+        error: cp.ExecException | null;
+        stdout: string;
+        stderr: string;
+      }>((resolve) =>
         cp.execFile(
           gitPath,
           [
@@ -284,28 +315,34 @@ export class DiffLayoutManager {
             timeout: 10000,
             windowsHide: true,
           },
-          (err, stdout, stderr) => resolve({ err, stdout, stderr })
+          (error, stdout, stderr) => resolve({ error, stdout, stderr })
         )
       );
-      const error = gitResult.err;
-      if (error !== null && (
-        error.code === undefined
-        || (error.code < 0 || error.code > 127)
-      )) {
-        vscode.window.showErrorMessage(
+      const error = gitResult.error;
+      if (
+        error !== null &&
+        (error.code === undefined || error.code < 0 || error.code > 127)
+      ) {
+        void vscode.window.showErrorMessage(
           `Error when merging files by Git: ${gitResult.stderr}.`
         );
         return false;
       }
-      if (!await new Promise(resolve => fs.writeFile(
-        mergedPath, gitResult.stdout, err => resolve(err === null),
-      ))) { return false; }
+      if (
+        !(await new Promise((resolve) =>
+          fs.writeFile(mergedPath, gitResult.stdout, (error) =>
+            resolve(error === null)
+          )
+        ))
+      ) {
+        return false;
+      }
     }
     const diffedURIs: DiffedURIs = new DiffedURIs(
       vscode.Uri.file(selectionResult.base.fsPath),
       vscode.Uri.file(selectionResult.local.fsPath),
       vscode.Uri.file(selectionResult.remote.fsPath),
-      vscode.Uri.file(selectionResult.merged.fsPath),
+      vscode.Uri.file(selectionResult.merged.fsPath)
     );
     return await this.openDiffedURIs(diffedURIs);
   }

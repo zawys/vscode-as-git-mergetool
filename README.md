@@ -2,6 +2,7 @@
 <img width="64" height="64" src="./media/icon.png">
 
 # VS Code as Git Mergetool
+
 </div>
 
 This extension provides diff editor layouts for 3-way merges
@@ -38,7 +39,7 @@ to report any compatibility issues. See [Contribute](#Contribute).
 - Skip this if you do not want to verify the signature:
   - Download the other files into the same directory.
   - `sha256sum -c SHA256SUMS`
-  - `gpg --recv-keys '4A5D 4A5F B953 7A3A B931  6463 41B3 FBF3 7F23 3754'`
+  - `gpg --recv-keys '4A5D 4A5F B953 7A3A B931 6463 41B3 FBF3 7F23 3754'`
   - `gpg --verify SHA256SUMS.sig SHA256SUMS`
 - Run the command “Install from VSIX…” inside VS Code and select the VSIX.
 
@@ -91,7 +92,7 @@ There is also a 3-column layout available.
 2. `yarn`
 3. `yarn run build`
 
-  The generated VSIX should then be in `packages/`.
+   The generated VSIX should then be in `packages/`.
 
 ## Contribute
 

@@ -1,14 +1,14 @@
-import * as assert from 'assert';
+import * as assert from "assert";
 
-import { DiffLineMapper } from '../../scrollSynchronizer';
+import { DiffLineMapper } from "../../scrollSynchronizer";
 
-suite('DiffLineMapper', () => {
-  test('works', () => {
+suite("DiffLineMapper", () => {
+  test("works", () => {
     const testCases: {
-      old: string,
-      new: string,
-      from: number,
-      expectedTo: number
+      old: string;
+      new: string;
+      from: number;
+      expectedTo: number;
     }[] = [
       { old: "abcd", new: "abcd", from: 0, expectedTo: 0 },
       { old: "abcd", new: "abcd", from: 3, expectedTo: 3 },
@@ -33,9 +33,11 @@ suite('DiffLineMapper', () => {
         testCase.old.split(""),
         testCase.new.split("")
       );
+      // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
       const actual = sut.map(testCase.from);
       assert.strictEqual(
-        actual, testCase.expectedTo,
+        actual,
+        testCase.expectedTo,
         `{ old: "${testCase.old}", new: "${testCase.new}", from: ${testCase.from}, expectedTo: ${testCase.expectedTo} }`
       );
     }

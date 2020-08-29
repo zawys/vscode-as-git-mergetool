@@ -1,5 +1,5 @@
 import { DiffedURIs, asURIList } from "../diffedURIs";
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 import { Monitor } from "../monitor";
 import { TemporarySideBySideSettingsManager } from "../temporarySettingsManager";
 import { extensionID } from "../iDs";
@@ -61,21 +61,24 @@ export interface DiffLayouterFactory {
   create(
     monitor: Monitor,
     temporarySideBySideSettingsManager: TemporarySideBySideSettingsManager,
-    diffedURIs: DiffedURIs,
+    diffedURIs: DiffedURIs
   ): DiffLayouter;
 }
 
 export function watchDiffedURIs(
   uRIs: DiffedURIs,
-  handler: () => void,
+  handler: () => void
 ): vscode.Disposable[] {
   const disposables: vscode.Disposable[] = [];
   for (const uRI of asURIList(uRIs)) {
     if (uRI.fsPath.endsWith(".git")) {
-      vscode.window.showErrorMessage("path ends with .git");
+      void vscode.window.showErrorMessage("path ends with .git");
     }
     const watcher = vscode.workspace.createFileSystemWatcher(
-      uRI.fsPath, true, true, false
+      uRI.fsPath,
+      true,
+      true,
+      false
     );
     disposables.push(watcher);
     watcher.onDidDelete(handler, disposables);
@@ -89,7 +92,5 @@ export enum SearchType {
   previous,
 }
 
-export const focusPreviousConflictCommandID =
-  `${extensionID}.focusPreviousConflict`;
-export const focusNextConflictCommandID =
-  `${extensionID}.focusNextConflict`;
+export const focusPreviousConflictCommandID = `${extensionID}.focusPreviousConflict`;
+export const focusNextConflictCommandID = `${extensionID}.focusNextConflict`;

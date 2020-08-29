@@ -1,29 +1,31 @@
-import * as assert from 'assert';
+import * as assert from "assert";
 
-import * as vscode from 'vscode';
-import { defaultVSCodeConfigurator, separateSmallestKey } from '../../vSCodeConfigurator';
-import { hrtime } from 'process';
-import { extensionID } from '../../iDs';
+import {
+  defaultVSCodeConfigurator,
+  separateSmallestKey,
+} from "../../vSCodeConfigurator";
+import { hrtime } from "process";
+import { extensionID } from "../../iDs";
 
 suite("separateSmallestKey", () => {
   const sut = separateSmallestKey;
 
-  test('works correctly', () => {
+  test("works correctly", () => {
     const testCases = [
       { input: "ab", expected: [undefined, "ab"] },
       { input: "ab.cd", expected: ["ab", "cd"] },
       { input: "ab.cd.ef", expected: ["ab.cd", "ef"] },
     ];
     for (const { input, expected } of testCases) {
-      assert.deepEqual(sut(input), expected);
+      assert.deepStrictEqual(sut(input), expected);
     }
   });
 });
 
-suite('VSCodeConfigurator', () => {
+suite("VSCodeConfigurator", () => {
   const sut = defaultVSCodeConfigurator;
 
-  test('persists settings', async () => {
+  test("persists settings", async () => {
     const key = `${extensionID}.layout`;
     const original = sut.get(key);
     {
@@ -32,7 +34,7 @@ suite('VSCodeConfigurator', () => {
       const actual = sut.get(key);
       const end = hrtime.bigint();
       console.warn(`1. took: ${end - start}`);
-      assert(end - start < 1*1000*1000, `1. took: ${end - start}ns`);
+      assert(end - start < 1 * 1000 * 1000, `1. took: ${end - start}ns`);
       assert.strictEqual(actual, "3DiffToBase");
     }
     {
@@ -41,9 +43,9 @@ suite('VSCodeConfigurator', () => {
       const actual = sut.get(key);
       const end = hrtime.bigint();
       console.warn(`2. took: ${end - start}`);
-      assert(end - start < 1*1000*1000, `2. took: ${end - start}ns`);
+      assert(end - start < 1 * 1000 * 1000, `2. took: ${end - start}ns`);
       assert.strictEqual(actual, "4TransferDown");
     }
-    sut.set(key, original);
+    await sut.set(key, original);
   });
 });

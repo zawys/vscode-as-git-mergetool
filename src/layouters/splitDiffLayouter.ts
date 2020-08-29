@@ -1,29 +1,38 @@
-import * as vscode from 'vscode';
-import { DiffedURIs } from '../diffedURIs';
-import { Monitor } from '../monitor';
-import { DiffLayouter, watchDiffedURIs, SearchType, focusPreviousConflictCommandID, focusNextConflictCommandID } from './diffLayouter';
-import { ScrollSynchronizer } from '../scrollSynchronizer';
-import { defaultTemporarySideBySideSettingsManagerLazy } from '../temporarySettingsManager';
-import { defaultVSCodeConfigurator } from '../vSCodeConfigurator';
-import { mergeConflictIndicatorRE } from '../mergeConflictDetector';
-import { extensionID } from '../iDs';
+import * as vscode from "vscode";
+import { DiffedURIs } from "../diffedURIs";
+import { extensionID } from "../iDs";
+import { mergeConflictIndicatorRE } from "../mergeConflictDetector";
+import { Monitor } from "../monitor";
+import { ScrollSynchronizer } from "../scrollSynchronizer";
+import { defaultTemporarySideBySideSettingsManagerLazy } from "../temporarySettingsManager";
+import { defaultVSCodeConfigurator } from "../vSCodeConfigurator";
+import {
+  DiffLayouter,
+  focusNextConflictCommandID,
+  focusPreviousConflictCommandID,
+  SearchType,
+  watchDiffedURIs,
+} from "./diffLayouter";
 
 export class SplitDiffLayouter implements DiffLayouter {
   public async tryActivate(): Promise<boolean> {
     await this.monitor.enter();
     try {
-      if (this.monitor.someoneIsWaiting || this._isEmployed) { return false; }
+      if (this.monitor.someoneIsWaiting || this._isEmployed) {
+        return false;
+      }
       this._isEmployed = true;
       this._isActivating = true;
       this.watchingDisposables.push(
-        ...watchDiffedURIs(this.diffedURIs, () => this.deactivate())
+        ...watchDiffedURIs(this.diffedURIs, () => void this.deactivate())
       );
       await this.temporarySideBySideSettingsManager.activateSettings();
       const layoutDescription = this.createLayoutDescription(this.diffedURIs);
       await vscode.commands.executeCommand("workbench.action.closeSidebar");
       await vscode.commands.executeCommand("workbench.action.closePanel");
       await vscode.commands.executeCommand(
-        "vscode.setEditorLayout", layoutDescription,
+        "vscode.setEditorLayout",
+        layoutDescription
       );
 
       // iterate through editors in depth-first manner
@@ -31,15 +40,19 @@ export class SplitDiffLayouter implements DiffLayouter {
       let element: GroupOrEditorDescription = layoutDescription;
       let indexInGroup = 0;
       let column = 1;
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         if (element.type === diffEditorSymbol) {
-          await vscode.commands.executeCommand("vscode.diff",
-            element.oldUri, element.newUri, element.title,
+          await vscode.commands.executeCommand(
+            "vscode.diff",
+            element.oldUri,
+            element.newUri,
+            element.title,
             {
               viewColumn: column,
               preview: true,
               preserveFocus: false,
-            },
+            }
           );
           const editor = vscode.window.activeTextEditor;
           if (editor !== undefined) {
@@ -48,7 +61,9 @@ export class SplitDiffLayouter implements DiffLayouter {
               this.mergeEditorIndex = this.editors.length;
             }
             this.editors.push(editor);
-            if (element.save) { this.editorsToSave.push(editor); }
+            if (element.save) {
+              this.editorsToSave.push(editor);
+            }
           }
           column++;
         } else if (indexInGroup < element.groups.length) {
@@ -58,16 +73,19 @@ export class SplitDiffLayouter implements DiffLayouter {
           continue;
         }
         const top = stack.pop();
-        if (top === undefined) { break; }
+        if (top === undefined) {
+          break;
+        }
         [element, indexInGroup] = top;
       }
 
       this.remainingEditors = this.editors.length;
-      if (this.mergeEditor !== undefined
-        && this.mergeEditorIndex !== undefined
+      if (
+        this.mergeEditor !== undefined &&
+        this.mergeEditorIndex !== undefined
       ) {
         if (!focusMergeConflict(this.mergeEditor, SearchType.first)) {
-          vscode.window.showInformationMessage(
+          void vscode.window.showInformationMessage(
             "The merged file does not contain conflict indicators."
           );
         }
@@ -78,7 +96,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.watchingDisposables.push(
         vscode.window.onDidChangeVisibleTextEditors(
           this.handleDidChangeVisibleTextEditors.bind(this)
-        ),
+        )
       );
       this.watchingDisposables.push(
         await ScrollSynchronizer.create(this.editors, this.mergeEditorIndex),
@@ -90,10 +108,12 @@ export class SplitDiffLayouter implements DiffLayouter {
     }
   }
 
-  public async deactivate(gridIsOk = false) {
+  public async deactivate(gridIsOk = false): Promise<void> {
     await this.monitor.enter();
     try {
-      if (!this.isEmployed) { return; }
+      if (!this.isEmployed) {
+        return;
+      }
       this._isActive = false;
       for (const disposable of this.watchingDisposables) {
         disposable.dispose();
@@ -104,12 +124,13 @@ export class SplitDiffLayouter implements DiffLayouter {
         // focus sidebar to have it open
         await vscode.commands.executeCommand("workbench.action.focusSideBar");
 
-        if (this.vSCodeConfigurator.get(
-          quickLayoutDeactivationSettingID
-        ) === true) {
-          await vscode.commands.executeCommand(
-            "vscode.setEditorLayout", { groups: [{}] }
-          );
+        if (
+          this.vSCodeConfigurator.get(quickLayoutDeactivationSettingID) ===
+          true
+        ) {
+          await vscode.commands.executeCommand("vscode.setEditorLayout", {
+            groups: [{}],
+          });
           await this.closeTopEditorOfEachGroupIfOurs(false);
         } else {
           await this.closeTopEditorOfEachGroupIfOurs();
@@ -136,9 +157,15 @@ export class SplitDiffLayouter implements DiffLayouter {
     }
   }
 
-  public get isEmployed() { return this._isEmployed; }
-  public get isActive() { return this._isActive; }
-  public get isActivating() { return this._isActivating; }
+  public get isEmployed(): boolean {
+    return this._isEmployed;
+  }
+  public get isActive(): boolean {
+    return this._isActive;
+  }
+  public get isActivating(): boolean {
+    return this._isActivating;
+  }
 
   public get onDidDeactivate(): vscode.Event<DiffLayouter> {
     return this.didDeactivate.event;
@@ -147,33 +174,34 @@ export class SplitDiffLayouter implements DiffLayouter {
   public get wasInitiatedByMergetool(): boolean {
     return this._wasInitiatedByMergetool;
   }
-  public setWasInitiatedByMergetool() {
+  public setWasInitiatedByMergetool(): void {
     this._wasInitiatedByMergetool = true;
   }
 
   public focusMergeConflict(type: SearchType.first): boolean | undefined {
-    if (this.mergeEditor === undefined) { return undefined; }
+    if (this.mergeEditor === undefined) {
+      return undefined;
+    }
     return focusMergeConflict(this.mergeEditor, type);
   }
 
   public constructor(
     private readonly monitor: Monitor,
     public readonly diffedURIs: DiffedURIs,
-    private readonly createLayoutDescription:
-      (diffedURIs: DiffedURIs) => LayoutDescription,
-    private readonly temporarySideBySideSettingsManager =
-      defaultTemporarySideBySideSettingsManagerLazy.value,
-    private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
-  ) { }
+    private readonly createLayoutDescription: (
+      diffedURIs: DiffedURIs
+    ) => LayoutDescription,
+    private readonly temporarySideBySideSettingsManager = defaultTemporarySideBySideSettingsManagerLazy.value,
+    private readonly vSCodeConfigurator = defaultVSCodeConfigurator
+  ) {}
 
   private watchingDisposables: vscode.Disposable[] = [];
   private editors: vscode.TextEditor[] = [];
   private editorsToSave: vscode.TextEditor[] = [];
-  private _isEmployed: boolean = false;
-  private _isActive: boolean = false;
-  private _isActivating: boolean = true;
-  private readonly didDeactivate =
-    new vscode.EventEmitter<DiffLayouter>();
+  private _isEmployed = false;
+  private _isActive = false;
+  private _isActivating = true;
+  private readonly didDeactivate = new vscode.EventEmitter<DiffLayouter>();
   private mergeEditor: vscode.TextEditor | undefined;
   private mergeEditorIndex: number | undefined;
   private remainingEditors = 0;
@@ -184,7 +212,8 @@ export class SplitDiffLayouter implements DiffLayouter {
     const items: vscode.StatusBarItem[] = [];
     const addSBI = (text: string, command?: string, tooltip?: string) => {
       const item = vscode.window.createStatusBarItem(
-        vscode.StatusBarAlignment.Left, priority--
+        vscode.StatusBarAlignment.Left,
+        priority--
       );
       item.text = text;
       item.command = command;
@@ -192,10 +221,14 @@ export class SplitDiffLayouter implements DiffLayouter {
       items.push(item);
     };
     addSBI("Merge conflict:");
-    addSBI("$(arrow-up)", focusPreviousConflictCommandID,
+    addSBI(
+      "$(arrow-up)",
+      focusPreviousConflictCommandID,
       "Focus previous merge conflict"
     );
-    addSBI("$(arrow-down)", focusNextConflictCommandID,
+    addSBI(
+      "$(arrow-down)",
+      focusNextConflictCommandID,
       "Focus next merge conflict"
     );
     if (
@@ -203,17 +236,25 @@ export class SplitDiffLayouter implements DiffLayouter {
       !this.vSCodeConfigurator.get("diffEditor.codeLens")
     ) {
       addSBI("accept:");
-      addSBI("current", "merge-conflict.accept.current",
+      addSBI(
+        "current",
+        "merge-conflict.accept.current",
         "Accept current (local) changes of focused merge conflict"
       );
-      addSBI("incoming", "merge-conflict.accept.incoming",
+      addSBI(
+        "incoming",
+        "merge-conflict.accept.incoming",
         "Accept incoming (remote) changes of focused merge conflict"
       );
-      addSBI("both", "merge-conflict.accept.both",
+      addSBI(
+        "both",
+        "merge-conflict.accept.both",
         "Accept both changes of focused merge conflict"
       );
     }
-    for (const item of items) { item.show(); }
+    for (const item of items) {
+      item.show();
+    }
     return items;
   }
 
@@ -227,7 +268,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       );
       await this.pause(
         "Workaround: Waiting for focus switch",
-        (typeof pauseLength === 'number' ? pauseLength : 500)
+        typeof pauseLength === "number" ? pauseLength : 500
       );
     }
     if (switchGroups) {
@@ -236,16 +277,21 @@ export class SplitDiffLayouter implements DiffLayouter {
       );
     }
     let remainingLastSwitch = false;
-    let remainingPrevSwitches = this.editors.length - 1;
+    let remainingPreviousSwitches = this.editors.length - 1;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const didClose = await this.closeTopEditorIfOurs();
-      if (this.remainingEditors <= 0) { break; }
+      if (this.remainingEditors <= 0) {
+        break;
+      }
       if (didClose) {
         remainingLastSwitch = true;
-        remainingPrevSwitches = this.editors.length - 1;
+        remainingPreviousSwitches = this.editors.length - 1;
         continue;
       }
-      if (!switchGroups || remainingPrevSwitches <= 0) { break; }
+      if (!switchGroups || remainingPreviousSwitches <= 0) {
+        break;
+      }
       if (remainingLastSwitch) {
         await vscode.commands.executeCommand(
           "workbench.action.focusLastEditorGroup"
@@ -255,7 +301,7 @@ export class SplitDiffLayouter implements DiffLayouter {
         await vscode.commands.executeCommand(
           "workbench.action.focusPreviousGroup"
         );
-        remainingPrevSwitches--;
+        remainingPreviousSwitches--;
       }
     }
   }
@@ -267,9 +313,10 @@ export class SplitDiffLayouter implements DiffLayouter {
     // leads to false negatives.
     // Comparing by document leads to false positives, however.
     // Is there a solution without VS Code API change?
-    const activeDoc = vscode.window.activeTextEditor?.document;
-    if (activeDoc !== undefined
-      && this.editors.some(editor => editor.document === activeDoc)
+    const activeDocument = vscode.window.activeTextEditor?.document;
+    if (
+      activeDocument !== undefined &&
+      this.editors.some((editor) => editor.document === activeDocument)
     ) {
       await vscode.commands.executeCommand(closeActiveEditorCommandID);
       this.remainingEditors--;
@@ -278,13 +325,15 @@ export class SplitDiffLayouter implements DiffLayouter {
     return false;
   }
 
-  private async pause(msg: string, time: number) {
-    vscode.window.setStatusBarMessage(msg, time);
-    await new Promise(r => setTimeout(r, time));
+  private async pause(message: string, time: number) {
+    vscode.window.setStatusBarMessage(message, time);
+    await new Promise((resolve) => setTimeout(resolve, time));
   }
 
   private async handleDidChangeVisibleTextEditors() {
-    if (!this._isActive) { return; }
+    if (!this._isActive) {
+      return;
+    }
     this._isActive = false;
 
     // focus sidebar to have it open
@@ -306,17 +355,20 @@ export class SplitDiffLayouter implements DiffLayouter {
   }
 }
 export function focusMergeConflict(
-  editor: vscode.TextEditor, type: SearchType
+  editor: vscode.TextEditor,
+  type: SearchType
 ): boolean {
-  const doc = editor.document;
-  const lineCount = doc.lineCount;
+  const document = editor.document;
+  const lineCount = document.lineCount;
   const direction = type === SearchType.previous ? -1 : 1;
-  const start = type === SearchType.first ?
-    0 :
-    (editor.selection.start.line + direction + lineCount) % lineCount;
+  const start =
+    type === SearchType.first
+      ? 0
+      : (editor.selection.start.line + direction + lineCount) % lineCount;
   let lineIndex = start;
+  // eslint-disable-next-line no-constant-condition
   while (true) {
-    const line = doc.lineAt(lineIndex).text;
+    const line = document.lineAt(lineIndex).text;
     if (mergeConflictIndicatorRE.test(line)) {
       const linePosition = new vscode.Position(lineIndex, 0);
       editor.revealRange(
@@ -333,7 +385,7 @@ export function focusMergeConflict(
   }
 }
 
-export async function focusColumn(column: number) {
+export async function focusColumn(column: number): Promise<void> {
   const focusEditorGroupCommandID = focusEditorGroupCommandIDs[column];
   if (focusEditorGroupCommandID !== undefined) {
     await vscode.commands.executeCommand(focusEditorGroupCommandID);
@@ -356,7 +408,7 @@ export const enum GroupOrientation {
   /**
    * Distribute splits along vertical axis; cut space horizontally.
    */
-  vertical
+  vertical,
 }
 
 export interface EditorGroupDescription extends LayoutElementDescription {
@@ -364,8 +416,8 @@ export interface EditorGroupDescription extends LayoutElementDescription {
   groups: GroupOrEditorDescription[];
 }
 
-export type DiffEditorType = 'diffEditor';
-export const diffEditorSymbol: DiffEditorType = 'diffEditor';
+export type DiffEditorType = "diffEditor";
+export const diffEditorSymbol: DiffEditorType = "diffEditor";
 
 export interface DiffEditorDescription extends LayoutElementDescription {
   type: DiffEditorType;
@@ -379,7 +431,7 @@ export interface DiffEditorDescription extends LayoutElementDescription {
 export type LayoutEditorEventHandler = (
   editor: vscode.TextEditor,
   column: number,
-  description: DiffEditorDescription,
+  description: DiffEditorDescription
 ) => void | Promise<void>;
 
 export interface LayoutElementDescription {
@@ -387,11 +439,12 @@ export interface LayoutElementDescription {
 }
 
 export type GroupOrEditorDescription =
-  EditorGroupDescription | DiffEditorDescription;
+  | EditorGroupDescription
+  | DiffEditorDescription;
 
-const focusEditorGroupCommandIDs:
-  { [key: number]: string | undefined } =
-{
+const focusEditorGroupCommandIDs: {
+  [key: number]: string | undefined;
+} = {
   0: "workbench.action.focusFirstEditorGroup",
   1: "workbench.action.focusSecondEditorGroup",
   2: "workbench.action.focusThirdEditorGroup",
@@ -402,9 +455,6 @@ const focusEditorGroupCommandIDs:
   7: "workbench.action.focusEighthEditorGroup",
 };
 
-const focusPauseLengthOnCloseSettingID =
-  `${extensionID}.workaroundFocusPauseLengthOnClose`;
-const quickLayoutDeactivationSettingID =
-  `${extensionID}.workaroundQuickLayoutDeactivation`;
-const closeActiveEditorCommandID =
-  "workbench.action.closeActiveEditor";
+const focusPauseLengthOnCloseSettingID = `${extensionID}.workaroundFocusPauseLengthOnClose`;
+const quickLayoutDeactivationSettingID = `${extensionID}.workaroundQuickLayoutDeactivation`;
+const closeActiveEditorCommandID = "workbench.action.closeActiveEditor";
