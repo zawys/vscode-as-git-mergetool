@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import { DiffedURIs } from './diffedURIs';
-import * as fs from 'fs';
 import * as path from 'path';
 import { getRealPath, getFileType, FileType, testFile } from './fsAsync';
 import { R_OK, W_OK } from 'constants';
@@ -9,15 +7,19 @@ import { defaultExtensionContextManager } from './extensionContextManager';
 import { extensionID } from './iDs';
 
 export class DiffFileSelector {
-  public async doSelection(): Promise<DiffedURIs | undefined> {
-    if (!await this.selector.doSelection()) { return undefined; }
-    const uRIs = this.selectableFiles
-      .map(file => this.selector.stateStore.getSelection(file.key));
-    if (uRIs.some(uRI => uRI === undefined)) { return undefined; }
-    return new DiffedURIs(uRIs[0]!, uRIs[1]!, uRIs[2]!, uRIs[3]!);
+  public async doSelection(): Promise<DiffFileSelectionResult | undefined> {
+    const innerResult = await this.selector.doSelection();
+    if (innerResult === undefined) { return undefined; }
+    let result: { [k in DiffFileKey]?: FileSelectionResult<DiffFileKey> } = {};
+    for (const value of innerResult) { result[value.key] = value; }
+    if (
+      result.base === undefined ||
+      result.local === undefined ||
+      result.remote === undefined ||
+      result.merged === undefined
+    ) { return undefined; }
+    return result as DiffFileSelectionResult;
   }
-
-  public get diffedURIs(): DiffedURIs | undefined { return this._diffedURIs; }
 
   public constructor(
     public readonly iD: string = `${extensionID}.mergeFileSelector`,
@@ -28,65 +30,65 @@ export class DiffFileSelector {
     );
   }
 
-  private readonly selectableFiles: SelectableFile[] = [
-    new SelectableFile(
-      "base", "base", true, validateAsReadableFile,
+  private readonly selectableFiles: SelectableFile<DiffFileKey>[] = [
+    new SelectableFile("base", "base", true,
+      validateAsReadableFile,
     ),
-    new SelectableFile(
-      "local", "local", true, validateAsReadableFile,
+    new SelectableFile("local", "local", true,
+      validateAsReadableFile,
     ),
-    new SelectableFile(
-      "remote", "remote", true, validateAsReadableFile,
+    new SelectableFile("remote", "remote", true,
+      validateAsReadableFile,
     ),
-    new SelectableFile(
-      "merged", "merged", true, validateAsWritableEmptyFileLocation,
-    )
+    new SelectableFile("merged", "merged", true,
+      validateAsExistingReadableOrEmptyWritableFileLocation,
+    ),
   ];
 
-  private readonly selector;
-  private _diffedURIs: DiffedURIs | undefined;
+  private readonly selector: MultiFileSelector<DiffFileKey>;
 }
 
-export class MultiFileSelector {
+export type DiffFileKey = "base" | "local" | "remote" | "merged";
+export type DiffFileSelectionResult = {
+  [k in DiffFileKey]: FileSelectionResult<DiffFileKey>;
+};
+
+export class MultiFileSelector<TKey extends string> {
   /**
-   * Returns if the result was accepted.
+   * Returns undefined iff the process was cancelled.
+   * Otherwise it returns only valid data.
    */
-  public async doSelection(): Promise<boolean> {
+  public async doSelection(): Promise<FileSelectionResult<TKey>[] | undefined> {
     while (true) {
-      const pickItems: FileOrActionPickItem[] = [];
-      let allValid = true;
-      for (let i = 0; i < this.selection.length; i++) {
-        const file = this.selection[i];
-        const uRI = this.stateStore.getSelection(file.key);
-        const set = uRI !== undefined;
-        const validationError =
-          set && file.validate ? await file.validate(uRI!) : undefined;
-        const comment = set ?
-          (validationError || "") :
-          (file.required ? "Required." : "Optional.");
-        const value = set ? `\`${uRI!.fsPath}\`` : "unset";
-        pickItems.push({
-          fileIndex: i,
-          label: `${firstLetterUppercase(file.label)}: ${value}`,
-          detail: comment,
-        });
-        allValid &&= set ? validationError === undefined : !file.required;
-      }
-      if (allValid) { pickItems.push(this.acceptItem); }
-      pickItems.push(this.unsetAll, this.abortItem);
-      const result = await vscode.window.showQuickPick(pickItems, {
+      const [validationResults, pickItems] = await this.createPickItems();
+
+      const pickResult = await vscode.window.showQuickPick(pickItems, {
         ignoreFocusOut: true,
       });
-      if (result === this.acceptItem) { return true; }
-      if (result === this.unsetAll) {
-        for (const file of this.selection) {
+
+      if (pickResult === this.acceptItem) {
+        const result: FileSelectionResult<TKey>[] = [];
+        for (let i = 0; i < this.selectableFiles.length; i++) {
+          const vr = validationResults[i];
+          if (vr?.valid === false) { return undefined; }
+          const file = this.selectableFiles[i];
+          const key = file.key;
+          const path = this.stateStore.getSelection(key);
+          if (path === undefined) { return undefined; }
+          result.push({
+            key, fsPath: path, validationResult: vr
+          });
+        }
+        return result;
+      } else if (pickResult === this.unsetAll) {
+        for (const file of this.selectableFiles) {
           this.stateStore.setSelection(file.key, undefined);
         }
         continue;
       }
-      const fileIndex = result?.fileIndex;
-      if (fileIndex === undefined) { return false; }
-      const file = this.selection[fileIndex];
+      const fileIndex = pickResult?.fileIndex;
+      if (fileIndex === undefined) { return undefined; }
+      const file = this.selectableFiles[fileIndex];
       const inputUri = await this.inputURI(file);
       if (inputUri === undefined) { continue; }
       this.stateStore.setSelection(
@@ -96,21 +98,53 @@ export class MultiFileSelector {
   }
 
   public constructor(
-    public readonly selection: SelectableFile[],
+    public readonly selectableFiles: SelectableFile<TKey>[],
     public readonly stateStore: FileSelectionStateStore,
     private readonly acceptItem: vscode.QuickPickItem = {
-      label: "Accept selection",
+      label: "$(check) Accept selection",
       alwaysShow: true,
     },
     private readonly unsetAll: vscode.QuickPickItem = {
-      label: "Clear selection",
+      label: "$(discard) Clear selection",
       alwaysShow: true,
     },
     private readonly abortItem: vscode.QuickPickItem = {
-      label: "Abort",
+      label: "$(close) Abort",
       alwaysShow: true,
     }
   ) { }
+
+  private async createPickItems(): Promise<[
+    (FileValidationResult | undefined)[],
+    FileOrActionPickItem[],
+  ]> {
+    const validationResults: (FileValidationResult | undefined)[] = [];
+    const pickItems: FileOrActionPickItem[] = [];
+    let allValid = true;
+    for (let i = 0; i < this.selectableFiles.length; i++) {
+      const file = this.selectableFiles[i];
+      const fsPath = this.stateStore.getSelection(file.key);
+      const set = fsPath !== undefined;
+      const validationResult =
+        set && file.validate ? await file.validate(fsPath!) : undefined;
+      validationResults.push(validationResult);
+      const comment =
+        !set ? (file.required ? "Required." : "Optional.") :
+          validationResult === undefined ? "" :
+            validationResult.message !== undefined ? validationResult.message :
+              validationResult.valid ? "" : "Error.";
+      const value = set ? `\`${fsPath}\`` : "unset";
+      pickItems.push({
+        fileIndex: i,
+        label: `${firstLetterUppercase(file.label)}: ${value}`,
+        detail: comment,
+      });
+      allValid &&= set ? validationResult?.valid === true : !file.required;
+    }
+    if (allValid) { pickItems.push(this.acceptItem); }
+    pickItems.push(this.unsetAll, this.abortItem);
+    return [validationResults, pickItems];
+  }
 
   /**
    *
@@ -118,8 +152,8 @@ export class MultiFileSelector {
    * @returns `undefined` means NOOP, `null` means unset.
    */
   private async inputURI(
-    file: SelectableFile
-  ): Promise<vscode.Uri | null | undefined> {
+    file: SelectableFile<TKey>
+  ): Promise<string | null | undefined> {
     const pasteItem: vscode.QuickPickItem = { label: "Type or paste" };
     const dialogItem: vscode.QuickPickItem = { label: "Use dialog" };
     const unsetItem: vscode.QuickPickItem = { label: "Unset" };
@@ -134,55 +168,148 @@ export class MultiFileSelector {
         ignoreFocusOut: true,
         prompt:
           `Input ${file.required ? "required" : ""} path for ${file.label}.`,
-        value: this.stateStore.getSelection(file.key)?.fsPath || "",
+        value: this.stateStore.getSelection(file.key) || this.getDefaultPath(),
       });
       if (!result) { return undefined; }
       if (result.startsWith("./") || result.startsWith(".\\")) {
-        const workingDir = getWorkingDirectoryUri();
+        const workingDir = getWorkingDirectoryUri()?.fsPath;
         if (workingDir !== undefined) {
-          return vscode.Uri.joinPath(workingDir, result);
+          return path.join(workingDir, result);
         }
       }
-      return vscode.Uri.file(result);
+      return result;
     } else {
+      const fSPath = this.stateStore.getSelection(file.key);
+      let defaultURI = fSPath === undefined ? undefined :
+        vscode.Uri.file(path.dirname(fSPath));
+      if (!defaultURI) {
+        const defaultPath = this.getDefaultPath();
+        if (defaultPath !== undefined) {
+          defaultURI = vscode.Uri.file(defaultPath);
+        }
+      }
       const result = await vscode.window.showOpenDialog({
         canSelectFiles: true,
         canSelectFolders: false,
         canSelectMany: false,
-        defaultUri: this.stateStore.getSelection(file.key),
+        defaultUri: defaultURI,
         openLabel: "Select",
         title: `Select ${file.required ? "required" : ""} ${file.label}`,
       });
       if (result === undefined || result.length === 0) { return undefined; }
-      return result[0];
+      return result[0].fsPath;
     }
   }
-}
 
-export async function validateAsReadableFile(
-  uRI: vscode.Uri
-): Promise<string | undefined> {
-  const resolvedPath = await getRealPath(uRI.fsPath);
-  if (resolvedPath === undefined) { return "Could not find file."; }
-  const fileType = await getFileType(uRI.fsPath);
-  if (fileType === undefined) { return "Could not test file."; }
-  if (fileType !== FileType.regular) { return "Not a regular file."; }
-  if (!await testFile(resolvedPath, R_OK)) {
-    return "Cannot read file.";
+  private getDefaultPath(): string | undefined {
+    for (const file of this.selectableFiles) {
+      const fSPath = this.stateStore.getSelection(file.key);
+      if (fSPath !== undefined) {
+        return fSPath;
+      }
+    }
+    return undefined;
   }
-  return undefined;
 }
 
-export async function validateAsWritableEmptyFileLocation(
-  uRI: vscode.Uri
-): Promise<string | undefined> {
-  const fileType = await getFileType(uRI.fsPath);
-  if (fileType !== undefined
-    && fileType !== FileType.notExisting
-  ) { return "File exists. Select empty location."; }
-  const parent = path.dirname(uRI.fsPath);
-  if (!testFile(parent, W_OK)) { return "Cannot write parent directory."; }
+export class SelectableFile<TKey extends string> {
+  public constructor(
+    public readonly key: TKey,
+    public readonly label: string,
+    public readonly required = false,
+    public readonly validate?:
+      (fsPath: string) => Promise<FileValidationResult>,
+  ) { }
 }
+
+export interface FileValidationResult {
+  valid: boolean,
+  message?: string,
+  readable?: boolean,
+  writable?: boolean,
+  emptyLoc?: boolean,
+}
+export interface FileSelectionResult<TKey extends string> {
+  key: TKey,
+  validationResult?: FileValidationResult,
+  fsPath: string,
+}
+
+async function validateAsReadableFile(
+  fsPath: string
+): Promise<FileValidationResult> {
+  const resolvedPath = await getRealPath(fsPath);
+  if (resolvedPath === undefined) {
+    return fileValidationResultFromErrorMsg("Could not find file.");
+  }
+  const fileType = await getFileType(resolvedPath);
+  if (fileType === undefined) {
+    return fileValidationResultFromErrorMsg("Could not test file.");
+  }
+  if (fileType !== FileType.regular) {
+    return fileValidationResultFromErrorMsg("Not a regular file.");
+  }
+  if (!await testFile(resolvedPath, R_OK)) {
+    return fileValidationResultFromErrorMsg("Cannot read file.");
+  }
+  return { valid: true, readable: true, emptyLoc: false };
+}
+
+async function validateAsExistingReadableOrEmptyWritableFileLocation(
+  fsPath: string,
+): Promise<FileValidationResult> {
+  const fileType = await getFileType(fsPath);
+  if (fileType !== undefined && fileType !== FileType.notExisting) {
+    const resolvedPath = await getRealPath(fsPath);
+    if (resolvedPath === undefined) {
+      return fileValidationResultFromErrorMsg(
+        "Error resolving existing file."
+      );
+    }
+    const fileType = await getFileType(resolvedPath);
+    if (fileType === undefined) {
+      return fileValidationResultFromErrorMsg("Could not test file.");
+    }
+    if (fileType !== FileType.regular) {
+      return fileValidationResultFromErrorMsg(
+        "Existing and not a regular file."
+      );
+    }
+    if (!await testFile(resolvedPath, R_OK)) {
+      return fileValidationResultFromErrorMsg("Cannot read file.");
+    }
+    const writable = !await testFile(resolvedPath, W_OK);
+    return {
+      valid: true, writable, readable: true, emptyLoc: false,
+      message: "File will not be overwritten; only loaded.",
+    };
+  }
+  const parent = path.dirname(fsPath);
+  if (!testFile(parent, W_OK)) {
+    return fileValidationResultFromErrorMsg("Cannot write parent directory.");
+  }
+  return { valid: true, writable: true, readable: false, emptyLoc: true };
+}
+
+async function validateAsWritableEmptyFileLocation(
+  fsPath: string,
+): Promise<FileValidationResult> {
+  const fileType = await getFileType(fsPath);
+  if (fileType !== undefined && fileType !== FileType.notExisting) {
+    return fileValidationResultFromErrorMsg(
+      "File exists. Select empty location."
+    );
+  }
+  const parent = path.dirname(fsPath);
+  if (!testFile(parent, W_OK)) {
+    return fileValidationResultFromErrorMsg("Cannot write parent directory.");
+  }
+  return { valid: true, writable: true, readable: false, emptyLoc: true };
+}
+
+function fileValidationResultFromErrorMsg(
+  message: string
+): FileValidationResult { return { valid: false, message }; }
 
 export interface FileOrActionPickItem extends vscode.QuickPickItem {
   fileIndex?: number;
@@ -191,33 +318,23 @@ export interface FilePickItem extends FileOrActionPickItem {
   fileIndex: number;
 }
 
-export class SelectableFile {
-  public constructor(
-    public readonly key: string,
-    public readonly label: string,
-    public readonly required = false,
-    public readonly validate?:
-      (uRI: vscode.Uri) => string | undefined | Promise<string | undefined>,
-  ) { }
-}
-
 export type FileSelectionState = { [key: string]: vscode.Uri | undefined };
 
 export class FileSelectionStateStore {
-  public getSelection(key: string): vscode.Uri | undefined {
+  public getSelection(key: string): string | undefined {
     const keyID = this.getKeyID(key);
     const value =
       defaultExtensionContextManager.value.workspaceState.get(keyID);
     if (value === undefined) {
       return undefined;
     } else if (typeof value === 'string') {
-      return vscode.Uri.file(value);
+      return value;
     }
     this.workspaceState.update(keyID, undefined);
     return undefined;
   }
-  public setSelection(key: string, value: vscode.Uri | undefined) {
-    this.workspaceState.update(this.getKeyID(key), value?.fsPath);
+  public setSelection(key: string, value: string | undefined) {
+    this.workspaceState.update(this.getKeyID(key), value);
   }
 
   public constructor(

@@ -140,10 +140,11 @@
 					"description": "Add a text label to each status bar item.",
 					"scope": "machine-overridable"
 				},
-				"vscode-as-git-mergetool.scrollingSynchronizedAt": {
+				"vscode-as-git-mergetool.scrollSynchronizationMethod": {
 					"type": "string",
-					"default": "top",
+					"default": "interval",
 					"enum": [
+						"interval",
 						"top",
 						"center"
 					],

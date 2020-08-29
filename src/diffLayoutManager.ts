@@ -256,46 +256,54 @@ export class DiffLayoutManager {
     if (this.diffFileSelector === undefined) {
       this.diffFileSelector = new DiffFileSelector();
     }
-    const diffedURIs = await this.diffFileSelector.doSelection();
-    if (diffedURIs === undefined) { return false; }
+    const selectionResult = await this.diffFileSelector.doSelection();
+    if (selectionResult === undefined) { return false; }
     const gitPath = await getGitPathInteractively();
     if (gitPath === undefined) { return false; }
-    const mergedPath = diffedURIs.merged.fsPath;
-    const gitResult = await new Promise<{
-      err: cp.ExecException | null,
-      stdout: string,
-      stderr: string,
-    }>(resolve =>
-      cp.execFile(
-        gitPath,
-        [
-          "merge-file",
-          "--stdout",
-          diffedURIs.local.fsPath,
-          diffedURIs.base.fsPath,
-          diffedURIs.remote.fsPath,
-        ],
-        {
-          cwd: path.dirname(mergedPath),
-          timeout: 10000,
-          windowsHide: true,
-        },
-        (err, stdout, stderr) => resolve({ err, stdout, stderr })
-      )
-    );
-    const error = gitResult.err;
-    if (error !== null && (
-      error.code === undefined
-      || (error.code < 0 || error.code > 127)
-    )) {
-      vscode.window.showErrorMessage(
-        `Error when merging files by Git: ${gitResult.stderr}.`
+    const mergedPath = selectionResult.merged.fsPath;
+    if (selectionResult.merged.validationResult?.emptyLoc === true) {
+      const gitResult = await new Promise<{
+        err: cp.ExecException | null,
+        stdout: string,
+        stderr: string,
+      }>(resolve =>
+        cp.execFile(
+          gitPath,
+          [
+            "merge-file",
+            "--stdout",
+            selectionResult.local.fsPath,
+            selectionResult.base.fsPath,
+            selectionResult.remote.fsPath,
+          ],
+          {
+            cwd: path.dirname(mergedPath),
+            timeout: 10000,
+            windowsHide: true,
+          },
+          (err, stdout, stderr) => resolve({ err, stdout, stderr })
+        )
       );
-      return false;
+      const error = gitResult.err;
+      if (error !== null && (
+        error.code === undefined
+        || (error.code < 0 || error.code > 127)
+      )) {
+        vscode.window.showErrorMessage(
+          `Error when merging files by Git: ${gitResult.stderr}.`
+        );
+        return false;
+      }
+      if (!await new Promise(resolve => fs.writeFile(
+        mergedPath, gitResult.stdout, err => resolve(err === null),
+      ))) { return false; }
     }
-    if (!await new Promise(resolve => fs.writeFile(
-      mergedPath, gitResult.stdout, err => resolve(err === null),
-    ))) { return false; }
+    const diffedURIs: DiffedURIs = new DiffedURIs(
+      vscode.Uri.file(selectionResult.base.fsPath),
+      vscode.Uri.file(selectionResult.local.fsPath),
+      vscode.Uri.file(selectionResult.remote.fsPath),
+      vscode.Uri.file(selectionResult.merged.fsPath),
+    );
     return await this.openDiffedURIs(diffedURIs);
   }
 }

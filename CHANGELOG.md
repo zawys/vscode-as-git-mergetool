@@ -9,6 +9,15 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Scroll synchronization method by default is now the new “interval” method.
+  The ID and meaning of the setting have changed
+  and so the setting will be reset to the default.
+
+### Added
+- Scroll synchronization method “interval”
+- Message when no merge conflicts exist on opening of a diff layout
+- Merge arbitrary files: Allow to select an existing file for merge
 
 ## [0.2.2] - 2020-08-29
 ### Fixed

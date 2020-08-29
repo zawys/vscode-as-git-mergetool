@@ -66,7 +66,11 @@ export class SplitDiffLayouter implements DiffLayouter {
       if (this.mergeEditor !== undefined
         && this.mergeEditorIndex !== undefined
       ) {
-        focusMergeConflict(this.mergeEditor, SearchType.first);
+        if (!focusMergeConflict(this.mergeEditor, SearchType.first)) {
+          vscode.window.showInformationMessage(
+            "The merged file does not contain conflict indicators."
+          );
+        }
         await focusColumn(this.mergeEditorIndex);
       }
       this._isActivating = false;
