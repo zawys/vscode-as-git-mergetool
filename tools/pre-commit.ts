@@ -1,13 +1,11 @@
 import * as fs from "fs";
 import { asyncWhich, runAsync, runCommand } from "./util";
 
-runAsync(async () => {
-  let result;
-
+void runAsync(async () => {
   const git = await asyncWhich("git");
   const yarn = await asyncWhich("yarn");
 
-  result = await runCommand(yarn, ["run", "working_dir_is_clean"]);
+  const result = await runCommand(yarn, ["run", "working_dir_is_clean"]);
   if (result === null) {
     return 1;
   }
