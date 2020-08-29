@@ -16,8 +16,10 @@ and this project adheres to
 
 ### Added
 - Scroll synchronization method “interval”
-- Message when no merge conflicts exist on opening of a diff layout
+- Reset settings directly on VS Code startup
+- Also disable glyph margin and activity bar during diff layout
 - Merge arbitrary files: Allow to select an existing file for merge
+- Message when no merge conflicts exist on opening of a diff layout
 
 ## [0.2.2] - 2020-08-29
 ### Fixed

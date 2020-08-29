@@ -68,6 +68,8 @@ export class TemporarySideBySideSettingsManager {
       "diffEditor.renderSideBySide": false,
       "editor.lineNumbers": "none",
       "workbench.editor.showTabs": false,
+      "editor.glyphMargin": false,
+      "workbench.activityBar.visible": false,
     },
     private readonly storageState =
       defaultExtensionContextManager.value.globalState,
