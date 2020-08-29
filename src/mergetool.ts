@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
 import { DiffedURIs, uRIsOrUndefEqual } from "./diffedURIs";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
-import { DiffLayoutManager } from "./diffLayoutManager";
+import { DiffLayouterManager } from "./diffLayouterManager";
 import { extensionID, labelsInStatusBarSettingID } from "./iDs";
 import { FileType, getFileType } from "./fsAsync";
 import { getWorkingDirectoryUri } from "./getPaths";
@@ -27,10 +27,10 @@ export class MergetoolProcess {
       );
     }
     this.registeredDisposables.push(
-      this.diffLayoutManager.onDidLayoutDeactivate(
+      this.diffLayouterManager.onDidLayoutDeactivate(
         this.handleDidLayoutDeactivate.bind(this)
       ),
-      this.diffLayoutManager.onDidLayoutActivate(
+      this.diffLayouterManager.onDidLayoutActivate(
         this.handleDidLayoutActivate.bind(this)
       )
     );
@@ -74,7 +74,7 @@ export class MergetoolProcess {
       ) {
         return;
       }
-      const focusResult = this.diffLayoutManager.focusMergeConflict(
+      const focusResult = this.diffLayouterManager.focusMergeConflict(
         SearchType.first
       );
       if (focusResult === undefined) {
@@ -100,8 +100,8 @@ export class MergetoolProcess {
       }
       break;
     }
-    await this.diffLayoutManager.save();
-    await this.diffLayoutManager.deactivateLayout();
+    await this.diffLayouterManager.save();
+    await this.diffLayouterManager.deactivateLayout();
     this.mergeSituation = undefined;
     this.mergetoolTerm?.sendText("y\n");
   }
@@ -113,8 +113,8 @@ export class MergetoolProcess {
     ) {
       return;
     }
-    await this.diffLayoutManager.save();
-    await this.diffLayoutManager.deactivateLayout();
+    await this.diffLayouterManager.save();
+    await this.diffLayouterManager.deactivateLayout();
     this.mergeSituation = undefined;
     this.mergetoolTerm?.sendText("n\ny\n");
   }
@@ -198,7 +198,7 @@ export class MergetoolProcess {
       gitMergetoolRunningID,
       false
     );
-    await this.diffLayoutManager.deactivateLayout();
+    await this.diffLayouterManager.deactivateLayout();
     this.termCloseListener?.dispose();
     this.termCloseListener = undefined;
     this.disposeStatusBarItems();
@@ -238,7 +238,7 @@ export class MergetoolProcess {
   }
 
   public constructor(
-    private readonly diffLayoutManager: DiffLayoutManager,
+    private readonly diffLayouterManager: DiffLayouterManager,
     private readonly vSCodeConfigurator = defaultVSCodeConfigurator
   ) {}
 
@@ -260,10 +260,10 @@ export class MergetoolProcess {
   private get mergeSituationInLayout(): boolean {
     return (
       this.mergeSituation !== undefined &&
-      this.diffLayoutManager.diffedURIs !== undefined &&
+      this.diffLayouterManager.diffedURIs !== undefined &&
       uRIsOrUndefEqual(
         this.mergeSituation.base,
-        this.diffLayoutManager.diffedURIs.base
+        this.diffLayouterManager.diffedURIs.base
       )
     );
   }
@@ -276,7 +276,7 @@ export class MergetoolProcess {
 
   private handleDidLayoutActivate(layouter: DiffLayouter) {
     if (this.mergeSituation === undefined) {
-      this.mergeSituation = this.diffLayoutManager.diffedURIs;
+      this.mergeSituation = this.diffLayouterManager.diffedURIs;
       layouter.setWasInitiatedByMergetool();
       if (this.mergeSituation !== undefined) {
         this.updateStatusBarItems();
@@ -301,7 +301,7 @@ export class MergetoolProcess {
       );
     } else {
       vscode.window.setStatusBarMessage("`git mergetool` succeeded.", 15000);
-      await this.diffLayoutManager.deactivateLayout();
+      await this.diffLayouterManager.deactivateLayout();
       await this.jumpToCommitMsg();
     }
     this.mergetoolTerm?.dispose();

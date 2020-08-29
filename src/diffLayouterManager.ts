@@ -1,10 +1,6 @@
-import * as cp from "child_process";
 import * as fs from "fs";
-import * as path from "path";
 import * as vscode from "vscode";
 import { DiffedURIs, filesExist, getDiffedURIs } from "./diffedURIs";
-import { DiffFileSelector } from "./diffFileSelector";
-import { getGitPathInteractively } from "./getPaths";
 import { extensionID } from "./iDs";
 import {
   DiffLayouter,
@@ -21,7 +17,7 @@ import { Monitor } from "./monitor";
 import { defaultTemporarySideBySideSettingsManagerLazy } from "./temporarySettingsManager";
 import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 
-export class DiffLayoutManager {
+export class DiffLayouterManager {
   public async register(): Promise<void> {
     for (const disposabe of this.disposables) {
       disposabe.dispose();
@@ -45,10 +41,6 @@ export class DiffLayoutManager {
       vscode.commands.registerCommand(
         resetMergedFileCommandID,
         this.resetMergedFile.bind(this)
-      ),
-      vscode.commands.registerCommand(
-        mergeArbitraryFilesCommandID,
-        this.mergeArbitraryFiles.bind(this)
       ),
     ];
     for (const editor of vscode.window.visibleTextEditors) {
@@ -149,37 +141,7 @@ export class DiffLayoutManager {
     });
   }
 
-  private layouter: DiffLayouter | undefined;
-  private readonly layouterMonitor = new Monitor();
-  private readonly layouterManagerMonitor = new Monitor();
-  private disposables: vscode.Disposable[] = [];
-  private readonly defaultFactory: DiffLayouterFactory;
-  private readonly didLayoutDeactivate = new vscode.EventEmitter<
-    DiffLayouter
-  >();
-  private readonly didLayoutActivate = new vscode.EventEmitter<DiffLayouter>();
-  private diffFileSelector: DiffFileSelector | undefined;
-
-  /**
-   *
-   * @param document opened TextDocument
-   * @returns whether a layouter is active afterwards
-   */
-  private handleDidOpenTextDocument(
-    document: vscode.TextDocument
-  ): Promise<boolean> {
-    return this.handleDidOpenURI(document.uri);
-  }
-
-  private async handleDidOpenURI(uRI: vscode.Uri): Promise<boolean> {
-    const diffedURIs = getDiffedURIs(uRI);
-    if (diffedURIs === undefined || !(await filesExist(diffedURIs))) {
-      return false;
-    }
-    return await this.openDiffedURIs(diffedURIs);
-  }
-
-  private async openDiffedURIs(diffedURIs: DiffedURIs): Promise<boolean> {
+  public async openDiffedURIs(diffedURIs: DiffedURIs): Promise<boolean> {
     await this.layouterManagerMonitor.enter();
     try {
       const activeDiffedURIs = this.layouter?.diffedURIs;
@@ -218,6 +180,35 @@ export class DiffLayoutManager {
     }
     this.didLayoutActivate.fire(this.layouter);
     return true;
+  }
+
+  private layouter: DiffLayouter | undefined;
+  private readonly layouterMonitor = new Monitor();
+  private readonly layouterManagerMonitor = new Monitor();
+  private disposables: vscode.Disposable[] = [];
+  private readonly defaultFactory: DiffLayouterFactory;
+  private readonly didLayoutDeactivate = new vscode.EventEmitter<
+    DiffLayouter
+  >();
+  private readonly didLayoutActivate = new vscode.EventEmitter<DiffLayouter>();
+
+  /**
+   *
+   * @param document opened TextDocument
+   * @returns whether a layouter is active afterwards
+   */
+  private handleDidOpenTextDocument(
+    document: vscode.TextDocument
+  ): Promise<boolean> {
+    return this.handleDidOpenURI(document.uri);
+  }
+
+  private async handleDidOpenURI(uRI: vscode.Uri): Promise<boolean> {
+    const diffedURIs = getDiffedURIs(uRI);
+    if (diffedURIs === undefined || !(await filesExist(diffedURIs))) {
+      return false;
+    }
+    return await this.openDiffedURIs(diffedURIs);
   }
 
   private async handleLayouterDidDeactivate(layouter: DiffLayouter) {
@@ -281,74 +272,8 @@ export class DiffLayoutManager {
       layoutSetting = this.defaultFactory.settingValue;
     }
   }
-
-  private async mergeArbitraryFiles(): Promise<boolean> {
-    if (this.diffFileSelector === undefined) {
-      this.diffFileSelector = new DiffFileSelector();
-    }
-    const selectionResult = await this.diffFileSelector.doSelection();
-    if (selectionResult === undefined) {
-      return false;
-    }
-    const gitPath = await getGitPathInteractively();
-    if (gitPath === undefined) {
-      return false;
-    }
-    const mergedPath = selectionResult.merged.fsPath;
-    if (selectionResult.merged.validationResult?.emptyLoc === true) {
-      const gitResult = await new Promise<{
-        error: cp.ExecException | null;
-        stdout: string;
-        stderr: string;
-      }>((resolve) =>
-        cp.execFile(
-          gitPath,
-          [
-            "merge-file",
-            "--stdout",
-            selectionResult.local.fsPath,
-            selectionResult.base.fsPath,
-            selectionResult.remote.fsPath,
-          ],
-          {
-            cwd: path.dirname(mergedPath),
-            timeout: 10000,
-            windowsHide: true,
-          },
-          (error, stdout, stderr) => resolve({ error, stdout, stderr })
-        )
-      );
-      const error = gitResult.error;
-      if (
-        error !== null &&
-        (error.code === undefined || error.code < 0 || error.code > 127)
-      ) {
-        void vscode.window.showErrorMessage(
-          `Error when merging files by Git: ${gitResult.stderr}.`
-        );
-        return false;
-      }
-      if (
-        !(await new Promise((resolve) =>
-          fs.writeFile(mergedPath, gitResult.stdout, (error) =>
-            resolve(error === null)
-          )
-        ))
-      ) {
-        return false;
-      }
-    }
-    const diffedURIs: DiffedURIs = new DiffedURIs(
-      vscode.Uri.file(selectionResult.base.fsPath),
-      vscode.Uri.file(selectionResult.local.fsPath),
-      vscode.Uri.file(selectionResult.remote.fsPath),
-      vscode.Uri.file(selectionResult.merged.fsPath)
-    );
-    return await this.openDiffedURIs(diffedURIs);
-  }
 }
 
 const layoutSettingID = `${extensionID}.layout`;
 const deactivateLayoutCommandID = `${extensionID}.deactivateLayout`;
 const resetMergedFileCommandID = `${extensionID}.resetMergedFile`;
-const mergeArbitraryFilesCommandID = `${extensionID}.mergeArbitraryFiles`;
