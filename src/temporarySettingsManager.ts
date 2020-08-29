@@ -21,7 +21,7 @@ export class TemporarySideBySideSettingsManager {
         const newTarget = this.targetSettings[iD];
         const newActual = this.vSCodeConfigurator.get(iD);
         if (newActual !== newTarget) {
-          this.vSCodeConfigurator.set(iD, newTarget);
+          await this.vSCodeConfigurator.set(iD, newTarget);
         }
 
         // in the latter case, user did change config setting afterwards,
@@ -33,7 +33,7 @@ export class TemporarySideBySideSettingsManager {
         newOrigTarget[iD] = newTarget;
       }
       for (const iD of obsoleteSettingKeys) {
-        this.vSCodeConfigurator.set(iD, oldOrigActual[iD]);
+        await this.vSCodeConfigurator.set(iD, oldOrigActual[iD]);
       }
       this.setStorageState(origActualKey, newOrigActual);
       this.setStorageState(origTargetKey, newOrigTarget);
@@ -51,7 +51,7 @@ export class TemporarySideBySideSettingsManager {
       for (const iD of origChangedIDs) {
         const newActual = this.vSCodeConfigurator.get(iD);
         if (newActual === origTarget[iD]) {
-          this.vSCodeConfigurator.set(iD, origActual[iD]);
+          await this.vSCodeConfigurator.set(iD, origActual[iD]);
         }
       }
       this.setStorageState(origActualKey, undefined);

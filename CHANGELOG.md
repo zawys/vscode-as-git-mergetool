@@ -21,6 +21,9 @@ and this project adheres to
 - Merge arbitrary files: Allow to select an existing file for merge
 - Message when no merge conflicts exist on opening of a diff layout
 
+### Fixed
+- Change settings synchronously to prevent confused VS Code and congestion
+
 ## [0.2.2] - 2020-08-29
 ### Fixed
 - Use the global storage instead of the workspace storage

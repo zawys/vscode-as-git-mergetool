@@ -39,8 +39,11 @@ export class DiffLayoutManager {
       ),
     ];
     for (const editor of vscode.window.visibleTextEditors) {
-      if (await this.handleDidOpenTextDocument(editor.document)) { break; }
+      if (await this.handleDidOpenTextDocument(editor.document)) {
+        return;
+      }
     }
+    this.temporarySideBySideSettingsManager.value.resetSettings();
   }
 
   public async deactivateLayout() {
