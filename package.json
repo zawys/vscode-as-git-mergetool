@@ -141,7 +141,7 @@
 					"scope": "machine-overridable"
 				},
 				"vscode-as-git-mergetool.scrollingSynchronizedAt": {
-					"type": "boolean",
+					"type": "string",
 					"default": "top",
 					"enum": [
 						"top",

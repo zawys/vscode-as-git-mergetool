@@ -12,6 +12,7 @@ and this project adheres to
 ### Fixed
 - Use the global storage instead of the workspace storage
   for restoring settings
+- Wrong setting type declared for `scrollingSynchronizedAt`
 
 ## [0.2.1] - 2020-08-29
 ### Added
