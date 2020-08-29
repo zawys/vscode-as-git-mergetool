@@ -9,6 +9,9 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Use the global storage instead of the workspace storage
+  for restoring settings
 
 ## [0.2.1] - 2020-08-29
 ### Added

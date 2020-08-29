@@ -69,8 +69,8 @@ export class TemporarySideBySideSettingsManager {
       "editor.lineNumbers": "none",
       "workbench.editor.showTabs": false,
     },
-    private readonly workspaceState =
-      defaultExtensionContextManager.value.workspaceState,
+    private readonly storageState =
+      defaultExtensionContextManager.value.globalState,
   ) {
     this.targetIDs = Object.keys(targetSettings);
   }
@@ -78,7 +78,7 @@ export class TemporarySideBySideSettingsManager {
   private targetIDs: string[];
 
   private getStorageState(key: string): StorageState {
-    const value = this.workspaceState.get(key);
+    const value = this.storageState.get(key);
     if (typeof value === "object") {
       // workspaceState.get returns JSON serializable objects.
       return value as StorageState;
@@ -87,7 +87,7 @@ export class TemporarySideBySideSettingsManager {
   }
 
   private setStorageState(key: string, value: StorageState | undefined) {
-    this.workspaceState.update(key, value);
+    this.storageState.update(key, value);
   }
 }
 
