@@ -16,6 +16,10 @@ and this project adheres to
   allowing to cleanly shut down `git mergetool` when VS Code is closed,
   deleting the temporary merge conflict files in the process.
 
+### Changed
+
+- Slight optimization of the speed of the diff layout stop
+
 ### Fixed
 
 - Large reworking of the mergetool process management, fixing several bugs

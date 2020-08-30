@@ -121,9 +121,6 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.watchingDisposables = [];
 
       if (!gridIsOk) {
-        // focus sidebar to have it open
-        await vscode.commands.executeCommand("workbench.action.focusSideBar");
-
         if (
           this.vSCodeConfigurator.get(quickLayoutDeactivationSettingID) ===
           true
@@ -135,6 +132,9 @@ export class SplitDiffLayouter implements DiffLayouter {
         } else {
           await this.closeTopEditorOfEachGroupIfOurs();
         }
+        // focus sidebar to have it open
+        await vscode.commands.executeCommand("workbench.action.focusSideBar");
+        await vscode.commands.executeCommand(focusFirstEditorGroupCommandID);
       }
 
       await this.temporarySideBySideSettingsManager.resetSettings();
@@ -442,10 +442,12 @@ export type GroupOrEditorDescription =
   | EditorGroupDescription
   | DiffEditorDescription;
 
+const focusFirstEditorGroupCommandID =
+  "workbench.action.focusFirstEditorGroup";
 const focusEditorGroupCommandIDs: {
   [key: number]: string | undefined;
 } = {
-  0: "workbench.action.focusFirstEditorGroup",
+  0: focusFirstEditorGroupCommandID,
   1: "workbench.action.focusSecondEditorGroup",
   2: "workbench.action.focusThirdEditorGroup",
   3: "workbench.action.focusFourthEditorGroup",
