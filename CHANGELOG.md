@@ -12,6 +12,9 @@ and this project adheres to
 
 ### Added
 
+- Powerful new command: “Start mergetool, go to next conflict, or do commit”.
+  This combines several commands of the extension into one
+  and guides through the whole merge process.
 - Terminal process detached from renderer process,
   allowing to cleanly shut down `git mergetool` when VS Code is closed,
   deleting the temporary merge conflict files in the process.

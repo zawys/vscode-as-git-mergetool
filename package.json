@@ -90,6 +90,11 @@
         "category": "Git"
       },
       {
+        "command": "vscode-as-git-mergetool.nextMergeStep",
+        "title": "Start mergetool, go to next conflict, or do commit",
+        "category": "Git Mergetool"
+      },
+      {
         "command": "vscode-as-git-mergetool.mergeArbitraryFiles",
         "title": "Merge arbitrary files",
         "category": "Git Mergetool"

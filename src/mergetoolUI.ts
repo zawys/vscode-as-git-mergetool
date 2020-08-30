@@ -21,6 +21,7 @@ export class MergetoolUI {
       [gitMergetoolMergeSituationCommandID, this.reopenMergeSituation],
       [gitMergeAbortCommandID, this.abortMerge],
       [gitCommitCommandID, this.commitActiveCommitMessage],
+      [nextMergeStepCommandID, this.doNextStepInMergeProcess],
       /* eslint-enable @typescript-eslint/unbound-method */
     ];
     for (const [commandID, handler] of commands) {
@@ -136,34 +137,6 @@ export class MergetoolUI {
     }
   }
 
-  private async continueMergetoolInner(): Promise<void> {
-    await this.diffLayouterManager.save();
-    await this.diffLayouterManager.deactivateLayout();
-    this.mergeSituation = undefined;
-    await this.processManager?.continue();
-  }
-
-  public async skipFile(): Promise<void> {
-    if (!this.checkMonitorNotInUse()) {
-      return;
-    }
-    await this.monitor.enter();
-    try {
-      if (
-        !this.assertMergetoolActiveInteractively() ||
-        !this.assertMergeSituationOpenedInteractively()
-      ) {
-        return;
-      }
-      await this.diffLayouterManager.save();
-      await this.diffLayouterManager.deactivateLayout();
-      this.mergeSituation = undefined;
-      await this.processManager?.skip();
-    } finally {
-      await this.monitor.leave();
-    }
-  }
-
   public async stopMergetoolInteractively(): Promise<void> {
     if (!this.checkMonitorNotInUse()) {
       return;
@@ -271,6 +244,28 @@ export class MergetoolUI {
     }
   }
 
+  public async doNextStepInMergeProcess(): Promise<void> {
+    if (!this.checkMonitorNotInUse()) {
+      return;
+    }
+    const document = vscode.window.activeTextEditor?.document;
+    if (document?.languageId === "git-commit") {
+      await this.commitActiveCommitMessage();
+      return;
+    }
+    if (!this.mergeSituationInLayout) {
+      await this.startMergetool();
+      return;
+    }
+    const focusResult = this.diffLayouterManager.focusMergeConflict(
+      SearchType.next
+    );
+    if (focusResult !== true) {
+      await this.continueMergetool();
+      return;
+    }
+  }
+
   public dispose(): void {
     this.registeredDisposables.forEach((item) => void item?.dispose());
     this.registeredDisposables = [];
@@ -302,6 +297,34 @@ export class MergetoolUI {
       return false;
     }
     return true;
+  }
+
+  private async continueMergetoolInner(): Promise<void> {
+    await this.diffLayouterManager.save();
+    await this.diffLayouterManager.deactivateLayout();
+    this.mergeSituation = undefined;
+    await this.processManager?.continue();
+  }
+
+  public async skipFile(): Promise<void> {
+    if (!this.checkMonitorNotInUse()) {
+      return;
+    }
+    await this.monitor.enter();
+    try {
+      if (
+        !this.assertMergetoolActiveInteractively() ||
+        !this.assertMergeSituationOpenedInteractively()
+      ) {
+        return;
+      }
+      await this.diffLayouterManager.save();
+      await this.diffLayouterManager.deactivateLayout();
+      this.mergeSituation = undefined;
+      await this.processManager?.skip();
+    } finally {
+      await this.monitor.leave();
+    }
   }
 
   private async stopMergetoolInner(): Promise<void> {
@@ -404,7 +427,7 @@ export class MergetoolUI {
   }
 
   private assertMergeSituationOpenedInteractively(): boolean {
-    if (!this.mergeSituationInLayout || this.mergeSituation === undefined) {
+    if (!this.mergeSituationInLayout) {
       void vscode.window.showErrorMessage(
         "You need to have the merge situation opened."
       );
@@ -496,3 +519,4 @@ const gitMergetoolMergeSituationCommandID = `${extensionID}.gitMergetoolReopenMe
 const gitMergeAbortCommandID = `${extensionID}.gitMergeAbort`;
 const gitCommitCommandID = `${extensionID}.commit`;
 const editCommitMessageAfterMergetoolSettingID = `${extensionID}.editCommitMessageAfterMergetool`;
+const nextMergeStepCommandID = `${extensionID}.nextMergeStep`;

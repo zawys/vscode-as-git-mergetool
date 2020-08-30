@@ -373,7 +373,9 @@ export function focusMergeConflict(
       const linePosition = new vscode.Position(lineIndex, 0);
       editor.revealRange(
         new vscode.Range(linePosition, linePosition),
-        vscode.TextEditorRevealType.AtTop
+        type === SearchType.first
+          ? vscode.TextEditorRevealType.AtTop
+          : vscode.TextEditorRevealType.InCenterIfOutsideViewport
       );
       editor.selection = new vscode.Selection(linePosition, linePosition);
       return true;
