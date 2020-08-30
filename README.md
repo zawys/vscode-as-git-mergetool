@@ -12,6 +12,9 @@ directly in VS Code.
 
 [Demo screencast](./media/unpackaged/demo.mp4)
 
+> Do you have a minute? You could help by upvoting needed API features.
+> See [Contribute](#Contribute).
+
 ## Features
 
 - Assists in setting up suitable Git and VS Code configuration options,
