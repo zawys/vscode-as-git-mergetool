@@ -183,7 +183,53 @@
           "group": "navigation"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "vscode-as-git-mergetool.nextMergeStep",
+        "key": "alt+shift+m m"
+      },
+      {
+        "command": "merge-conflict.accept.current",
+        "key": "alt+shift+m c"
+      },
+      {
+        "command": "merge-conflict.accept.all-current",
+        "key": "alt+shift+m ctrl+c"
+      },
+      {
+        "command": "merge-conflict.accept.incoming",
+        "key": "alt+shift+m i"
+      },
+      {
+        "command": "merge-conflict.accept.all-incoming",
+        "key": "alt+shift+m ctrl+i"
+      },
+      {
+        "command": "merge-conflict.accept.both",
+        "key": "alt+shift+m b"
+      },
+      {
+        "command": "merge-conflict.accept.all-both",
+        "key": "alt+shift+m ctrl+b"
+      },
+      {
+        "key": "shift+alt+m n",
+        "command": "merge-conflict.next"
+      },
+      {
+        "key": "shift+alt+m p",
+        "command": "merge-conflict.previous"
+      },
+      {
+        "key": "shift+alt+m s",
+        "command": "vscode-as-git-mergetool.gitMergetoolSkip"
+      },
+      {
+        "key": "shift+alt+m a",
+        "command": "vscode-as-git-mergetool.gitMergeAbort"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p ./",

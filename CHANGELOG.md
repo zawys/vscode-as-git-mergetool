@@ -12,6 +12,8 @@ and this project adheres to
 
 ### Added
 
+- Keybindings: Most functionality is now available as keyboard shortcuts
+  by first typing `shift+alt+m` and then a single letter.
 - Powerful new command: “Start mergetool, go to next conflict, or do commit”.
   This combines several commands of the extension into one
   and guides through the whole merge process.
