@@ -103,7 +103,7 @@ which provide no additional information or ideas.
 
 - [#105487: Invoke initial command via process arguments](https://github.com/microsoft/vscode/issues/105487):
 
-  That could allow for using the mergetool functionality
+  For using the mergetool functionality
   via the command line independent from Git’s file naming convention.
 
 ## Build
