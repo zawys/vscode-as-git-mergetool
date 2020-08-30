@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import * as mergetool from "./mergetool";
+import * as mergetool from "./mergetoolUI";
 import { SettingsAssistantCreator } from "./settingsAssistant";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { defaultExtensionContextManager } from "./extensionContextManager";
@@ -24,7 +24,7 @@ export async function deactivate(): Promise<void> {
 export class Extension {
   public async activate(): Promise<void> {
     await this.diffLayouterManager.register();
-    this.mergetoolProcess.register();
+    this.mergetoolUI.register();
     this.arbitraryFilesMerger.register();
     setTimeout(() => void new SettingsAssistantCreator().tryLaunch(), 4000);
   }
@@ -33,13 +33,13 @@ export class Extension {
     if (this.timer !== undefined) {
       clearTimeout(this.timer);
     }
-    this.mergetoolProcess.dispose();
+    this.mergetoolUI.dispose();
     await this.diffLayouterManager.dispose();
   }
 
   public constructor(
     private readonly diffLayouterManager = new DiffLayouterManager(),
-    private readonly mergetoolProcess = new mergetool.MergetoolProcess(
+    private readonly mergetoolUI = new mergetool.MergetoolUI(
       diffLayouterManager
     ),
     private readonly arbitraryFilesMerger = new ArbitraryFilesMerger(

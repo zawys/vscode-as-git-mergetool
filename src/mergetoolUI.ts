@@ -4,13 +4,13 @@ import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { FileType, getFileType } from "./fsAsync";
 import { getWorkingDirectoryUriInteractively } from "./getPaths";
-import { GitMergetoolManager } from "./gitMergetoolManager";
+import { MergetoolProcessManager } from "./mergetoolProcessManager";
 import { extensionID, labelsInStatusBarSettingID } from "./iDs";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
 import { Monitor } from "./monitor";
 import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 
-export class MergetoolProcess {
+export class MergetoolUI {
   public register(): void {
     const commands: [string, () => unknown][] = [
       /* eslint-disable @typescript-eslint/unbound-method */
@@ -44,23 +44,23 @@ export class MergetoolProcess {
     }
     await this.monitor.enter();
     try {
-      if (this.mergetoolManager?.isRunning === true) {
+      if (this.processManager?.isRunning === true) {
         if (this.mergeSituation !== undefined) {
           await this.reopenMergeSituation();
         }
         return;
       }
-      if (this.mergetoolManager !== undefined) {
+      if (this.processManager !== undefined) {
         return;
       }
-      const newMergetoolManager = new GitMergetoolManager();
-      newMergetoolManager.onDidStop((success) =>
-        this.handleMergetoolStop(newMergetoolManager, success)
+      const newProcessManager = new MergetoolProcessManager();
+      newProcessManager.onDidStop((success) =>
+        this.handleMergetoolStop(newProcessManager, success)
       );
-      if (!(await newMergetoolManager.start())) {
+      if (!(await newProcessManager.start())) {
         return;
       }
-      this.mergetoolManager = newMergetoolManager;
+      this.processManager = newProcessManager;
       await vscode.commands.executeCommand(
         "setContext",
         gitMergetoolRunningID,
@@ -140,7 +140,7 @@ export class MergetoolProcess {
     await this.diffLayouterManager.save();
     await this.diffLayouterManager.deactivateLayout();
     this.mergeSituation = undefined;
-    await this.mergetoolManager?.continue();
+    await this.processManager?.continue();
   }
 
   public async skipFile(): Promise<void> {
@@ -158,7 +158,7 @@ export class MergetoolProcess {
       await this.diffLayouterManager.save();
       await this.diffLayouterManager.deactivateLayout();
       this.mergeSituation = undefined;
-      await this.mergetoolManager?.skip();
+      await this.processManager?.skip();
     } finally {
       await this.monitor.leave();
     }
@@ -208,7 +208,7 @@ export class MergetoolProcess {
     }
     await this.monitor.enter();
     try {
-      if (this.mergetoolManager?.isAvailable) {
+      if (this.processManager?.isAvailable) {
         await this.stopMergetoolInner();
       }
       await createBackgroundGitTerminal({
@@ -274,7 +274,7 @@ export class MergetoolProcess {
   public dispose(): void {
     this.registeredDisposables.forEach((item) => void item?.dispose());
     this.registeredDisposables = [];
-    this.mergetoolManager?.dispose();
+    this.processManager?.dispose();
   }
 
   public constructor(
@@ -291,7 +291,7 @@ export class MergetoolProcess {
     "statusBar.foreground"
   );
   private mergeSituation: DiffedURIs | undefined = undefined;
-  private mergetoolManager: GitMergetoolManager | undefined;
+  private processManager: MergetoolProcessManager | undefined;
   private registeredDisposables: (vscode.Disposable | undefined)[] = [];
 
   private checkMonitorNotInUse(): boolean {
@@ -313,9 +313,9 @@ export class MergetoolProcess {
     await this.diffLayouterManager.deactivateLayout();
     this.disposeStatusBarItems();
     this.mergeSituation = undefined;
-    if (this.mergetoolManager !== undefined) {
-      void this.mergetoolManager.startStopping();
-      this.mergetoolManager = undefined;
+    if (this.processManager !== undefined) {
+      void this.processManager.startStopping();
+      this.processManager = undefined;
     }
   }
 
@@ -345,12 +345,12 @@ export class MergetoolProcess {
   }
 
   private async handleMergetoolStop(
-    mergetoolManager: GitMergetoolManager,
+    processManager: MergetoolProcessManager,
     success: boolean
   ) {
     await this.monitor.enter();
     try {
-      if (this.mergetoolManager !== mergetoolManager) {
+      if (this.processManager !== processManager) {
         return;
       }
       await this.diffLayouterManager.deactivateLayout();
@@ -387,14 +387,14 @@ export class MergetoolProcess {
   }
 
   private assertMergetoolActiveInteractively(): boolean {
-    if (!this.mergetoolManager?.isRunning) {
+    if (!this.processManager?.isRunning) {
       void vscode.window.showErrorMessage(
         "There is no running `git mergetool` process which " +
           "is controlled by VS Code."
       );
       return false;
     }
-    if (!this.mergetoolManager.isAvailable) {
+    if (!this.processManager.isAvailable) {
       void vscode.window.showErrorMessage(
         "The `git mergetool` process is currently stopping."
       );
@@ -423,7 +423,7 @@ export class MergetoolProcess {
     const showLabel =
       this.vSCodeConfigurator.get(labelsInStatusBarSettingID) === true;
     this.statusBarItems = [];
-    if (this.mergetoolManager?.isAvailable !== true) {
+    if (this.processManager?.isAvailable !== true) {
       return;
     }
     this.statusBarItems.push(
@@ -480,7 +480,7 @@ export class MergetoolProcess {
     );
     result.text = text;
     result.command = command;
-    result.color = MergetoolProcess.statusBarItemColor;
+    result.color = MergetoolUI.statusBarItemColor;
     result.tooltip = tooltip;
     result.show();
     return result;

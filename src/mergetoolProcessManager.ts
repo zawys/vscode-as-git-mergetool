@@ -8,7 +8,7 @@ import {
 } from "./getPaths";
 import { TerminalProcessManager } from "./terminalProcessManager";
 
-export class GitMergetoolManager implements Disposable {
+export class MergetoolProcessManager implements Disposable {
   public async start(): Promise<boolean> {
     if (!this.isInitial) {
       return false;
@@ -75,7 +75,7 @@ export class GitMergetoolManager implements Disposable {
       15
     );
     this.stopStatusMessage.text = "Stopping `git mergetool`…";
-    this.stopStatusMessage.color = GitMergetoolManager.statusBarItemColor;
+    this.stopStatusMessage.color = MergetoolProcessManager.statusBarItemColor;
     this.stopStatusMessage.show();
     await this.processManager?.handleInput("n\nn\n");
     await new Promise((resolve) => setTimeout(resolve, 1000));
