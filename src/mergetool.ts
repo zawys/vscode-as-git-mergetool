@@ -320,7 +320,10 @@ export class MergetoolProcess {
   }
 
   private get mergeSituationInLayout(): boolean {
-    return this.mergeSituation === this.diffLayouterManager.diffedURIs;
+    return (
+      this.mergeSituation !== undefined &&
+      this.diffLayouterManager.diffedURIs?.equals(this.mergeSituation) === true
+    );
   }
 
   private handleDidLayoutDeactivate() {
