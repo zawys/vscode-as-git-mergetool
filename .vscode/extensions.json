@@ -4,6 +4,7 @@
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "rlnt.keep-a-changelog"
+    "rlnt.keep-a-changelog",
+    "davidanson.vscode-markdownlint"
   ]
 }
