@@ -1,4 +1,8 @@
 {
   "no-duplicate-header": false,
-  "no-inline-html": false
+  "no-inline-html": false,
+  "line-length": {
+    "strict": false,
+    "line_length": 79
+  }
 }
