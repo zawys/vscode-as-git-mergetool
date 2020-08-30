@@ -86,6 +86,26 @@ There is also a 3-column layout available.
   to stop the diff editor layout.
   Auto save is useful, too.
 
+## Contribute
+
+Feel free to file feature requests and bug reports
+[on GitHub](https://github.com/zawys/vscode-as-git-mergetool/issues).
+
+👉 **You can help making new features for this extension possible
+by adding your 👍 to following issues
+([info](https://github.com/microsoft/vscode/wiki/Issues-Triaging#up-voting-a-feature-request)).**
+But DO NOT post comments there
+which provide no additional information or ideas.
+
+- [#105625: API for reacting to and setting horizontal scroll position](https://github.com/microsoft/vscode/issues/105625):
+
+  For synchronized horizontal scrolling.
+
+- [#105487: Invoke initial command via process arguments](https://github.com/microsoft/vscode/issues/105487):
+
+  That could allow for using the mergetool functionality
+  via the command line independent from Git’s file naming convention.
+
 ## Build
 
 1. [Install Yarn globally](https://classic.yarnpkg.com/en/docs/install)
@@ -93,18 +113,6 @@ There is also a 3-column layout available.
 3. `yarn run build`
 
    The generated VSIX should then be in `packages/`.
-
-## Contribute
-
-Feel free to file feature requests and bug reports
-[on GitHub](https://github.com/zawys/vscode-as-git-mergetool/issues).
-
-You can support the development of new features for this extension
-by adding your 👍 to following issues.
-But DO NOT post comments there which provide no additional information:
-
-- [#105625: API for reacting to and setting horizontal scroll position](https://github.com/microsoft/vscode/issues/105625)
-- [#105487: Invoke initial command via process arguments](https://github.com/microsoft/vscode/issues/105487)
 
 ### Development environment setup
 
