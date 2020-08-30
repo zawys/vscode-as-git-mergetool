@@ -10,6 +10,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.4.0] - 2020-08-30
+
 ### Added
 
 - Keybindings: Most functionality is now available as keyboard shortcuts
@@ -128,7 +130,9 @@ and this project adheres to
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.2.2...HEAD
+[unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.4.0
+[0.3.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.3.0
 [0.2.2]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.2.2
 [0.2.1]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.2.1
 [0.2.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.2.0
