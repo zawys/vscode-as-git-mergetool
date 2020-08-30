@@ -10,6 +10,16 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Terminal process detached from renderer process,
+  allowing to cleanly shut down `git mergetool` when VS Code is closed,
+  deleting the temporary merge conflict files in the process.
+
+### Fixed
+
+- Large reworking of the mergetool process management, fixing several bugs
+
 ## [0.3.0] - 2020-08-30
 
 ### Changed

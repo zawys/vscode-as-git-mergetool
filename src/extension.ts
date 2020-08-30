@@ -33,10 +33,8 @@ export class Extension {
     if (this.timer !== undefined) {
       clearTimeout(this.timer);
     }
-    await Promise.all([
-      this.diffLayouterManager.dispose(),
-      this.mergetoolProcess.dispose(),
-    ]);
+    this.mergetoolProcess.dispose();
+    await this.diffLayouterManager.dispose();
   }
 
   public constructor(

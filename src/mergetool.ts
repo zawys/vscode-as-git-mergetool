@@ -1,11 +1,13 @@
 import * as vscode from "vscode";
 import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
-import { DiffedURIs, uRIsOrUndefEqual } from "./diffedURIs";
-import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
+import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
-import { extensionID, labelsInStatusBarSettingID } from "./iDs";
 import { FileType, getFileType } from "./fsAsync";
-import { getWorkingDirectoryUri } from "./getPaths";
+import { getWorkingDirectoryUriInteractively } from "./getPaths";
+import { GitMergetoolManager } from "./gitMergetoolManager";
+import { extensionID, labelsInStatusBarSettingID } from "./iDs";
+import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
+import { Monitor } from "./monitor";
 import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class MergetoolProcess {
@@ -37,37 +39,47 @@ export class MergetoolProcess {
   }
 
   public async startMergetool(): Promise<void> {
-    if (this.mergetoolRunning) {
-      await this.reopenMergeSituation();
+    if (!this.checkMonitorNotInUse()) {
       return;
     }
-    this.mergetoolRunning = true;
-    this.mergetoolTerm = await createBackgroundGitTerminal({
-      shellArgs: ["mergetool"],
-      env: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        LANG: "POSIX",
-      },
-    });
-    if (this.mergetoolTerm === undefined) {
-      return;
+    await this.monitor.enter();
+    try {
+      if (this.mergetoolManager?.isRunning === true) {
+        if (this.mergeSituation !== undefined) {
+          await this.reopenMergeSituation();
+        }
+        return;
+      }
+      if (this.mergetoolManager !== undefined) {
+        return;
+      }
+      const newMergetoolManager = new GitMergetoolManager();
+      newMergetoolManager.onDidStop((success) =>
+        this.handleMergetoolStop(newMergetoolManager, success)
+      );
+      if (!(await newMergetoolManager.start())) {
+        return;
+      }
+      this.mergetoolManager = newMergetoolManager;
+      await vscode.commands.executeCommand(
+        "setContext",
+        gitMergetoolRunningID,
+        true
+      );
+      this.updateStatusBarItems();
+      // layout launches automatically by detecting an opened *_BASE_* file
+    } finally {
+      await this.monitor.leave();
     }
-    this.termCloseListener = vscode.window.onDidCloseTerminal(
-      this.handleMergetoolTerminalClose.bind(this)
-    );
-    await vscode.commands.executeCommand(
-      "setContext",
-      gitMergetoolRunningID,
-      true
-    );
-    this.updateStatusBarItems();
-    // layout launches automatically by detecting an opened *_BASE_* file
   }
 
   public async continueMergetool(): Promise<void> {
-    let acceptIndicators = false;
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    if (!this.checkMonitorNotInUse()) {
+      return;
+    }
+    await this.monitor.enter();
+    try {
+      // eslint-disable-next-line no-constant-condition
       if (
         !this.assertMergetoolActiveInteractively() ||
         !this.assertMergeSituationOpenedInteractively()
@@ -83,47 +95,88 @@ export class MergetoolProcess {
         );
         return;
       }
-      if (!acceptIndicators && focusResult !== false) {
-        const cancel = "Cancel";
-        const acceptIncludedIndicators = "Accept included indicators";
-        const result = await vscode.window.showErrorMessage(
-          "Merged file contains Git merge conflict indicators.",
-          cancel,
-          acceptIncludedIndicators
-        );
-        if (result !== acceptIncludedIndicators) {
-          return;
-        } else {
-          acceptIndicators = true;
-          continue;
-        }
+      if (!focusResult) {
+        await this.continueMergetoolInner();
+        return;
       }
-      break;
+    } finally {
+      await this.monitor.leave();
     }
+    const situation = this.mergeSituation;
+    const cancel = "Cancel";
+    const acceptIncludedIndicators = "Accept included indicators";
+    const result = await vscode.window.showWarningMessage(
+      "Merged file contains Git merge conflict indicators.",
+      cancel,
+      acceptIncludedIndicators
+    );
+    if (result !== acceptIncludedIndicators) {
+      return;
+    }
+    await this.monitor.enter();
+    try {
+      if (
+        situation === undefined ||
+        this.mergeSituation?.equals(situation) !== true
+      ) {
+        void vscode.window.showErrorMessage(
+          "The situation has changed. Reopen the situation and try again."
+        );
+        return;
+      }
+      if (
+        !this.assertMergetoolActiveInteractively() ||
+        !this.assertMergeSituationOpenedInteractively()
+      ) {
+        return;
+      }
+      await this.continueMergetoolInner();
+    } finally {
+      await this.monitor.leave();
+    }
+  }
+
+  private async continueMergetoolInner(): Promise<void> {
     await this.diffLayouterManager.save();
     await this.diffLayouterManager.deactivateLayout();
     this.mergeSituation = undefined;
-    this.mergetoolTerm?.sendText("y\n");
+    await this.mergetoolManager?.continue();
   }
 
   public async skipFile(): Promise<void> {
-    if (
-      !this.assertMergetoolActiveInteractively() ||
-      !this.assertMergeSituationOpenedInteractively()
-    ) {
+    if (!this.checkMonitorNotInUse()) {
       return;
     }
-    await this.diffLayouterManager.save();
-    await this.diffLayouterManager.deactivateLayout();
-    this.mergeSituation = undefined;
-    this.mergetoolTerm?.sendText("n\ny\n");
+    await this.monitor.enter();
+    try {
+      if (
+        !this.assertMergetoolActiveInteractively() ||
+        !this.assertMergeSituationOpenedInteractively()
+      ) {
+        return;
+      }
+      await this.diffLayouterManager.save();
+      await this.diffLayouterManager.deactivateLayout();
+      this.mergeSituation = undefined;
+      await this.mergetoolManager?.skip();
+    } finally {
+      await this.monitor.leave();
+    }
   }
 
   public async stopMergetoolInteractively(): Promise<void> {
-    if (!this.assertMergetoolActiveInteractively()) {
+    if (!this.checkMonitorNotInUse()) {
       return;
     }
-    await this.stopMergetool();
+    await this.monitor.enter();
+    try {
+      if (!this.assertMergetoolActiveInteractively()) {
+        return;
+      }
+      await this.stopMergetoolInner();
+    } finally {
+      await this.monitor.leave();
+    }
   }
 
   public async abortMerge(): Promise<void> {
@@ -149,123 +202,125 @@ export class MergetoolProcess {
     if (pickedItem === nothing || pickedItem === undefined) {
       return;
     }
-    if (this.mergetoolRunning && !this.mergetoolStopping) {
-      await this.stopMergetool();
+
+    if (!this.checkMonitorNotInUse()) {
+      return;
     }
-    await createBackgroundGitTerminal({
-      shellArgs: ["merge", pickedItem === abortMerge ? "--abort" : "--quit"],
-    });
+    await this.monitor.enter();
+    try {
+      if (this.mergetoolManager?.isAvailable) {
+        await this.stopMergetoolInner();
+      }
+      await createBackgroundGitTerminal({
+        shellArgs: ["merge", pickedItem === abortMerge ? "--abort" : "--quit"],
+      });
+    } finally {
+      await this.monitor.leave();
+    }
   }
 
   public async commitActiveCommitMessage(): Promise<void> {
-    const document = vscode.window.activeTextEditor?.document;
-    if (document?.languageId !== "git-commit") {
+    if (!this.checkMonitorNotInUse()) {
       return;
     }
-    await document.save();
-    const term = await createBackgroundGitTerminal({
-      shellArgs: ["commit", "--no-edit", `--file=${document.fileName}`],
-    });
-    term?.show(true);
-    await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+    await this.monitor.enter();
+    try {
+      const document = vscode.window.activeTextEditor?.document;
+      if (document?.languageId !== "git-commit") {
+        return;
+      }
+      await document.save();
+      const term = await createBackgroundGitTerminal({
+        shellArgs: ["commit", "--no-edit", `--file=${document.fileName}`],
+      });
+      term?.show(true);
+      await vscode.commands.executeCommand(
+        "workbench.action.closeActiveEditor"
+      );
+    } finally {
+      await this.monitor.leave();
+    }
   }
 
   public async reopenMergeSituation(): Promise<void> {
-    if (this.mergeSituation === undefined) {
-      void vscode.window.showErrorMessage(
-        "No merge situation registered. " +
-          "Try to open the *_BASE_* file manually."
-      );
+    if (!this.checkMonitorNotInUse()) {
       return;
     }
-    if (this.mergeSituationInLayout) {
-      vscode.window.setStatusBarMessage(
-        "Merge situation should already be displayed.",
-        5000
+    await this.monitor.enter();
+    try {
+      if (this.mergeSituation === undefined) {
+        void vscode.window.showErrorMessage(
+          "No merge situation registered. " +
+            "Try to open the *_BASE_* file manually."
+        );
+        return;
+      }
+      if (this.mergeSituationInLayout) {
+        vscode.window.setStatusBarMessage(
+          "Merge situation should already be displayed.",
+          5000
+        );
+        return;
+      }
+      await vscode.commands.executeCommand(
+        "vscode.open",
+        this.mergeSituation.base
       );
-      return;
+    } finally {
+      await this.monitor.leave();
     }
-    await vscode.commands.executeCommand(
-      "vscode.open",
-      this.mergeSituation.base
-    );
   }
 
-  public async stopMergetool(): Promise<void> {
-    this.mergetoolStopping = true;
+  public dispose(): void {
+    this.registeredDisposables.forEach((item) => void item?.dispose());
+    this.registeredDisposables = [];
+    this.mergetoolManager?.dispose();
+  }
+
+  public constructor(
+    private readonly diffLayouterManager: DiffLayouterManager,
+    private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
+    private readonly monitor = new Monitor()
+  ) {}
+
+  /**
+   * implies `mergetoolRunning`
+   */
+  private statusBarItems: vscode.StatusBarItem[] | undefined = undefined;
+  private static readonly statusBarItemColor = new vscode.ThemeColor(
+    "statusBar.foreground"
+  );
+  private mergeSituation: DiffedURIs | undefined = undefined;
+  private mergetoolManager: GitMergetoolManager | undefined;
+  private registeredDisposables: (vscode.Disposable | undefined)[] = [];
+
+  private checkMonitorNotInUse(): boolean {
+    if (this.monitor.inUse) {
+      void vscode.window.showErrorMessage(
+        "Another operation is pending. Please try again later."
+      );
+      return false;
+    }
+    return true;
+  }
+
+  private async stopMergetoolInner(): Promise<void> {
     await vscode.commands.executeCommand(
       "setContext",
       gitMergetoolRunningID,
       false
     );
     await this.diffLayouterManager.deactivateLayout();
-    this.termCloseListener?.dispose();
-    this.termCloseListener = undefined;
     this.disposeStatusBarItems();
     this.mergeSituation = undefined;
-    if (this.mergetoolTerm !== undefined) {
-      const stopStatusMessage = vscode.window.createStatusBarItem(
-        vscode.StatusBarAlignment.Left,
-        15
-      );
-      stopStatusMessage.text = "Stopping `git mergetool`…";
-      stopStatusMessage.color = MergetoolProcess.statusBarItemColor;
-      stopStatusMessage.show();
-      this.mergetoolTerm.sendText("n\nn\n");
-      this.mergetoolTerm.show();
-      const term = this.mergetoolTerm;
-      await new Promise((resolve) => {
-        this.stopMergetoolListener = vscode.window.onDidCloseTerminal((t) => {
-          if (term === t) {
-            resolve();
-          }
-        });
-      });
-      this.mergetoolTerm.dispose();
-      this.mergetoolTerm = undefined;
-      this.stopMergetoolListener?.dispose();
-      this.stopMergetoolListener = undefined;
-      stopStatusMessage.dispose();
+    if (this.mergetoolManager !== undefined) {
+      void this.mergetoolManager.startStopping();
+      this.mergetoolManager = undefined;
     }
-    this.mergetoolRunning = false;
-    this.mergetoolStopping = false;
   }
-
-  public async dispose(): Promise<void> {
-    await this.stopMergetool();
-    this.registeredDisposables.forEach((item) => void item.dispose());
-    this.registeredDisposables = [];
-  }
-
-  public constructor(
-    private readonly diffLayouterManager: DiffLayouterManager,
-    private readonly vSCodeConfigurator = defaultVSCodeConfigurator
-  ) {}
-
-  private mergetoolRunning = false;
-  /**
-   * implies `mergetoolRunning`
-   */
-  private mergetoolStopping = false;
-  private mergetoolTerm: vscode.Terminal | undefined = undefined;
-  private termCloseListener: vscode.Disposable | undefined = undefined;
-  private statusBarItems: vscode.StatusBarItem[] | undefined = undefined;
-  private stopMergetoolListener: vscode.Disposable | undefined = undefined;
-  private static readonly statusBarItemColor = new vscode.ThemeColor(
-    "statusBar.foreground"
-  );
-  private mergeSituation: DiffedURIs | undefined = undefined;
-  private registeredDisposables: vscode.Disposable[] = [];
 
   private get mergeSituationInLayout(): boolean {
-    return (
-      this.mergeSituation !== undefined &&
-      this.diffLayouterManager.diffedURIs !== undefined &&
-      uRIsOrUndefEqual(
-        this.mergeSituation.base,
-        this.diffLayouterManager.diffedURIs.base
-      )
-    );
+    return this.mergeSituation === this.diffLayouterManager.diffedURIs;
   }
 
   private handleDidLayoutDeactivate() {
@@ -286,27 +341,23 @@ export class MergetoolProcess {
     }
   }
 
-  private async handleMergetoolTerminalClose(closedTerminal: vscode.Terminal) {
-    if (closedTerminal !== this.mergetoolTerm || this.mergetoolStopping) {
-      return;
-    }
-    if (closedTerminal.exitStatus?.code === undefined) {
-      void vscode.window.showWarningMessage(
-        `\`git mergetool\` exited with unknown exit status.`
-      );
-    } else if (closedTerminal.exitStatus?.code !== 0) {
-      const returnCode = closedTerminal.exitStatus?.code;
-      void vscode.window.showErrorMessage(
-        `\`git mergetool\` returned ${returnCode}`
-      );
-    } else {
-      vscode.window.setStatusBarMessage("`git mergetool` succeeded.", 15000);
+  private async handleMergetoolStop(
+    mergetoolManager: GitMergetoolManager,
+    success: boolean
+  ) {
+    await this.monitor.enter();
+    try {
+      if (this.mergetoolManager !== mergetoolManager) {
+        return;
+      }
       await this.diffLayouterManager.deactivateLayout();
-      await this.jumpToCommitMsg();
+      await this.stopMergetoolInner();
+      if (success) {
+        await this.jumpToCommitMsg();
+      }
+    } finally {
+      await this.monitor.leave();
     }
-    this.mergetoolTerm?.dispose();
-    this.mergetoolTerm = undefined;
-    await this.stopMergetool();
   }
 
   private async jumpToCommitMsg() {
@@ -314,7 +365,7 @@ export class MergetoolProcess {
     if (
       defaultVSCodeConfigurator.get(editCommitMessageAfterMergetoolSettingID)
     ) {
-      const workspaceRoot = getWorkingDirectoryUri();
+      const workspaceRoot = getWorkingDirectoryUriInteractively();
       if (workspaceRoot !== undefined) {
         const commitMessagePath = vscode.Uri.joinPath(
           workspaceRoot,
@@ -333,14 +384,14 @@ export class MergetoolProcess {
   }
 
   private assertMergetoolActiveInteractively(): boolean {
-    if (!this.mergetoolRunning) {
+    if (!this.mergetoolManager?.isRunning) {
       void vscode.window.showErrorMessage(
         "There is no running `git mergetool` process which " +
           "is controlled by VS Code."
       );
       return false;
     }
-    if (this.mergetoolStopping) {
+    if (!this.mergetoolManager.isAvailable) {
       void vscode.window.showErrorMessage(
         "The `git mergetool` process is currently stopping."
       );
@@ -369,7 +420,7 @@ export class MergetoolProcess {
     const showLabel =
       this.vSCodeConfigurator.get(labelsInStatusBarSettingID) === true;
     this.statusBarItems = [];
-    if (!this.mergetoolRunning || this.mergetoolStopping) {
+    if (this.mergetoolManager?.isAvailable !== true) {
       return;
     }
     this.statusBarItems.push(

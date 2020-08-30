@@ -16,10 +16,10 @@ export class Monitor {
 
   public async leave(): Promise<void> {
     const thisOperation = this.pendingOperations[0];
-    this.pendingOperations.splice(0, 1);
     while (thisOperation.resolver === undefined) {
       await new Promise((resolve) => setTimeout(resolve, 0));
     }
+    this.pendingOperations.splice(0, 1);
     thisOperation.resolver();
   }
 

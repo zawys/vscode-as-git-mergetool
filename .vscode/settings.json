@@ -10,6 +10,8 @@
   "typescript.tsc.autoDetect": "off",
   "cSpell.words": [
     "AGPL",
+    "OLRE",
+    "Pseudoterminal",
     "Symm",
     "configurator",
     "conflictstyle",

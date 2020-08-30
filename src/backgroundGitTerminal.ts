@@ -1,18 +1,18 @@
 import * as vscode from "vscode";
-import { getGitPathInteractively, getWorkingDirectoryUri } from "./getPaths";
+import {
+  getGitPathInteractively,
+  getWorkingDirectoryUriInteractively,
+} from "./getPaths";
 
 export async function createBackgroundGitTerminal(
   terminalOptions: vscode.TerminalOptions
 ): Promise<vscode.Terminal | undefined> {
-  const workingDirectory = getWorkingDirectoryUri();
-  if (workingDirectory === undefined) {
-    void vscode.window.showErrorMessage(
-      "You need need to have a workspace opened."
-    );
+  const gitPath = await getGitPathInteractively();
+  if (gitPath === undefined) {
     return;
   }
-  const gitPath = await getGitPathInteractively();
-  if (!gitPath) {
+  const workingDirectory = getWorkingDirectoryUriInteractively();
+  if (workingDirectory === undefined) {
     return;
   }
   const term = vscode.window.createTerminal({

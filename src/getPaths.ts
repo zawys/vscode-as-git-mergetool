@@ -27,13 +27,22 @@ export function getWorkingDirectoryUri(): vscode.Uri | undefined {
   }
   if (
     vscode.workspace.workspaceFolders === undefined ||
-    vscode.workspace.workspaceFolders.length === 0
+    vscode.workspace.workspaceFolders.length !== 1
   ) {
     return undefined;
   }
   return vscode.workspace.workspaceFolders[0].uri;
 }
 
+export function getWorkingDirectoryUriInteractively(): vscode.Uri | undefined {
+  const result = getWorkingDirectoryUri();
+  if (result === undefined) {
+    void vscode.window.showErrorMessage(
+      "You need need to have exactly one workspace opened."
+    );
+  }
+  return result;
+}
 let gitPathPromise: Promise<string | undefined> | undefined;
 
 export function getGitPath(): Promise<string | undefined> {
