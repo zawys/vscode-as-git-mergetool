@@ -42,7 +42,7 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
     }
     this.preOpenBuffer = null;
     if (this.closeResult !== null) {
-      this.didClose.fire(this.closeResult);
+      this.emitDidCloseInner(this.closeResult);
     }
   }
   /**
@@ -55,7 +55,7 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
   public register(): void {
     this.childProcess.on("close", (code, signal) => {
       this.writeStatusAndTerminate(`closed with ${code} on signal ${signal}`);
-      this.emitDidClose(code === null ? undefined : code);
+      this.emitDidCloseIfOpen(code === null ? undefined : code);
     });
     this.childProcess.on("disconnect", () => {
       this.writeStatusAndTerminate("disconnected");
@@ -69,7 +69,7 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
             ? ` by signal ${signal}`
             : "")
       );
-      this.emitDidClose(code === null ? undefined : code);
+      this.emitDidCloseIfOpen(code === null ? undefined : code);
     });
     this.childProcess.on("error", (error) =>
       this.writeStatusAndTerminate(
@@ -169,6 +169,7 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
   }
   public constructor(
     public readonly childProcess: cp.ChildProcess,
+    public readonly revealExitCodeToTerminal = true,
     public sigtermTimeoutMS = 1000,
     public sigkillTimeoutMS = 1000
   ) {
@@ -240,18 +241,21 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
   private emitDidTerminate(code: undefined | number) {
     this._isRunning = false;
     if (!this.disposing) {
-      this.emitDidClose(code);
+      this.emitDidCloseIfOpen(code);
       this.didTerminate.fire(code);
     }
   }
-  private emitDidClose(code: undefined | number) {
+  private emitDidCloseIfOpen(code: undefined | number) {
     if (this.closeResult !== null) {
       return;
     }
     this.closeResult = code;
     if (this.preOpenBuffer === null && !this.disposing) {
-      this.didClose.fire(code);
+      this.emitDidCloseInner(code);
     }
+  }
+  private emitDidCloseInner(code: undefined | number) {
+    this.didClose.fire(this.revealExitCodeToTerminal ? code : undefined);
   }
   private deco(text: string): string {
     return `[[ ${text} ]]`;

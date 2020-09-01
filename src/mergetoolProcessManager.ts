@@ -30,7 +30,7 @@ export class MergetoolProcessManager implements Disposable {
         ELECTRON_RUN_AS_NODE: undefined,
       },
     });
-    this.processManager = new TerminalProcessManager(childProcess);
+    this.processManager = new TerminalProcessManager(childProcess, false);
     this.processManager.onWasCloseRequested(() => {
       void this.startStopping(false);
     });

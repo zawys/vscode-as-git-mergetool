@@ -17,6 +17,7 @@ and this project adheres to
   when telling `git mergetool` that the merge was not successful.
 - Showing by which number an editor is reachable in the title
   (reachable using `ctrl+<number>`)
+- Prevent “Terminal process exited …” message from VS Code
 
 ### Changed
 
