@@ -199,7 +199,14 @@ export class MergetoolUI {
     await this.monitor.enter();
     try {
       const document = vscode.window.activeTextEditor?.document;
-      if (document?.languageId !== "git-commit") {
+      if (
+        document?.languageId !== "git-commit" ||
+        (!document?.uri.path.endsWith("/.git/COMMIT_EDITMSG") &&
+          !document?.uri.path.endsWith("/.git/MERGE_MSG"))
+      ) {
+        void vscode.window.showErrorMessage(
+          "Opened file does not seem to be a Git commit message."
+        );
         return;
       }
       await document.save();
