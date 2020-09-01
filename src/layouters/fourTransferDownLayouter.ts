@@ -30,7 +30,7 @@ export class FourTransferDownLayouterFactory implements DiffLayouterFactory {
                 type: diffEditorSymbol,
                 oldUri: diffedURIs.base,
                 newUri: diffedURIs.local,
-                title: "(1) Current changes on base",
+                title: "(1) Current changes on base [readonly]",
                 save: false,
                 size: topSize,
               },
