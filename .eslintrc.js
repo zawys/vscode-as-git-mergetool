@@ -32,5 +32,6 @@ module.exports = {
     "unicorn/no-useless-undefined": "off",
     "unicorn/no-nested-ternary": "off",
     "unicorn/no-null": "off",
+    "prettier/prettier": "warn",
   },
 };
