@@ -15,6 +15,8 @@ and this project adheres to
 - Asking for confirmation and creating a backup when skipping a file,
   as `git mergetool` automatically resets any changes made to the merged file
   when telling `git mergetool` that the merge was not successful.
+- Kill `git mergetool` instead of clean stop
+  to prevent reset without backup on VS Code crash.
 - Showing by which number an editor is reachable in the title
   (reachable using `ctrl+<number>`)
 - Prevent “Terminal process exited …” message from VS Code

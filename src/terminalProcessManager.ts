@@ -238,11 +238,17 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
       });
     }
   }
-  private emitDidTerminate(code: undefined | number) {
+  private emitDidTerminate(codeOnTermination: undefined | number) {
     this._isRunning = false;
     if (!this.disposing) {
-      this.emitDidCloseIfOpen(code);
-      this.didTerminate.fire(code);
+      const emittedCode =
+        codeOnTermination !== undefined
+          ? codeOnTermination
+          : this.closeResult !== null
+          ? this.closeResult
+          : undefined;
+      this.emitDidCloseIfOpen(emittedCode);
+      this.didTerminate.fire(emittedCode);
     }
   }
   private emitDidCloseIfOpen(code: undefined | number) {

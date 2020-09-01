@@ -42,7 +42,7 @@ export class MergetoolProcessManager implements Disposable {
     });
     if (this.terminal === undefined) {
       void vscode.window.showErrorMessage("Failed to create a terminal.");
-      await this.startStopping(false);
+      this.startStopping(false);
       return false;
     }
     return true;
@@ -62,7 +62,7 @@ export class MergetoolProcessManager implements Disposable {
     await this.processManager?.handleInput("n\ny\n");
   }
 
-  public async startStopping(showTerminal = true): Promise<void> {
+  public startStopping(showTerminal = true): void {
     if (!this.isAvailable) {
       return;
     }
@@ -77,8 +77,6 @@ export class MergetoolProcessManager implements Disposable {
     this.stopStatusMessage.text = "Stopping `git mergetool`…";
     this.stopStatusMessage.color = MergetoolProcessManager.statusBarItemColor;
     this.stopStatusMessage.show();
-    await this.processManager?.handleInput("n\nn\n");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     this.processManager?.startTermination();
   }
 
