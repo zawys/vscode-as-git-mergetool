@@ -47,7 +47,7 @@ export class MergetoolUI {
     try {
       if (this.processManager?.isRunning === true) {
         if (this.mergeSituation !== undefined) {
-          await this.reopenMergeSituation();
+          await this.reopenMergeSituationInner();
         }
         return;
       }
@@ -221,24 +221,28 @@ export class MergetoolUI {
     }
     await this.monitor.enter();
     try {
-      if (this.mergeSituation === undefined) {
-        void vscode.window.showErrorMessage(
-          "No merge situation registered. " +
-            "Try to open the *_BASE_* file manually."
-        );
+      await this.reopenMergeSituationInner();
+    } finally {
+      await this.monitor.leave();
+    }
+  }
+
+  public async skipFile(): Promise<void> {
+    if (!this.checkMonitorNotInUse()) {
+      return;
+    }
+    await this.monitor.enter();
+    try {
+      if (
+        !this.assertMergetoolActiveInteractively() ||
+        !this.assertMergeSituationOpenedInteractively()
+      ) {
         return;
       }
-      if (this.mergeSituationInLayout) {
-        vscode.window.setStatusBarMessage(
-          "Merge situation should already be displayed.",
-          5000
-        );
-        return;
-      }
-      await vscode.commands.executeCommand(
-        "vscode.open",
-        this.mergeSituation.base
-      );
+      await this.diffLayouterManager.save();
+      await this.diffLayouterManager.deactivateLayout();
+      this.mergeSituation = undefined;
+      await this.processManager?.skip();
     } finally {
       await this.monitor.leave();
     }
@@ -299,32 +303,32 @@ export class MergetoolUI {
     return true;
   }
 
+  private async reopenMergeSituationInner(): Promise<void> {
+    if (this.mergeSituation === undefined) {
+      void vscode.window.showErrorMessage(
+        "No merge situation registered. " +
+          "Try to open the *_BASE_* file manually."
+      );
+      return;
+    }
+    if (this.mergeSituationInLayout) {
+      vscode.window.setStatusBarMessage(
+        "Merge situation should already be displayed.",
+        5000
+      );
+      return;
+    }
+    await vscode.commands.executeCommand(
+      "vscode.open",
+      this.mergeSituation.base
+    );
+  }
+
   private async continueMergetoolInner(): Promise<void> {
     await this.diffLayouterManager.save();
     await this.diffLayouterManager.deactivateLayout();
     this.mergeSituation = undefined;
     await this.processManager?.continue();
-  }
-
-  public async skipFile(): Promise<void> {
-    if (!this.checkMonitorNotInUse()) {
-      return;
-    }
-    await this.monitor.enter();
-    try {
-      if (
-        !this.assertMergetoolActiveInteractively() ||
-        !this.assertMergeSituationOpenedInteractively()
-      ) {
-        return;
-      }
-      await this.diffLayouterManager.save();
-      await this.diffLayouterManager.deactivateLayout();
-      this.mergeSituation = undefined;
-      await this.processManager?.skip();
-    } finally {
-      await this.monitor.leave();
-    }
   }
 
   private async stopMergetoolInner(): Promise<void> {

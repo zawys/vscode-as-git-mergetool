@@ -10,6 +10,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixes
+
+- Reopening the layout by using the start command failed
+
 ## [0.4.0] - 2020-08-30
 
 ### Added
