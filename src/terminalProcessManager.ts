@@ -103,12 +103,24 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
     this.registerStdoutListener("error", (error) =>
       this.write(this.deco(`error on stderr: ${error.name}, ${error.message}`))
     );
-    this.registerCombinedListener("pause", () =>
-      this.write(this.deco("pause"))
-    );
-    this.registerCombinedListener("resume", () =>
-      this.write(this.deco("resume"))
-    );
+    this.registerStdoutListener("pause", () => {
+      this.stdoutWasPaused = true;
+      this.write(this.deco("pause"));
+    });
+    this.registerStderrListener("pause", () => {
+      this.stderrWasPaused = true;
+      this.write(this.deco("pause"));
+    });
+    this.registerStdoutListener("resume", () => {
+      if (this.stdoutWasPaused) {
+        this.write(this.deco("resume"));
+      }
+    });
+    this.registerStderrListener("resume", () => {
+      if (this.stderrWasPaused) {
+        this.write(this.deco("resume"));
+      }
+    });
   }
   public get onWasCloseRequested(): Event<void> {
     return this.wasCloseRequested.event;
@@ -209,6 +221,8 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
   private closeResult: number | undefined | null = null;
   private preOpenBuffer: string[] | null = [];
   private processInputBuffer: string[] = [];
+  private stdoutWasPaused = false;
+  private stderrWasPaused = false;
 
   private writeStatusAndTerminate(status: string) {
     this.write(this.deco(status));
