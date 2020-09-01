@@ -90,6 +90,9 @@ export class DiffLayouterManager {
   public get onDidLayoutActivate(): vscode.Event<DiffLayouter> {
     return this.didLayoutActivate.event;
   }
+  public get onDidLayoutReact(): vscode.Event<void> {
+    return this.didMergetoolReact.event;
+  }
 
   public get diffedURIs(): DiffedURIs | undefined {
     return this.layouter?.isActivating || this.layouter?.isActive
@@ -191,6 +194,7 @@ export class DiffLayouterManager {
     DiffLayouter
   >();
   private readonly didLayoutActivate = new vscode.EventEmitter<DiffLayouter>();
+  private readonly didMergetoolReact = new vscode.EventEmitter<void>();
 
   /**
    *
@@ -208,6 +212,7 @@ export class DiffLayouterManager {
     if (diffedURIs === undefined || !(await filesExist(diffedURIs))) {
       return false;
     }
+    this.didMergetoolReact.fire();
     return await this.openDiffedURIs(diffedURIs);
   }
 

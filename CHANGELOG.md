@@ -19,6 +19,7 @@ and this project adheres to
   to prevent reset without backup on VS Code crash.
 - Showing by which number an editor is reachable in the title
   (reachable using `ctrl+<number>`)
+- When `git mergetool` does not seem to respond, show terminal
 - Prevent “Terminal process exited …” message from VS Code
 
 ### Changed

@@ -35,7 +35,10 @@ export class MergetoolUI {
       ),
       this.diffLayouterManager.onDidLayoutActivate(
         this.handleDidLayoutActivate.bind(this)
-      )
+      ),
+      this.diffLayouterManager.onDidLayoutReact(() => {
+        this.processManager?.setMergetoolReacted();
+      })
     );
   }
 
