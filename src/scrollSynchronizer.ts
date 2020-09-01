@@ -1,7 +1,7 @@
 import * as diff from "diff";
 import * as vscode from "vscode";
 import { Disposable } from "vscode";
-import { getStats } from "./fsAsync";
+import { getStats } from "./fsHandy";
 import { extensionID } from "./iDs";
 import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 

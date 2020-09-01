@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
-import { copy, fileContentsEqual, FileType, getFileType } from "./fsAsync";
+import { copy, fileContentsEqual, FileType, getFileType } from "./fsHandy";
 import { getWorkingDirectoryUriInteractively } from "./getPaths";
 import { extensionID, labelsInStatusBarSettingID } from "./iDs";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";

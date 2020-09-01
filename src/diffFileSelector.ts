@@ -2,7 +2,7 @@ import { R_OK, W_OK } from "constants";
 import * as path from "path";
 import * as vscode from "vscode";
 import { defaultExtensionContextManager } from "./extensionContextManager";
-import { FileType, getFileType, getRealPath, testFile } from "./fsAsync";
+import { FileType, getFileType, getRealPath, testFile } from "./fsHandy";
 import { getWorkingDirectoryUri } from "./getPaths";
 import { extensionID } from "./iDs";
 

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getStats } from "./fsAsync";
+import { getStats } from "./fsHandy";
 
 export function getDiffedURIs(baseURI: vscode.Uri): DiffedURIs | undefined {
   const parseResult = parseBaseFileNameRE.exec(baseURI.path);

@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
 import { DiffedURIs, filesExist, getDiffedURIs } from "./diffedURIs";
-import { copy } from "./fsAsync";
+import { copy } from "./fsHandy";
 import { extensionID } from "./iDs";
 import {
   DiffLayouter,
