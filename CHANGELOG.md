@@ -10,6 +10,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Show by which number an editor is reachable in the title
+  (reachable using `ctrl+<number>`)
+
+### Changed
+
+- Shorter editor titles
+
 ### Fixes
 
 - Reopening the layout by using the start command failed
