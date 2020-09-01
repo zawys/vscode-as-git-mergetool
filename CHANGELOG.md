@@ -10,6 +10,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.5.0] - 2020-09-01
+
 ### Added
 
 - Asking for confirmation and creating a backup when skipping a file,
@@ -154,7 +156,8 @@ and this project adheres to
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.5.0
 [0.4.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.4.0
 [0.3.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.3.0
 [0.2.2]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.2.2
