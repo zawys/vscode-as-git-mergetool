@@ -2,11 +2,11 @@ import * as vscode from "vscode";
 import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
-import { FileType, getFileType } from "./fsAsync";
+import { fileContentsEqual, FileType, getFileType, move } from "./fsAsync";
 import { getWorkingDirectoryUriInteractively } from "./getPaths";
-import { MergetoolProcessManager } from "./mergetoolProcessManager";
 import { extensionID, labelsInStatusBarSettingID } from "./iDs";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
+import { MergetoolProcessManager } from "./mergetoolProcessManager";
 import { Monitor } from "./monitor";
 import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 
@@ -242,11 +242,50 @@ export class MergetoolUI {
     try {
       if (
         !this.assertMergetoolActiveInteractively() ||
-        !this.assertMergeSituationOpenedInteractively()
+        !this.assertMergeSituationOpenedInteractively() ||
+        this.mergeSituation?.backup === undefined
       ) {
         return;
       }
       await this.diffLayouterManager.save();
+      const mergedPath = this.mergeSituation.merged.fsPath;
+      const backupPath = this.mergeSituation.backup.fsPath;
+      if (!(await fileContentsEqual(mergedPath, backupPath))) {
+        if (
+          this.vSCodeConfigurator.get(
+            askToConfirmResetWhenSkippingSettingID
+          ) !== false
+        ) {
+          const resetOnceItem = { title: "Reset" };
+          const resetAlwaysItem = { title: "Always reset" };
+          const cancelItem = { title: "Cancel" };
+          const warningResult = await vscode.window.showWarningMessage(
+            "The merged file has possibly been changed. " +
+              "Continuing will reset the merged file. " +
+              "A backup will be stored under “<merged file>.<date>.orig”.",
+            resetOnceItem,
+            resetAlwaysItem,
+            cancelItem
+          );
+          if (warningResult === resetAlwaysItem) {
+            await this.vSCodeConfigurator.set(
+              askToConfirmResetWhenSkippingSettingID,
+              false
+            );
+          } else if (warningResult !== resetOnceItem) {
+            return;
+          }
+        }
+        if (this.mergeSituation?.backup !== undefined) {
+          const newPath = `${mergedPath}.${new Date()
+            .toISOString()
+            .replace(/[.:]/g, "-")}.orig`;
+          if (!(await move(mergedPath, newPath))) {
+            void vscode.window.showErrorMessage("Backup could not be saved.");
+            return;
+          }
+        }
+      }
       await this.diffLayouterManager.deactivateLayout();
       this.mergeSituation = undefined;
       await this.processManager?.skip();
@@ -292,11 +331,11 @@ export class MergetoolUI {
   /**
    * implies `mergetoolRunning`
    */
-  private statusBarItems: vscode.StatusBarItem[] | undefined = undefined;
+  private statusBarItems: vscode.StatusBarItem[] | undefined;
   private static readonly statusBarItemColor = new vscode.ThemeColor(
     "statusBar.foreground"
   );
-  private mergeSituation: DiffedURIs | undefined = undefined;
+  private mergeSituation: DiffedURIs | undefined;
   private processManager: MergetoolProcessManager | undefined;
   private registeredDisposables: (vscode.Disposable | undefined)[] = [];
 
@@ -529,5 +568,6 @@ const gitMergetoolStopCommandID = `${extensionID}.gitMergetoolStop`;
 const gitMergetoolMergeSituationCommandID = `${extensionID}.gitMergetoolReopenMergeSituation`;
 const gitMergeAbortCommandID = `${extensionID}.gitMergeAbort`;
 const gitCommitCommandID = `${extensionID}.commit`;
-const editCommitMessageAfterMergetoolSettingID = `${extensionID}.editCommitMessageAfterMergetool`;
 const nextMergeStepCommandID = `${extensionID}.nextMergeStep`;
+const editCommitMessageAfterMergetoolSettingID = `${extensionID}.editCommitMessageAfterMergetool`;
+const askToConfirmResetWhenSkippingSettingID = `${extensionID}.askToConfirmResetWhenSkipping`;

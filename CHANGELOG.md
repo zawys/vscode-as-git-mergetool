@@ -12,7 +12,10 @@ and this project adheres to
 
 ### Added
 
-- Show by which number an editor is reachable in the title
+- Asking for confirmation and creating a backup when skipping a file,
+  as `git mergetool` automatically resets any changes made to the merged file
+  when telling `git mergetool` that the merge was not successful.
+- Showing by which number an editor is reachable in the title
   (reachable using `ctrl+<number>`)
 
 ### Changed

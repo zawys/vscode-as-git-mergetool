@@ -158,6 +158,12 @@
           ],
           "description": "Vertical position in the editor at which the extension shall try to align the contents such that corresponding lines match.",
           "scope": "window"
+        },
+        "vscode-as-git-mergetool.askToConfirmResetWhenSkipping": {
+          "type": "boolean",
+          "default": true,
+          "description": "When using the “Skip file” command, if a message shall be displayed which informs about the reset and backup of changes and which allows to cancel.",
+          "scope": "application"
         }
       }
     },

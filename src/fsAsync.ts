@@ -1,16 +1,18 @@
 import * as fs from "fs";
 
 export function getStats(path: string): Promise<fs.Stats | undefined> {
-  return new Promise<fs.Stats | undefined>((resolve) =>
-    fs.stat(path, (error, stats) => resolve(error ? undefined : stats))
-  );
+  return new Promise<fs.Stats | undefined>((resolve) => {
+    fs.stat(path, (error, stats) => {
+      resolve(error ? undefined : stats);
+    });
+  });
 }
 
 export function getRealPath(path: string): Promise<string | undefined> {
   return new Promise<string | undefined>((resolve) => {
-    fs.realpath(path, (error, resolvedPath) =>
-      resolve(error ? undefined : resolvedPath)
-    );
+    fs.realpath(path, (error, resolvedPath) => {
+      resolve(error ? undefined : resolvedPath);
+    });
   });
 }
 
@@ -57,7 +59,47 @@ export async function getFileType(
 }
 
 export function testFile(path: string, mode: number): Promise<boolean> {
-  return new Promise((resolve) =>
-    fs.access(path, mode, (error) => resolve(!error))
-  );
+  return new Promise((resolve) => {
+    fs.access(path, mode, (error) => resolve(!error));
+  });
+}
+
+export function getContents(path: string): Promise<string | undefined> {
+  return new Promise<string>((resolve) => {
+    fs.readFile(path, { encoding: "utf-8" }, (error, data) => {
+      resolve(error ? undefined : data);
+    });
+  });
+}
+
+/**
+ *
+ * @param firstPath
+ * @param secondPath
+ * @returns `true` iff the file contents equal. `false` in any other case.
+ */
+export async function fileContentsEqual(
+  firstPath: string,
+  secondPath: string
+): Promise<boolean> {
+  const promises = [getContents(firstPath), getContents(secondPath)];
+  if ((await Promise.race(promises)) === undefined) {
+    return false;
+  }
+  const [firstContents, secondContents] = await Promise.all(promises);
+  if (firstContents === undefined || secondContents === undefined) {
+    return false;
+  }
+  return firstContents === secondContents;
+}
+
+export function move(
+  sourcePath: string,
+  destinationPath: string
+): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    fs.rename(sourcePath, destinationPath, (error) => {
+      resolve(error === null);
+    });
+  });
 }
