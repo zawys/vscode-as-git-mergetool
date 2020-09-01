@@ -42,7 +42,7 @@ export class MergetoolProcessManager implements Disposable {
     });
     if (this._terminal === undefined) {
       void vscode.window.showErrorMessage("Failed to create a terminal.");
-      this.startStopping(false);
+      await this.startStopping(false);
       return false;
     }
     this.setReactionTimeout();
@@ -65,7 +65,7 @@ export class MergetoolProcessManager implements Disposable {
     await this.processManager?.handleInput("n\ny\n");
   }
 
-  public startStopping(showTerminal = true): void {
+  public async startStopping(showTerminal = true): Promise<void> {
     if (!this.isAvailable) {
       return;
     }
@@ -81,32 +81,24 @@ export class MergetoolProcessManager implements Disposable {
     this.stopStatusMessage.color = MergetoolProcessManager.statusBarItemColor;
     this.stopStatusMessage.show();
     this.setReactionTimeout();
-    this.processManager?.startTermination();
+    await this.startStoppingNoUI();
   }
 
   public setMergetoolReacted(): void {
-    if (this.reactionTimeout !== undefined) {
-      clearTimeout(this.reactionTimeout);
-    }
+    this.clearReactionTimeout();
   }
 
   public get isInitial(): boolean {
-    return !this.disposed && this.processManager === undefined;
+    return !this.disposing && this.processManager === undefined;
   }
   public get isAvailable(): boolean {
     return this.isRunning && !this.isStopping;
   }
-  /**
-   * = available || stopping
-   */
   public get isRunning(): boolean {
     return this.processManager?.isRunning === true;
   }
   public get isStopping(): boolean {
     return this._isStopping;
-  }
-  public get isDisposed(): boolean {
-    return this.disposed;
   }
   public get wasSuccessful(): boolean | undefined {
     return this.success;
@@ -116,25 +108,28 @@ export class MergetoolProcessManager implements Disposable {
     return this.didStop.event;
   }
 
+  public doHardStop = false;
+
   public dispose(): void {
-    if (this.isDisposed) {
+    if (this.disposing) {
       return;
     }
+    this.disposing = true;
     this.stopStatusMessage?.dispose();
     this._terminal?.dispose();
     this._terminal = undefined;
-    this.processManager?.dispose();
-    this.processManager = undefined;
-    this._isStopping = false;
-    this.disposed = true;
-    this.didStop.fire(this.success);
     this.didStop.dispose();
+    this.clearReactionTimeout();
+    if (!this._isStopping) {
+      this._isStopping = true;
+      void this.startStoppingNoUI();
+    }
   }
 
   private processManager: TerminalProcessManager | undefined;
   private _terminal: vscode.Terminal | undefined;
   private _isStopping = false;
-  private disposed = false;
+  private disposing = false;
   private didStop = new EventEmitter<boolean>();
   private stopStatusMessage: vscode.StatusBarItem | undefined;
   private success = false;
@@ -146,29 +141,46 @@ export class MergetoolProcessManager implements Disposable {
   );
   private reactionTimeout: NodeJS.Timeout | undefined;
 
-  private handleTermination(code: number | undefined) {
-    this.setMergetoolReacted();
-    if (code === undefined) {
-      void vscode.window.showWarningMessage(
-        `\`git mergetool\` exited with unknown exit status.`
-      );
-    } else if (code !== 0) {
-      void vscode.window.showErrorMessage(
-        `\`git mergetool\` exited with code ${code}`
-      );
-    } else {
-      vscode.window.setStatusBarMessage("`git mergetool` succeeded.", 5000);
-      this.success = true;
+  private async startStoppingNoUI(): Promise<void> {
+    if (!this.doHardStop) {
+      await this.processManager?.handleInput("n\nn\n");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    this.dispose();
+    this.processManager?.startTermination();
+  }
+
+  private handleTermination(code: number | undefined) {
+    this._isStopping = false;
+    if (!this.disposing) {
+      this.setMergetoolReacted();
+      if (code === undefined) {
+        void vscode.window.showWarningMessage(
+          `\`git mergetool\` exited with unknown exit status.`
+        );
+      } else if (code !== 0) {
+        void vscode.window.showErrorMessage(
+          `\`git mergetool\` exited with code ${code}`
+        );
+      } else {
+        vscode.window.setStatusBarMessage("`git mergetool` succeeded.", 5000);
+        this.success = true;
+      }
+      this.didStop.fire(this.success);
+      this.dispose();
+    }
+    this.processManager?.dispose();
+    this.processManager = undefined;
   }
   private setReactionTimeout() {
-    if (this.reactionTimeout !== undefined) {
-      clearTimeout(this.reactionTimeout);
-    }
-    this.reactionTimeout = setTimeout(this.reactionTimeoutHandler, 1000);
+    this.clearReactionTimeout();
+    this.reactionTimeout = setTimeout(this.reactionTimeoutHandler, 1500);
   }
   private handleReactionTimeout() {
     this._terminal?.show();
+  }
+  private clearReactionTimeout() {
+    if (this.reactionTimeout !== undefined) {
+      clearTimeout(this.reactionTimeout);
+    }
   }
 }

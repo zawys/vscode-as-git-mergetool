@@ -93,12 +93,12 @@ export async function fileContentsEqual(
   return firstContents === secondContents;
 }
 
-export function move(
+export function copy(
   sourcePath: string,
   destinationPath: string
 ): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
-    fs.rename(sourcePath, destinationPath, (error) => {
+    fs.copyFile(sourcePath, destinationPath, (error) => {
       resolve(error === null);
     });
   });

@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
-import { fileContentsEqual, FileType, getFileType, move } from "./fsAsync";
+import { copy, fileContentsEqual, FileType, getFileType } from "./fsAsync";
 import { getWorkingDirectoryUriInteractively } from "./getPaths";
 import { extensionID, labelsInStatusBarSettingID } from "./iDs";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
@@ -48,7 +48,7 @@ export class MergetoolUI {
     }
     await this.monitor.enter();
     try {
-      if (this.processManager?.isRunning === true) {
+      if (this.processManager?.isAvailable === true) {
         if (this.mergeSituation !== undefined) {
           await this.reopenMergeSituationInner();
         }
@@ -149,7 +149,7 @@ export class MergetoolUI {
       if (!this.assertMergetoolActiveInteractively()) {
         return;
       }
-      await this.stopMergetoolInner();
+      void (await this.stopMergetoolWithoutDataLossInner());
     } finally {
       await this.monitor.leave();
     }
@@ -185,7 +185,9 @@ export class MergetoolUI {
     await this.monitor.enter();
     try {
       if (this.processManager?.isAvailable) {
-        await this.stopMergetoolInner();
+        if (!(await this.stopMergetoolWithoutDataLossInner())) {
+          return;
+        }
       }
       await createBackgroundGitTerminal({
         shellArgs: ["merge", pickedItem === abortMerge ? "--abort" : "--quit"],
@@ -251,43 +253,8 @@ export class MergetoolUI {
         return;
       }
       await this.diffLayouterManager.save();
-      const mergedPath = this.mergeSituation.merged.fsPath;
-      const backupPath = this.mergeSituation.backup.fsPath;
-      if (!(await fileContentsEqual(mergedPath, backupPath))) {
-        if (
-          this.vSCodeConfigurator.get(
-            askToConfirmResetWhenSkippingSettingID
-          ) !== false
-        ) {
-          const resetOnceItem = { title: "Reset" };
-          const resetAlwaysItem = { title: "Always reset" };
-          const cancelItem = { title: "Cancel" };
-          const warningResult = await vscode.window.showWarningMessage(
-            "The merged file has possibly been changed. " +
-              "Continuing will reset the merged file. " +
-              "A backup will be stored under “<merged file>.<date>.orig”.",
-            resetOnceItem,
-            resetAlwaysItem,
-            cancelItem
-          );
-          if (warningResult === resetAlwaysItem) {
-            await this.vSCodeConfigurator.set(
-              askToConfirmResetWhenSkippingSettingID,
-              false
-            );
-          } else if (warningResult !== resetOnceItem) {
-            return;
-          }
-        }
-        if (this.mergeSituation?.backup !== undefined) {
-          const newPath = `${mergedPath}.${new Date()
-            .toISOString()
-            .replace(/[.:]/g, "-")}.orig`;
-          if (!(await move(mergedPath, newPath))) {
-            void vscode.window.showErrorMessage("Backup could not be saved.");
-            return;
-          }
-        }
+      if (!(await this.askForResetByMergetoolAndBackup())) {
+        return;
       }
       await this.diffLayouterManager.deactivateLayout();
       this.mergeSituation = undefined;
@@ -320,9 +287,15 @@ export class MergetoolUI {
   }
 
   public dispose(): void {
+    if (this.disposing) {
+      return;
+    }
+    this.disposing = true;
+    const mergedPath = this.mergeSituation?.merged.fsPath;
+    this.disposeStatusBarItems();
     this.registeredDisposables.forEach((item) => void item?.dispose());
     this.registeredDisposables = [];
-    this.processManager?.dispose();
+    void this.disposeProcessManager(mergedPath);
   }
 
   public constructor(
@@ -341,12 +314,78 @@ export class MergetoolUI {
   private mergeSituation: DiffedURIs | undefined;
   private processManager: MergetoolProcessManager | undefined;
   private registeredDisposables: (vscode.Disposable | undefined)[] = [];
+  private disposing = false;
 
   private checkMonitorNotInUse(): boolean {
     if (this.monitor.inUse) {
       void vscode.window.showErrorMessage(
         "Another operation is pending. Please try again later."
       );
+      return false;
+    }
+    return true;
+  }
+
+  private async disposeProcessManager(
+    mergedPath: string | undefined
+  ): Promise<void> {
+    if (this.processManager === undefined) {
+      return;
+    }
+    this.processManager.doHardStop =
+      mergedPath === undefined ||
+      !(await this.createMergedFileBackup(mergedPath));
+    this.processManager.dispose();
+  }
+
+  private async askForResetByMergetoolAndBackup(): Promise<boolean> {
+    if (
+      this.mergeSituation === undefined ||
+      this.mergeSituation.backup === undefined
+    ) {
+      return false;
+    }
+    const mergedPath = this.mergeSituation.merged.fsPath;
+    const backupPath = this.mergeSituation.backup.fsPath;
+    if (await fileContentsEqual(mergedPath, backupPath)) {
+      return true;
+    }
+    if (
+      this.vSCodeConfigurator.get(askToConfirmResetWhenSkippingSettingID) !==
+      false
+    ) {
+      const resetOnceItem = { title: "Reset" };
+      const resetAlwaysItem = { title: "Always reset" };
+      const cancelItem = { title: "Cancel" };
+      const warningResult = await vscode.window.showWarningMessage(
+        "The merged file has possibly been changed. " +
+          "Continuing will reset the merged file. " +
+          "A backup will be stored under “<merged file>.<date>.vsc-orig”.",
+        resetOnceItem,
+        resetAlwaysItem,
+        cancelItem
+      );
+      if (warningResult === resetAlwaysItem) {
+        await this.vSCodeConfigurator.set(
+          askToConfirmResetWhenSkippingSettingID,
+          false
+        );
+      } else if (warningResult !== resetOnceItem) {
+        return false;
+      }
+    }
+    if (this.mergeSituation?.merged.fsPath !== mergedPath) {
+      return false;
+    }
+    return await this.createMergedFileBackup(mergedPath);
+  }
+
+  private async createMergedFileBackup(mergedPath: string): Promise<boolean> {
+    const newPath = `${mergedPath}.${new Date()
+      .toISOString()
+      .replace(/[.:]/g, "-")}.vsc-orig`;
+    if (!(await copy(mergedPath, newPath))) {
+      void vscode.window.showErrorMessage("Backup could not be saved.");
       return false;
     }
     return true;
@@ -378,6 +417,18 @@ export class MergetoolUI {
     await this.diffLayouterManager.deactivateLayout();
     this.mergeSituation = undefined;
     await this.processManager?.continue();
+  }
+
+  private async stopMergetoolWithoutDataLossInner(): Promise<boolean> {
+    if (
+      this.mergeSituation !== undefined &&
+      this.mergeSituation.backup !== undefined &&
+      !(await this.askForResetByMergetoolAndBackup())
+    ) {
+      return false;
+    }
+    await this.stopMergetoolInner();
+    return true;
   }
 
   private async stopMergetoolInner(): Promise<void> {

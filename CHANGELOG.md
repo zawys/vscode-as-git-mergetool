@@ -15,11 +15,14 @@ and this project adheres to
 - Asking for confirmation and creating a backup when skipping a file,
   as `git mergetool` automatically resets any changes made to the merged file
   when telling `git mergetool` that the merge was not successful.
-- Kill `git mergetool` instead of clean stop
-  to prevent reset without backup on VS Code crash.
+- Also creating a backup when VS Code is closed
+  while `git mergetool` is running.
 - Showing by which number an editor is reachable in the title
   (reachable using `ctrl+<number>`)
-- When `git mergetool` does not seem to respond, show terminal
+- When `git mergetool` does not seem to respond, show the terminal.
+  That way the other merge conflict types
+  (symbolic links, directories and submodules)
+  can be (with some care) managed.
 - Prevent “Terminal process exited …” message from VS Code
 
 ### Changed
@@ -29,6 +32,7 @@ and this project adheres to
 ### Fixes
 
 - Reopening the layout by using the start command failed
+- Various issues with the process management
 
 ## [0.4.0] - 2020-08-30
 

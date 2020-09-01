@@ -1,5 +1,6 @@
 import * as cp from "child_process";
 import { Disposable, Event, EventEmitter, Pseudoterminal } from "vscode";
+import { Monitor } from "./monitor";
 
 /**
  * Usage:
@@ -28,8 +29,10 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
   }
   public async handleInput(data: string): Promise<void> {
     this.write(data);
-    this.processInputBuffer.push(this.userInputToApplicationInput(data));
-    await this.flushProcessInputBuffer();
+    if (!this.terminating) {
+      this.processInputBuffer.push(this.userInputToApplicationInput(data));
+      await this.flushProcessInputBuffer();
+    }
   }
   public open(): void {
     if (this.disposing) {
@@ -86,22 +89,31 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
       }
     });
     this.registerStdoutListener("close", () => {
-      this.write(this.deco("stdout closed"));
+      this.writeStatusAndTerminate(this.deco("stdout closed"));
     });
     this.registerStderrListener("close", () => {
-      this.write(this.deco("stderr closed"));
+      this.writeStatusAndTerminate(this.deco("stderr closed"));
+    });
+    this.registerStdinListener("close", () => {
+      this.writeStatusAndTerminate(this.deco("stdin closed"));
     });
     this.registerStdoutListener("end", () => {
-      this.write(this.deco("stdout ended"));
+      this.writeStatusAndTerminate(this.deco("stdout ended"));
     });
     this.registerStderrListener("end", () => {
-      this.write(this.deco("stderr ended"));
+      this.writeStatusAndTerminate(this.deco("stderr ended"));
+    });
+    this.registerStdinListener("end", () => {
+      this.writeStatusAndTerminate(this.deco("stdin ended"));
     });
     this.registerStdoutListener("error", (error) =>
       this.write(this.deco(`error on stdout: ${error.name}, ${error.message}`))
     );
-    this.registerStdoutListener("error", (error) =>
+    this.registerStderrListener("error", (error) =>
       this.write(this.deco(`error on stderr: ${error.name}, ${error.message}`))
+    );
+    this.registerStdinListener("error", (error) =>
+      this.write(this.deco(`error on stdin: ${error.name}, ${error.message}`))
     );
     this.registerStdoutListener("pause", () => {
       this.stdoutWasPaused = true;
@@ -135,6 +147,7 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
     this.terminating = true;
     this.childProcess.stdout?.removeAllListeners();
     this.childProcess.stderr?.removeAllListeners();
+    this.childProcess.stdin?.removeAllListeners();
     this.childProcess.removeAllListeners();
     // this.childProcess.disconnect(); // … is not a function
     this.childProcess.unref();
@@ -198,6 +211,10 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
       this.childProcess.stdout?.on(key, listener);
       this.childProcess.stderr?.on(key, listener);
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.registerStdinListener = (key: any, listener: any): any => {
+      this.childProcess.stdin?.on(key, listener);
+    };
   }
   private readonly didClose = new EventEmitter<number | void>();
   private readonly didTerminate = new EventEmitter<number | undefined>();
@@ -215,6 +232,10 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
     cp.ChildProcess["stdout"] & cp.ChildProcess["stderr"],
     null
   >["on"];
+  private readonly registerStdinListener: Exclude<
+    cp.ChildProcess["stdin"],
+    null
+  >["on"];
   private terminating = false;
   private disposing = false;
   private _isRunning = true;
@@ -223,6 +244,7 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
   private processInputBuffer: string[] = [];
   private stdoutWasPaused = false;
   private stderrWasPaused = false;
+  private writeMonitor = new Monitor();
 
   private writeStatusAndTerminate(status: string) {
     this.write(this.deco(status));
@@ -236,20 +258,50 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
     }
   }
   private async flushProcessInputBuffer(): Promise<void> {
-    // eslint-disable-next-line no-constant-condition
-    while (this.processInputBuffer.length > 0) {
-      await new Promise((resolve) => {
+    await this.writeMonitor.enter();
+    try {
+      // eslint-disable-next-line no-constant-condition
+      while (this.processInputBuffer.length > 0) {
         const data = this.processInputBuffer.shift();
         if (data === undefined) {
           return;
         }
-        this.childProcess.stdin?.write(data, "utf-8", (error) => {
-          if (error) {
-            this.write(this.deco("error writing on stdin"));
-          }
-          resolve();
+        if (
+          this.childProcess.stdin?.writable !== true ||
+          this.childProcess.stdin.destroyed
+        ) {
+          this.write(this.deco("error: stdin not writable"));
+          return;
+        }
+        let callbackPromise: Promise<void> | undefined;
+        // eslint-disable-next-line promise/param-names
+        await new Promise<void>((resolveDrain) => {
+          // eslint-disable-next-line promise/param-names
+          callbackPromise = new Promise<void>((resolveCallback) => {
+            if (this.childProcess.stdin === null) {
+              resolveCallback();
+              resolveDrain();
+              return;
+            }
+            const writeResult = this.childProcess.stdin.write(
+              data,
+              "utf-8",
+              (error) => {
+                if (error) {
+                  this.write(this.deco("error writing on stdin"));
+                }
+                resolveCallback();
+              }
+            );
+            if (!writeResult) {
+              this.childProcess.stdin.once("drain", resolveDrain);
+            }
+          });
         });
-      });
+        await callbackPromise;
+      }
+    } finally {
+      await this.writeMonitor.leave();
     }
   }
   private emitDidTerminate(codeOnTermination: undefined | number) {

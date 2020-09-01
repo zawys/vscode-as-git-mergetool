@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
 import { DiffedURIs, filesExist, getDiffedURIs } from "./diffedURIs";
+import { copy } from "./fsAsync";
 import { extensionID } from "./iDs";
 import {
   DiffLayouter,
@@ -124,24 +125,21 @@ export class DiffLayouterManager {
   }
 
   public async resetMergedFile(): Promise<void> {
-    await new Promise((resolve, reject) => {
-      const diffedURIs = this.diffedURIs;
-      if (this.layouter?.isActive === undefined || diffedURIs === undefined) {
-        void vscode.window.showErrorMessage(
-          "Reset not applicable; no merge situation opened."
-        );
-        return;
-      }
-      if (diffedURIs?.backup === undefined) {
-        void vscode.window.showErrorMessage("Backup file is unknown.");
-        return;
-      }
-      fs.copyFile(
-        diffedURIs.backup.fsPath,
-        diffedURIs.merged.fsPath,
-        (error) => (error ? reject(error) : resolve())
+    const diffedURIs = this.diffedURIs;
+    if (this.layouter?.isActive === undefined || diffedURIs === undefined) {
+      void vscode.window.showErrorMessage(
+        "Reset not applicable; no merge situation opened."
       );
-    });
+      return;
+    }
+    if (diffedURIs?.backup === undefined) {
+      void vscode.window.showErrorMessage("Backup file is unknown.");
+      return;
+    }
+    if (!(await copy(diffedURIs.backup.fsPath, diffedURIs.merged.fsPath))) {
+      void vscode.window.showErrorMessage("Resetting the merged file failed");
+      return;
+    }
   }
 
   public async openDiffedURIs(diffedURIs: DiffedURIs): Promise<boolean> {
