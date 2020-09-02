@@ -1,38 +1,30 @@
-import * as path from "path";
-import * as Mocha from "mocha";
-import * as glob from "glob";
+import * as unitTests from "./unitTest.systemTest";
 
-export function run(): Promise<void> {
-  // Create the mocha test
-  const mocha = new Mocha({
-    ui: "tdd",
-    color: true,
-  });
-
-  const testsRoot = path.resolve(__dirname, "..");
-
-  return new Promise((resolve, reject) => {
-    glob("**/**.test.js", { cwd: testsRoot }, (error, files) => {
-      if (error) {
-        return reject(error);
-      }
-
-      // Add files to the test suite
-      files.forEach((f) => mocha.addFile(path.resolve(testsRoot, f)));
-
-      try {
-        // Run the mocha test
-        mocha.run((failures) => {
-          if (failures > 0) {
-            reject(new Error(`${failures} tests failed.`));
-          } else {
-            resolve();
-          }
-        });
-      } catch (error_) {
-        console.error(error_);
-        reject(error_);
-      }
-    });
-  });
+export async function runTests(): Promise<void> {
+  await unitTests.runTest();
+  // const files = await new Promise<string[]>((resolve, reject) => {
+  //   glob("*.systemTest/runTest.ts", { cwd: __dirname }, (error, files) => {
+  //     if (error) {
+  //       console.error(
+  //         `Error using glob:\n${error.name}\n${error.message}\n${
+  //           error.stack || ""
+  //         }`
+  //       );
+  //       reject(error);
+  //     } else {
+  //       resolve(files);
+  //     }
+  //   });
+  // });
+  // for (const file of files) {
+  //   try {
+  //     // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
+  //     const test = require(file);
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  //     await test.runTest();
+  //   } catch (error_) {
+  //     console.error(error_);
+  //     throw error_;
+  //   }
+  // }
 }

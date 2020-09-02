@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import {
   getGitPathInteractively,
   getWorkingDirectoryUriInteractively,
-} from "./getPaths";
+} from "./getPathsWithinVSCode";
 
 export async function createBackgroundGitTerminal(
   terminalOptions: vscode.TerminalOptions

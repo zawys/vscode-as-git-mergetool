@@ -5,7 +5,7 @@ import * as vscode from "vscode";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffFileSelector } from "./diffFileSelector";
 import { DiffLayouterManager } from "./diffLayouterManager";
-import { getGitPathInteractively } from "./getPaths";
+import { getGitPathInteractively } from "./getPathsWithinVSCode";
 import { extensionID } from "./iDs";
 import { Lazy } from "./lazy";
 

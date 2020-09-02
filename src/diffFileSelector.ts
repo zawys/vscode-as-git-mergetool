@@ -3,7 +3,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { FileType, getFileType, getRealPath, testFile } from "./fsHandy";
-import { getWorkingDirectoryUri } from "./getPaths";
+import { getWorkingDirectoryUri } from "./getPathsWithinVSCode";
 import { extensionID } from "./iDs";
 
 export class DiffFileSelector {

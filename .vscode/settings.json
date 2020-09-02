@@ -21,6 +21,7 @@
     "layouter",
     "layouters",
     "mergetool",
+    "mktemp",
     "overridable",
     "postversion",
     "precommit",

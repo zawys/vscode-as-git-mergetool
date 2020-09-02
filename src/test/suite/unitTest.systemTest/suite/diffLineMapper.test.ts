@@ -1,6 +1,6 @@
 import * as assert from "assert";
 
-import { DiffLineMapper } from "../../scrollSynchronizer";
+import { DiffLineMapper } from "../../../../scrollSynchronizer";
 
 suite("DiffLineMapper", () => {
   test("works", () => {

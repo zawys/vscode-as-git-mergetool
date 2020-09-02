@@ -3,9 +3,9 @@ import * as assert from "assert";
 import {
   defaultVSCodeConfigurator,
   separateSmallestKey,
-} from "../../vSCodeConfigurator";
+} from "../../../../vSCodeConfigurator";
 import { hrtime } from "process";
-import { extensionID } from "../../iDs";
+import { extensionID } from "../../../../iDs";
 
 suite("separateSmallestKey", () => {
   const sut = separateSmallestKey;

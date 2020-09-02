@@ -5,7 +5,7 @@ import { Disposable, Event, EventEmitter } from "vscode";
 import {
   getGitPathInteractively,
   getWorkingDirectoryUriInteractively,
-} from "./getPaths";
+} from "./getPathsWithinVSCode";
 import { TerminalProcessManager } from "./terminalProcessManager";
 
 export class MergetoolProcessManager implements Disposable {

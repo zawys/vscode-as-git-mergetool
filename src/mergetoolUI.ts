@@ -3,7 +3,7 @@ import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { copy, fileContentsEqual, FileType, getFileType } from "./fsHandy";
-import { getWorkingDirectoryUriInteractively } from "./getPaths";
+import { getWorkingDirectoryUriInteractively } from "./getPathsWithinVSCode";
 import { extensionID, labelsInStatusBarSettingID } from "./iDs";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
 import { MergetoolProcessManager } from "./mergetoolProcessManager";
