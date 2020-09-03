@@ -6,6 +6,7 @@ import {
   getWorkingDirectoryUriInteractively,
 } from "./getPathsWithinVSCode";
 import {
+  displayProcessExitInteractively,
   getCoreNodeModuleInteractively,
   TerminalProcessManager,
 } from "./terminalProcessManager";
@@ -164,18 +165,8 @@ export class MergetoolProcessManager implements Disposable {
     this._isStopping = false;
     if (!this.disposing) {
       this.setMergetoolReacted();
-      if (code === undefined) {
-        void vscode.window.showWarningMessage(
-          `\`git mergetool\` exited with unknown exit status.`
-        );
-      } else if (code !== 0) {
-        void vscode.window.showErrorMessage(
-          `\`git mergetool\` exited with code ${code}`
-        );
-      } else {
-        vscode.window.setStatusBarMessage("`git mergetool` succeeded.", 5000);
-        this.success = true;
-      }
+      displayProcessExitInteractively("`git mergetool`", code);
+      this.success = code === 0;
       this.didStop.fire(this.success);
       this.dispose();
     }

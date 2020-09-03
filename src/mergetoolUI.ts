@@ -8,6 +8,7 @@ import { extensionID, labelsInStatusBarSettingID } from "./iDs";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
 import { MergetoolProcessManager } from "./mergetoolProcessManager";
 import { Monitor } from "./monitor";
+import { displayProcessExitInteractively } from "./terminalProcessManager";
 import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class MergetoolUI {
@@ -25,17 +26,21 @@ export class MergetoolUI {
       /* eslint-enable @typescript-eslint/unbound-method */
     ];
     for (const [commandID, handler] of commands) {
-      this.registeredDisposables.push(
+      this.registeredDisposables.add(
         vscode.commands.registerCommand(commandID, handler.bind(this))
       );
     }
-    this.registeredDisposables.push(
+    this.registeredDisposables.add(
       this.diffLayouterManager.onDidLayoutDeactivate(
         this.handleDidLayoutDeactivate.bind(this)
-      ),
+      )
+    );
+    this.registeredDisposables.add(
       this.diffLayouterManager.onDidLayoutActivate(
         this.handleDidLayoutActivate.bind(this)
-      ),
+      )
+    );
+    this.registeredDisposables.add(
       this.diffLayouterManager.onDidLayoutReact(() => {
         this._processManager?.setMergetoolReacted();
       })
@@ -215,13 +220,32 @@ export class MergetoolUI {
         return;
       }
       await document.save();
-      const term = await createBackgroundGitTerminal({
-        shellArgs: ["commit", "--no-edit", `--file=${document.fileName}`],
-      });
-      term?.show(true);
       await vscode.commands.executeCommand(
         "workbench.action.closeActiveEditor"
       );
+      const term = await createBackgroundGitTerminal({
+        shellArgs: ["commit", "--no-edit", `--file=${document.fileName}`],
+      });
+      if (term !== undefined) {
+        term.show(true);
+        let closed = false;
+        const handler:
+          | vscode.Disposable
+          | undefined = vscode.window.onDidCloseTerminal((closedTerm) => {
+          if (term === closedTerm) {
+            const exitCode = term.exitStatus?.code;
+            displayProcessExitInteractively("`git commit`", exitCode);
+            closed = true;
+            if (handler !== undefined) {
+              handler.dispose();
+              this.registeredDisposables.delete(handler);
+            }
+          }
+        });
+        if (!closed) {
+          this.registeredDisposables.add(handler);
+        }
+      }
     } finally {
       await this.monitor.leave();
     }
@@ -294,7 +318,7 @@ export class MergetoolUI {
     const mergedPath = this._mergeSituation?.merged.fsPath;
     this.disposeStatusBarItems();
     this.registeredDisposables.forEach((item) => void item?.dispose());
-    this.registeredDisposables = [];
+    this.registeredDisposables = new Set();
     void this.disposeProcessManager(mergedPath);
   }
 
@@ -329,7 +353,7 @@ export class MergetoolUI {
   );
   private _mergeSituation: DiffedURIs | undefined;
   private _processManager: MergetoolProcessManager | undefined;
-  private registeredDisposables: (vscode.Disposable | undefined)[] = [];
+  private registeredDisposables: Set<vscode.Disposable> = new Set();
   private disposing = false;
 
   private checkMonitorNotInUse(): boolean {

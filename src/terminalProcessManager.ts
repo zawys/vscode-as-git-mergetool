@@ -237,3 +237,20 @@ export function getCoreNodeModuleInteractively(moduleName: string): unknown {
   }
   return result.module;
 }
+
+export function displayProcessExitInteractively(
+  processName: string,
+  exitCode: number | undefined
+): void {
+  if (exitCode === undefined) {
+    void window.showWarningMessage(
+      `${processName} exited with unknown exit code.`
+    );
+  } else if (exitCode === 0) {
+    void window.setStatusBarMessage(`${processName} succeeded.`, 5000);
+  } else {
+    void window.showErrorMessage(
+      `${processName} failed with exit code ${exitCode}.`
+    );
+  }
+}

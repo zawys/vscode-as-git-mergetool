@@ -10,6 +10,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Show message about `git commit` result.
+
 ### Changed
 
 - Usage node-pty to host `git mergetool` more reliably.
