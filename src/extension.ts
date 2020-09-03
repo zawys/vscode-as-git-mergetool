@@ -5,23 +5,24 @@ import { DiffLayouterManager } from "./diffLayouterManager";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";
 
-let extension: Extension | undefined;
+let extensionAPI: ExtensionAPI | undefined;
 
 export async function activate(
   context: vscode.ExtensionContext
-): Promise<void> {
+): Promise<ExtensionAPI> {
   defaultExtensionContextManager.value = context;
-  extension = new Extension();
-  await extension.activate();
+  extensionAPI = new ExtensionAPI();
+  await extensionAPI.activate();
+  return extensionAPI;
 }
 
 // this method is called when your extension is deactivated
 export async function deactivate(): Promise<void> {
-  await extension?.deactivate();
-  extension = undefined;
+  await extensionAPI?.deactivate();
+  extensionAPI = undefined;
 }
 
-export class Extension {
+export class ExtensionAPI {
   public async activate(): Promise<void> {
     await this.diffLayouterManager.register();
     this.mergetoolUI.register();
@@ -38,11 +39,11 @@ export class Extension {
   }
 
   public constructor(
-    private readonly diffLayouterManager = new DiffLayouterManager(),
-    private readonly mergetoolUI = new mergetool.MergetoolUI(
+    public readonly diffLayouterManager = new DiffLayouterManager(),
+    public readonly mergetoolUI = new mergetool.MergetoolUI(
       diffLayouterManager
     ),
-    private readonly arbitraryFilesMerger = new ArbitraryFilesMerger(
+    public readonly arbitraryFilesMerger = new ArbitraryFilesMerger(
       diffLayouterManager
     )
   ) {}

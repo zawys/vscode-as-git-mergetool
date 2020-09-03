@@ -4,9 +4,13 @@ import * as glob from "glob";
 
 export function runMochaTests(testDirectory: string): Promise<void> {
   // Create the mocha test
+  const debug = /--debug|--inspect/.test(
+    [process.argv.concat(process.execArgv)].join(" ")
+  );
   const mocha = new Mocha({
     ui: "tdd",
     color: true,
+    timeout: debug ? 0 : undefined,
   });
 
   const testsRoot = path.resolve(testDirectory, "..");

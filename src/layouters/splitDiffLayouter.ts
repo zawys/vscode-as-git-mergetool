@@ -459,6 +459,6 @@ const focusEditorGroupCommandIDs: {
   7: "workbench.action.focusEighthEditorGroup",
 };
 
-const focusPauseLengthOnCloseSettingID = `${extensionID}.workaroundFocusPauseLengthOnClose`;
-const quickLayoutDeactivationSettingID = `${extensionID}.workaroundQuickLayoutDeactivation`;
-const closeActiveEditorCommandID = "workbench.action.closeActiveEditor";
+export const focusPauseLengthOnCloseSettingID = `${extensionID}.workaroundFocusPauseLengthOnClose`;
+export const quickLayoutDeactivationSettingID = `${extensionID}.workaroundQuickLayoutDeactivation`;
+export const closeActiveEditorCommandID = "workbench.action.closeActiveEditor";

@@ -6,7 +6,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Extension",
+      "name": "run extension",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
@@ -15,17 +15,19 @@
       "preLaunchTask": "${defaultBuildTask}"
     },
     {
-      "name": "Extension Tests",
-      "type": "extensionHost",
-      "request": "launch",
-      "runtimeExecutable": "${execPath}",
-      "args": [
-        "--disable-extensions",
-        "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionTestsPath=${workspaceFolder}/out/src/test/suite/index"
+      "name": "debug tests",
+      "port": 3714,
+      "request": "attach",
+      "skipFiles": [
+        "<node_internals>/**"
       ],
-      "outFiles": ["${workspaceFolder}/out/src/test/**/*.js"],
-      "preLaunchTask": "${defaultBuildTask}"
-    }
+      "type": "pwa-node",
+      "preLaunchTask": "start_test_for_debugging",
+      "continueOnAttach": true,
+      "smartStep": true,
+      "showAsyncStacks": true,
+      "timeout": 10000,
+      "outFiles": ["${workspaceFolder}/out/src/**/*.js"],
+    },
   ]
 }

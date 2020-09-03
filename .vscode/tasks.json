@@ -4,17 +4,55 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "compile",
       "type": "npm",
-      "script": "watch",
-      "problemMatcher": "$tsc-watch",
-      "isBackground": true,
+      "script": "compile",
+      "problemMatcher": "$tsc",
       "presentation": {
-        "reveal": "never"
+        "reveal": "silent"
       },
       "group": {
         "kind": "build",
         "isDefault": true
       }
-    }
-  ]
+    },
+    {
+      "label": "start_test_for_debugging",
+      "type": "npm",
+      "script": "test:minimal",
+      "options": {
+        "env": {
+          "DEBUG_CURRENT_FILE_PATH": "${file}"
+        }
+      },
+      "runOptions": {
+        "instanceLimit": 1,
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern":[
+          {
+            "regexp": "^([^\\\\s].*)\\\\((\\\\d+,\\\\d+)\\\\):\\\\s*(.*)$",
+            "file": 1,
+            "location": 2,
+            "message": 3
+          },
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "$never^",
+          "endsPattern": "^Debugging test .+\\. Waiting on port",
+        }
+      },
+      "dependsOn": ["compile"]
+    },
+  ],
 }

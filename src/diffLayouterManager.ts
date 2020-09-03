@@ -277,6 +277,6 @@ export class DiffLayouterManager {
   }
 }
 
-const layoutSettingID = `${extensionID}.layout`;
-const deactivateLayoutCommandID = `${extensionID}.deactivateLayout`;
-const resetMergedFileCommandID = `${extensionID}.resetMergedFile`;
+export const layoutSettingID = `${extensionID}.layout`;
+export const deactivateLayoutCommandID = `${extensionID}.deactivateLayout`;
+export const resetMergedFileCommandID = `${extensionID}.resetMergedFile`;

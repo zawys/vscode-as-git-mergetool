@@ -6,26 +6,54 @@ import { whichPromise } from "../getPaths";
 
 /**
  *
- * @param testDirectoryPath directory containing `environment.zip` and `suite`
+ * @param testDirectory directory containing `environment.zip` and `suite`
  */
 export async function runSystemTest(
-  testDirectoryPath: string,
+  testDirectory: string,
   noWorkspace = false
-): Promise<void> {
+): Promise<boolean> {
   // The folder containing the Extension Manifest package.json
   // Passed to `--extensionDevelopmentPath`.
   // Relative to the location of the compiled files (`out/src/test`)
   const extensionDevelopmentPath = path.resolve(__dirname, "../../../");
-  console.log(`extensionDevelopmentPath: ${extensionDevelopmentPath}`);
   // The path to test runner
   // Passed to --extensionTestsPath
-  const extensionTestsPath = path.resolve(testDirectoryPath, "./suite/index");
+  const extensionTestsPath = path.resolve(testDirectory, "./suite/index");
 
   const launchArguments = ["--new-window", "--disable-extensions"];
   if (!noWorkspace) {
-    const zipPath = path.resolve(testDirectoryPath, "environment.zip");
+    const zipPath = path.resolve(testDirectory, "environment.zip");
     const filesPath = await unpackToTemporaryDirectory(zipPath);
     launchArguments.push(path.resolve(filesPath, "workspace"));
+  }
+  const debugTestFilePath = process.env["DEBUG_CURRENT_FILE_PATH"];
+  let debugging = false;
+  if (debugTestFilePath !== undefined) {
+    const testName = (/[^/\\]+$/.exec(
+      path.relative(extensionDevelopmentPath, testDirectory)
+    ) || [undefined])[0];
+    if (
+      testName !== undefined &&
+      path
+        .relative(extensionDevelopmentPath, debugTestFilePath)
+        .split(path.sep)
+        .includes(testName)
+    ) {
+      const port = 3714;
+      // VS Code waits with debugging until this line appears.
+      // See `tasks.json`.
+      console.log(
+        `Debugging test ${debugTestFilePath}. Waiting on port ${port}.`
+      );
+      launchArguments.push(`--inspect-brk-extensions=${port}`);
+      debugging = true;
+    } else {
+      console.log(`extensionTestsPath: ${extensionTestsPath}`);
+      console.log(`testName: ${testName || "undefined"}`);
+      console.log(`debugTestFilePath: ${debugTestFilePath}`);
+      console.log("-> skipping");
+      return false;
+    }
   }
 
   try {
@@ -42,9 +70,10 @@ export async function runSystemTest(
       vscodeExecutablePath: process.env["stable_code_path"],
     });
   } catch (error) {
-    console.error(`Failed to run tests in ${testDirectoryPath}`);
+    console.error(`Failed to run tests in ${testDirectory}`);
     throw error;
   }
+  return debugging;
 }
 
 export function unwrap<T>(value: T | undefined): T {
@@ -79,4 +108,15 @@ export async function unpackToTemporaryDirectory(
 
 export function deleteTemporaryDirectory(path: string): void {
   fs.unlinkSync(path);
+}
+
+export function isContainedIn(
+  parentPath: string,
+  comparedPath: string
+): boolean {
+  const relative = path.relative(parentPath, comparedPath);
+  console.log(`relative: ${relative}`);
+  return (
+    relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative)
+  );
 }

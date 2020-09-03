@@ -89,22 +89,22 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
       }
     });
     this.registerStdoutListener("close", () => {
-      this.writeStatusAndTerminate(this.deco("stdout closed"));
+      this.writeStatusAndTerminate("stdout closed");
     });
     this.registerStderrListener("close", () => {
-      this.writeStatusAndTerminate(this.deco("stderr closed"));
+      this.writeStatusAndTerminate("stderr closed");
     });
     this.registerStdinListener("close", () => {
-      this.writeStatusAndTerminate(this.deco("stdin closed"));
+      this.writeStatusAndTerminate("stdin closed");
     });
     this.registerStdoutListener("end", () => {
-      this.writeStatusAndTerminate(this.deco("stdout ended"));
+      this.writeStatusAndTerminate("stdout ended");
     });
     this.registerStderrListener("end", () => {
-      this.writeStatusAndTerminate(this.deco("stderr ended"));
+      this.writeStatusAndTerminate("stderr ended");
     });
     this.registerStdinListener("end", () => {
-      this.writeStatusAndTerminate(this.deco("stdin ended"));
+      this.writeStatusAndTerminate("stdin ended");
     });
     this.registerStdoutListener("error", (error) =>
       this.write(this.deco(`error on stdout: ${error.name}, ${error.message}`))
