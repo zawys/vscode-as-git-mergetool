@@ -10,6 +10,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Layout `3DiffToBaseMergedRight` with the merged file editor
+  taking up the whole right half.
+  Best used with scroll synchronization method set to `center`.
+
 ## [0.6.0] - 2020-09-03
 
 This will be the first version published on the

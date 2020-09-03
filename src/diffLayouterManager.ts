@@ -13,6 +13,7 @@ import {
 import { FourTransferDownLayouterFactory } from "./layouters/fourTransferDownLayouter";
 import { FourTransferRightLayouterFactory } from "./layouters/fourTransferRightLayouter";
 import { ThreeDiffToBaseLayouterFactory } from "./layouters/threeDiffToBaseLayouter";
+import { ThreeDiffToBaseMergedRightLayouterFactory } from "./layouters/threeDiffToBaseMergedRightLayouter";
 import { ThreeDiffToBaseRowsLayouterFactory } from "./layouters/threeDiffToBaseRowsLayouter";
 import { containsMergeConflictIndicators } from "./mergeConflictDetector";
 import { Monitor } from "./monitor";
@@ -116,6 +117,7 @@ export class DiffLayouterManager {
       new ThreeDiffToBaseLayouterFactory(),
       new FourTransferDownLayouterFactory(),
       new ThreeDiffToBaseRowsLayouterFactory(),
+      new ThreeDiffToBaseMergedRightLayouterFactory(),
     ],
     private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
     private readonly temporarySideBySideSettingsManager = defaultTemporarySideBySideSettingsManagerLazy

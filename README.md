@@ -83,7 +83,7 @@ In the right panes you can edit the (same) merged file
 and the goal of the game is to make the right side
 semantically equal the left side. 😅
 
-There is also a 3-column layout available.
+There are also several other layouts available.
 
 ## Known issues
 
