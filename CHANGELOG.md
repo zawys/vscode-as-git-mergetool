@@ -12,11 +12,12 @@ and this project adheres to
 
 ### Added
 
+- Layout `3DiffToBaseRows`, which is useful for long lines.
 - Show message about `git commit` result.
 
 ### Changed
 
-- Usage node-pty to host `git mergetool` more reliably.
+- Use node-pty to host `git mergetool` more reliably.
 
 ## [0.5.0] - 2020-09-01
 
