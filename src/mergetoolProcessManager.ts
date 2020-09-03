@@ -1,4 +1,3 @@
-import * as cp from "child_process";
 import * as process from "process";
 import * as vscode from "vscode";
 import { Disposable, Event, EventEmitter } from "vscode";
@@ -6,7 +5,10 @@ import {
   getGitPathInteractively,
   getWorkingDirectoryUriInteractively,
 } from "./getPathsWithinVSCode";
-import { TerminalProcessManager } from "./terminalProcessManager";
+import {
+  getCoreNodeModuleInteractively,
+  TerminalProcessManager,
+} from "./terminalProcessManager";
 
 export class MergetoolProcessManager implements Disposable {
   public async start(): Promise<boolean> {
@@ -21,23 +23,32 @@ export class MergetoolProcessManager implements Disposable {
     if (workingDirectory === undefined) {
       return false;
     }
-    const options = ["mergetool"];
-    const childProcess = cp.spawn(gitPath, options, {
-      cwd: workingDirectory.fsPath,
-      env: {
-        ...process.env,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        ELECTRON_RUN_AS_NODE: undefined,
+    const nodePtyResult = getCoreNodeModuleInteractively("node-pty");
+    if (nodePtyResult === undefined) {
+      return false;
+    }
+    const arguments_ = ["mergetool"];
+    this.processManager = new TerminalProcessManager(
+      nodePtyResult as typeof import("node-pty"),
+      gitPath,
+      arguments_,
+      {
+        cwd: workingDirectory.fsPath,
+        env: {
+          ...process.env,
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          ELECTRON_RUN_AS_NODE: "",
+        },
       },
-    });
-    this.processManager = new TerminalProcessManager(childProcess, false);
+      false
+    );
     this.processManager.onWasCloseRequested(() => {
       void this.startStopping(false);
     });
     this.processManager.onDidTerminate(this.handleTermination.bind(this));
-    this.processManager.register();
+    this.processManager.start();
     this._terminal = vscode.window.createTerminal({
-      name: ["git", ...options].join(" "),
+      name: ["git", ...arguments_].join(" "),
       pty: this.processManager,
     });
     if (this._terminal === undefined) {

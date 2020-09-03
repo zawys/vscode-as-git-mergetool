@@ -1,6 +1,12 @@
-import * as cp from "child_process";
-import { Disposable, Event, EventEmitter, Pseudoterminal } from "vscode";
-import { Monitor } from "./monitor";
+import {
+  Disposable,
+  Event,
+  EventEmitter,
+  Pseudoterminal,
+  TerminalDimensions,
+  env,
+  window,
+} from "vscode";
 
 /**
  * Usage:
@@ -19,7 +25,6 @@ import { Monitor } from "./monitor";
  *    - -> It will call `open()` and afterwards receive all the buffered
  *      input and close events, if any.
  */
-
 export class TerminalProcessManager implements Pseudoterminal, Disposable {
   public get onDidWrite(): Event<string> {
     return this.didWrite.event;
@@ -27,12 +32,11 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
   public get onDidClose(): Event<number | void> {
     return this.didClose.event;
   }
-  public async handleInput(data: string): Promise<void> {
-    this.write(data);
+  public handleInput(data: string): Promise<void> {
     if (!this.terminating) {
-      this.processInputBuffer.push(this.userInputToApplicationInput(data));
-      await this.flushProcessInputBuffer();
+      this.ptyProcess?.write(data);
     }
+    return Promise.resolve();
   }
   public open(): void {
     if (this.disposing) {
@@ -55,84 +59,47 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
   public close(): void {
     this.wasCloseRequested.fire();
   }
-  public register(): void {
-    this.childProcess.on("close", (code, signal) => {
-      this.writeStatusAndTerminate(`closed with ${code} on signal ${signal}`);
-      this.emitDidCloseIfOpen(code === null ? undefined : code);
-    });
-    this.childProcess.on("disconnect", () => {
-      this.writeStatusAndTerminate("disconnected");
-    });
-    this.childProcess.on("exit", (code, signal) => {
-      this.writeStatusAndTerminate(
-        "exited" +
-          (code !== null
-            ? ` with code ${code}`
-            : signal !== null
-            ? ` by signal ${signal}`
-            : "")
-      );
-      this.emitDidCloseIfOpen(code === null ? undefined : code);
-    });
-    this.childProcess.on("error", (error) =>
-      this.writeStatusAndTerminate(
-        `error on process: ${error.name}, ${error.message}`
-      )
+  public setDimensions(dimensions: TerminalDimensions): void {
+    this.dimensions = dimensions;
+    if (this.ptyProcess !== undefined) {
+      this.ptyProcess.resize(dimensions.columns, dimensions.rows);
+    }
+  }
+  /**
+   * May cause an error when node-pty cannot be imported.
+   */
+  public start(): void {
+    if (this.ptyProcess !== undefined || this.terminating) {
+      return;
+    }
+    const options =
+      this.dimensions === undefined
+        ? this.ptyOptions
+        : {
+            ...this.ptyOptions,
+            cols: this.dimensions.columns,
+            rows: this.dimensions.rows,
+          };
+    this.ptyProcess = this.nodePty.spawn(
+      this.executablePath,
+      this.arguments_,
+      options
     );
-    this.childProcess.stdout?.setEncoding("utf-8");
-    this.childProcess.stderr?.setEncoding("utf-8");
-    this.registerCombinedListener("data", (chunk: unknown) => {
-      if (typeof chunk === "string") {
+    this.disposables.push(
+      this.ptyProcess.onData((chunk: string) => {
         this.write(chunk);
-      } else {
-        console.error('typeof chunk !== "string"');
-      }
-    });
-    this.registerStdoutListener("close", () => {
-      this.writeStatusAndTerminate("stdout closed");
-    });
-    this.registerStderrListener("close", () => {
-      this.writeStatusAndTerminate("stderr closed");
-    });
-    this.registerStdinListener("close", () => {
-      this.writeStatusAndTerminate("stdin closed");
-    });
-    this.registerStdoutListener("end", () => {
-      this.writeStatusAndTerminate("stdout ended");
-    });
-    this.registerStderrListener("end", () => {
-      this.writeStatusAndTerminate("stderr ended");
-    });
-    this.registerStdinListener("end", () => {
-      this.writeStatusAndTerminate("stdin ended");
-    });
-    this.registerStdoutListener("error", (error) =>
-      this.write(this.deco(`error on stdout: ${error.name}, ${error.message}`))
+      }),
+      this.ptyProcess.onExit(({ exitCode, signal }) => {
+        this.write(
+          this.deco(
+            `exited with code ${exitCode}` +
+              (signal !== undefined ? ` by signal ${signal}` : "")
+          )
+        );
+        this.emitDidTerminate(exitCode);
+        this.ptyProcess = undefined;
+      })
     );
-    this.registerStderrListener("error", (error) =>
-      this.write(this.deco(`error on stderr: ${error.name}, ${error.message}`))
-    );
-    this.registerStdinListener("error", (error) =>
-      this.write(this.deco(`error on stdin: ${error.name}, ${error.message}`))
-    );
-    this.registerStdoutListener("pause", () => {
-      this.stdoutWasPaused = true;
-      this.write(this.deco("pause"));
-    });
-    this.registerStderrListener("pause", () => {
-      this.stderrWasPaused = true;
-      this.write(this.deco("pause"));
-    });
-    this.registerStdoutListener("resume", () => {
-      if (this.stdoutWasPaused) {
-        this.write(this.deco("resume"));
-      }
-    });
-    this.registerStderrListener("resume", () => {
-      if (this.stderrWasPaused) {
-        this.write(this.deco("resume"));
-      }
-    });
   }
   public get onWasCloseRequested(): Event<void> {
     return this.wasCloseRequested.event;
@@ -141,35 +108,11 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
     return this.didTerminate.event;
   }
   public startTermination(): void {
-    if (this.terminating) {
+    if (this.terminating || this.ptyProcess === undefined) {
       return;
     }
     this.terminating = true;
-    this.childProcess.stdout?.removeAllListeners();
-    this.childProcess.stderr?.removeAllListeners();
-    this.childProcess.stdin?.removeAllListeners();
-    this.childProcess.removeAllListeners();
-    // this.childProcess.disconnect(); // … is not a function
-    this.childProcess.unref();
-    if (this.childProcess.exitCode !== null) {
-      this.emitDidTerminate(this.childProcess.exitCode);
-      return;
-    }
-    this.childProcess.kill("SIGTERM");
-    setTimeout(() => {
-      if (this.childProcess.exitCode !== null) {
-        this.emitDidTerminate(this.childProcess.exitCode);
-        return;
-      }
-      setTimeout(() => {
-        this.childProcess.kill("SIGKILL");
-        this.emitDidTerminate(
-          this.childProcess.exitCode !== null
-            ? this.childProcess.exitCode
-            : undefined
-        );
-      }, this.sigkillTimeoutMS);
-    }, Math.max(0, this.sigtermTimeoutMS));
+    this.ptyProcess.kill();
   }
   /**
    * You immediately won’t receive any events when this has started.
@@ -185,71 +128,33 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
       this.didTerminate,
       this.didWrite,
       this.wasCloseRequested,
+      ...this.disposables,
     ]) {
       disposable.dispose();
     }
   }
   public get isRunning(): boolean {
-    return this._isRunning;
+    return this.ptyProcess !== undefined;
   }
   public constructor(
-    public readonly childProcess: cp.ChildProcess,
-    public readonly revealExitCodeToTerminal = true,
-    public sigtermTimeoutMS = 1000,
-    public sigkillTimeoutMS = 1000
-  ) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.registerStdoutListener = (key: any, listener: any): any => {
-      this.childProcess.stdout?.on(key, listener);
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.registerStderrListener = (key: any, listener: any): any => {
-      this.childProcess.stderr?.on(key, listener);
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.registerCombinedListener = (key: any, listener: any): any => {
-      this.childProcess.stdout?.on(key, listener);
-      this.childProcess.stderr?.on(key, listener);
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.registerStdinListener = (key: any, listener: any): any => {
-      this.childProcess.stdin?.on(key, listener);
-    };
-  }
+    private readonly nodePty: typeof import("node-pty"),
+    public readonly executablePath: string,
+    public readonly arguments_: string[] = [],
+    public readonly ptyOptions: import("node-pty").IBasePtyForkOptions = {},
+    public readonly revealExitCodeToTerminal = true
+  ) {}
+  private ptyProcess: import("node-pty").IPty | undefined;
+  private dimensions: TerminalDimensions | undefined;
   private readonly didClose = new EventEmitter<number | void>();
   private readonly didTerminate = new EventEmitter<number | undefined>();
   private readonly didWrite = new EventEmitter<string>();
   private readonly wasCloseRequested = new EventEmitter<void>();
-  private readonly registerStdoutListener: Exclude<
-    cp.ChildProcess["stdout"],
-    null
-  >["on"];
-  private readonly registerStderrListener: Exclude<
-    cp.ChildProcess["stderr"],
-    null
-  >["on"];
-  private readonly registerCombinedListener: Exclude<
-    cp.ChildProcess["stdout"] & cp.ChildProcess["stderr"],
-    null
-  >["on"];
-  private readonly registerStdinListener: Exclude<
-    cp.ChildProcess["stdin"],
-    null
-  >["on"];
+  private disposables: Disposable[] = [];
   private terminating = false;
   private disposing = false;
-  private _isRunning = true;
   private closeResult: number | undefined | null = null;
   private preOpenBuffer: string[] | null = [];
-  private processInputBuffer: string[] = [];
-  private stdoutWasPaused = false;
-  private stderrWasPaused = false;
-  private writeMonitor = new Monitor();
 
-  private writeStatusAndTerminate(status: string) {
-    this.write(this.deco(status));
-    this.startTermination();
-  }
   private write(data: string): void {
     if (this.preOpenBuffer !== null) {
       this.preOpenBuffer.push(this.toCRLF(data));
@@ -257,55 +162,7 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
       this.didWrite.fire(this.toCRLF(data));
     }
   }
-  private async flushProcessInputBuffer(): Promise<void> {
-    await this.writeMonitor.enter();
-    try {
-      // eslint-disable-next-line no-constant-condition
-      while (this.processInputBuffer.length > 0) {
-        const data = this.processInputBuffer.shift();
-        if (data === undefined) {
-          return;
-        }
-        if (
-          this.childProcess.stdin?.writable !== true ||
-          this.childProcess.stdin.destroyed
-        ) {
-          this.write(this.deco("error: stdin not writable"));
-          return;
-        }
-        let callbackPromise: Promise<void> | undefined;
-        // eslint-disable-next-line promise/param-names
-        await new Promise<void>((resolveDrain) => {
-          // eslint-disable-next-line promise/param-names
-          callbackPromise = new Promise<void>((resolveCallback) => {
-            if (this.childProcess.stdin === null) {
-              resolveCallback();
-              resolveDrain();
-              return;
-            }
-            const writeResult = this.childProcess.stdin.write(
-              data,
-              "utf-8",
-              (error) => {
-                if (error) {
-                  this.write(this.deco("error writing on stdin"));
-                }
-                resolveCallback();
-              }
-            );
-            if (!writeResult) {
-              this.childProcess.stdin.once("drain", resolveDrain);
-            }
-          });
-        });
-        await callbackPromise;
-      }
-    } finally {
-      await this.writeMonitor.leave();
-    }
-  }
   private emitDidTerminate(codeOnTermination: undefined | number) {
-    this._isRunning = false;
     if (!this.disposing) {
       const emittedCode =
         codeOnTermination !== undefined
@@ -336,8 +193,47 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
   private toCRLF(text: string): string {
     return text.replace(TerminalProcessManager.eOLRE, "\r\n");
   }
-  private static readonly carriageReturnRE = /\r/g;
-  private userInputToApplicationInput(userInput: string): string {
-    return userInput.replace(TerminalProcessManager.carriageReturnRE, "\n");
+}
+
+// https://github.com/microsoft/vscode/issues/84439#issuecomment-552328194
+export function getCoreNodeModule(
+  moduleName: string
+): { module?: unknown; errors: Error[] } {
+  const errors: Error[] = [];
+  try {
+    return {
+      module: require(`${env.appRoot}/node_modules.asar/${moduleName}`),
+      errors,
+    };
+  } catch (error) {
+    errors.push(error);
   }
+
+  try {
+    return {
+      module: require(`${env.appRoot}/node_modules/${moduleName}`),
+      errors,
+    };
+  } catch (error) {
+    errors.push(error);
+  }
+
+  return { errors };
+}
+
+/**
+ * Returns a node module installed with VSCode, or undefined if it fails.
+ */
+export function getCoreNodeModuleInteractively(moduleName: string): unknown {
+  const result = getCoreNodeModule(moduleName);
+  if (!result.module) {
+    const errorString = result.errors
+      .map((error) => `\n• ${error.name}: ${error.message}`)
+      .join("");
+    void window.showErrorMessage(
+      `Could not import ${moduleName}.${errorString}`
+    );
+    return undefined;
+  }
+  return result.module;
 }
