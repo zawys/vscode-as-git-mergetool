@@ -52,7 +52,7 @@ to report any compatibility issues. See [Contribute](#Contribute).
 - Run the command “Install from VSIX…” inside VS Code and select the VSIX.
 
 Currently, the extension is not available on the Visual Studio Marketplace,
-but that will hopefully change in a few days.
+but that **will change within an hour**.
 
 ## Usage
 
