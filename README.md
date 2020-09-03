@@ -41,6 +41,11 @@ to report any compatibility issues. See [Contribute](#Contribute).
 
 ## Installation
 
+This is extension is available [in the official
+Marketplace](https://marketplace.visualstudio.com/items?itemName=zawys.vscode-as-git-mergetool).
+
+Alternatively, you can get the build from GitHub:
+
 - Go to the
   [latest Release](https://github.com/zawys/vscode-as-git-mergetool/releases/latest)
   and download the VSIX.
@@ -50,9 +55,6 @@ to report any compatibility issues. See [Contribute](#Contribute).
   - `gpg --recv-keys '4A5D 4A5F B953 7A3A B931 6463 41B3 FBF3 7F23 3754'`
   - `gpg --verify SHA256SUMS.sig SHA256SUMS`
 - Run the command “Install from VSIX…” inside VS Code and select the VSIX.
-
-Currently, the extension is not available on the Visual Studio Marketplace,
-but that **will change within an hour**.
 
 ## Usage
 
