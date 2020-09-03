@@ -41,8 +41,12 @@ to report any compatibility issues. See [Contribute](#Contribute).
 
 ## Installation
 
-This is extension is available [in the official
-Marketplace](https://marketplace.visualstudio.com/items?itemName=zawys.vscode-as-git-mergetool).
+This is extension is available
+[in the official Marketplace](https://marketplace.visualstudio.com/items?itemName=zawys.vscode-as-git-mergetool).
+
+> Launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
+>
+> `ext install zawys.vscode-as-git-mergetool`
 
 Alternatively, you can get the build from GitHub:
 
