@@ -1,5 +1,5 @@
 import { runMochaTests } from "../../../mochaTest";
 
 export async function run(): Promise<void> {
-  await runMochaTests(__dirname);
+  await runMochaTests(__dirname, 5000);
 }

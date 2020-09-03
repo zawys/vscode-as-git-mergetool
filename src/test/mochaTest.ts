@@ -2,7 +2,10 @@ import * as path from "path";
 import * as Mocha from "mocha";
 import * as glob from "glob";
 
-export function runMochaTests(testDirectory: string): Promise<void> {
+export function runMochaTests(
+  testDirectory: string,
+  timeout?: number
+): Promise<void> {
   // Create the mocha test
   const debug = /--debug|--inspect/.test(
     [process.argv.concat(process.execArgv)].join(" ")
@@ -10,7 +13,7 @@ export function runMochaTests(testDirectory: string): Promise<void> {
   const mocha = new Mocha({
     ui: "tdd",
     color: true,
-    timeout: debug ? 0 : undefined,
+    timeout: debug ? 0 : timeout,
   });
 
   const testsRoot = path.resolve(testDirectory, "..");
