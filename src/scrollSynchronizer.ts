@@ -106,20 +106,9 @@ export class ScrollSynchronizer implements Disposable {
 
     const visibleRanges = sourceEditor.visibleRanges;
     // positions are cursors, lines are indexes
-    let sourceStartPos = Number.MAX_SAFE_INTEGER;
-    let sourceEndPos = 0;
-    for (const range of visibleRanges) {
-      const rangeStart = range.start.line;
-      if (sourceStartPos > rangeStart) {
-        sourceStartPos = rangeStart;
-      }
-      if (this.syncMethod !== ScrollSyncMethod.top) {
-        const rangeEnd = range.end.line + 1;
-        if (sourceEndPos < rangeEnd) {
-          sourceEndPos = rangeEnd;
-        }
-      }
-    }
+    const [sourceStartPos, sourceEndPos] = this.getScrollStartAndEndPos(
+      visibleRanges
+    );
     let sourceSyncPos = -1;
     let sourceSyncFraction = -1;
     if (this.syncMethod !== ScrollSyncMethod.interval) {
@@ -158,25 +147,19 @@ export class ScrollSynchronizer implements Disposable {
           targetEditorIndex
         );
         if (targetStartPos !== undefined && targetEndPos !== undefined) {
+          const adaptedStartPos = Math.round(
+            targetStartPos + this.startPosCorrection
+          );
+          const adaptedEndPos = Math.round(
+            targetEndPos - 1 + this.endPosCorrection
+          );
           targetRange = new vscode.Range(
             new vscode.Position(
-              Math.min(
-                targetMaxLine,
-                Math.max(
-                  0,
-                  Math.round(targetStartPos + this.startPosCorrection)
-                )
-              ),
+              Math.min(targetMaxLine, Math.max(0, adaptedStartPos)),
               0
             ),
             new vscode.Position(
-              Math.min(
-                targetMaxLine,
-                Math.max(
-                  0,
-                  Math.round(targetEndPos - 1 + this.endPosCorrection)
-                )
-              ),
+              Math.min(targetMaxLine, Math.max(0, adaptedEndPos)),
               0
             )
           );
@@ -232,6 +215,24 @@ export class ScrollSynchronizer implements Disposable {
       this.ignoreEditor[targetEditorIndex]++;
       targetEditor.revealRange(targetRange, revealType);
     }
+  }
+
+  private getScrollStartAndEndPos(ranges: vscode.Range[]): [number, number] {
+    let sourceStartPos = Number.MAX_SAFE_INTEGER;
+    let sourceEndPos = 0;
+    for (const range of ranges) {
+      const rangeStart = range.start.line;
+      if (sourceStartPos > rangeStart) {
+        sourceStartPos = rangeStart;
+      }
+      if (this.syncMethod !== ScrollSyncMethod.top) {
+        const rangeEnd = range.end.line + 1;
+        if (sourceEndPos < rangeEnd) {
+          sourceEndPos = rangeEnd;
+        }
+      }
+    }
+    return [sourceStartPos, sourceEndPos];
   }
 
   private updatedIgnore(index: number): number {
