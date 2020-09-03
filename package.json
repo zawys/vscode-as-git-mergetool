@@ -295,6 +295,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "diff": "^4.0.2",
+    "node-pty": "^0.9.0",
     "which": "^2.0.2"
   }
 }
