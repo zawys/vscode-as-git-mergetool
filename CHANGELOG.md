@@ -15,6 +15,7 @@ and this project adheres to
 - Layout `3DiffToBaseMergedRight` with the merged file editor
   taking up the whole right half.
   Best used with scroll synchronization method set to `center`.
+- Synchronization of the active line position
 - Command “Reset temporary settings activated on diff layout start”
   in case one has two VS Code instances open,
   activates a diff layout in one instance and simply closes it afterwards.

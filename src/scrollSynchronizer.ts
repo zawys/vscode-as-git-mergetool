@@ -19,11 +19,11 @@ export class ScrollSynchronizer implements Disposable {
     syncMethod?: ScrollSyncMethod,
     mappedIntervalRelativeSize?: number
   ): Promise<ScrollSynchronizer> {
-    const ignoreEditor = new Array<number>(editors.length).fill(
+    const scrollIgnoreCounts = new Array<number>(editors.length).fill(
       synchronizationSourceOnStartIndex === undefined ? 0 : 1
     );
     if (synchronizationSourceOnStartIndex !== undefined) {
-      ignoreEditor[synchronizationSourceOnStartIndex] = 0;
+      scrollIgnoreCounts[synchronizationSourceOnStartIndex] = 0;
     }
     if (syncMethod === undefined) {
       const setting = vSCodeConfigurator.get(scrollSynchronizationMethod);
@@ -40,9 +40,11 @@ export class ScrollSynchronizer implements Disposable {
     );
     const scrollSynchronizer = new ScrollSynchronizer(
       editors,
-      ignoreEditor,
+      scrollIgnoreCounts,
       syncMethod,
-      typeof surroundingLines === "number" ? surroundingLines : 0,
+      typeof surroundingLines === "number" && surroundingLines > 0
+        ? surroundingLines
+        : 0,
       mappedIntervalRelativeSize
     );
     if (synchronizationSourceOnStartIndex !== undefined) {
@@ -57,9 +59,11 @@ export class ScrollSynchronizer implements Disposable {
   private readonly disposables: Disposable[] = [];
   private readonly documents: vscode.TextDocument[];
   /**
-   * When was the respective `ignoreEditor` index updated last?
+   * When was the respective `scrollIgnoreCounts[index]` updated last?
    */
-  private readonly lastIgnoreChange: number[];
+  private readonly scrollIgnoreDates: number[];
+  private readonly selectionIgnoreCounts: number[];
+  private readonly selectionIgnoreDates: number[];
   private readonly editorLinesCache: (undefined | string[])[];
   private readonly mappersCache: {
     [k0: number]:
@@ -73,7 +77,7 @@ export class ScrollSynchronizer implements Disposable {
 
   private constructor(
     private readonly editors: vscode.TextEditor[],
-    private readonly ignoreEditor: number[],
+    private readonly scrollIgnoreCounts: number[],
     private readonly syncMethod: ScrollSyncMethod,
     private surroundingLines: number,
     mappedIntervalRelativeSize = 0.5,
@@ -84,7 +88,9 @@ export class ScrollSynchronizer implements Disposable {
     this.editorLinesCache = new Array<undefined>(editors.length).fill(
       undefined
     );
-    this.lastIgnoreChange = new Array<number>(editors.length).fill(0);
+    this.scrollIgnoreDates = new Array<number>(editors.length).fill(0);
+    this.selectionIgnoreCounts = new Array<number>(editors.length).fill(0);
+    this.selectionIgnoreDates = new Array<number>(editors.length).fill(0);
     this.documents = this.editors.map((editor) => editor.document);
     this.mappedWeight1 = (1 - mappedIntervalRelativeSize) / 2;
     this.mappedWeight0 = 1 - this.mappedWeight1;
@@ -92,11 +98,12 @@ export class ScrollSynchronizer implements Disposable {
     this.disposables.push(
       vscode.window.onDidChangeTextEditorVisibleRanges(
         this.handleDidChangeTextEditorVisibleRanges.bind(this)
-      )
-    );
-    this.disposables.push(
+      ),
       vscode.workspace.onDidChangeTextDocument(
         this.handleDidChangeTextDocument.bind(this)
+      ),
+      vscode.window.onDidChangeTextEditorSelection(
+        this.handleDidChangeTextEditorSelection.bind(this)
       )
     );
   }
@@ -242,8 +249,11 @@ export class ScrollSynchronizer implements Disposable {
         const targetVSCPosition = new vscode.Position(targetLine, 0);
         targetRange = new vscode.Range(targetVSCPosition, targetVSCPosition);
       }
-      this.updatedIgnore(targetEditorIndex);
-      this.ignoreEditor[targetEditorIndex]++;
+      this.increaseIgnore(
+        this.scrollIgnoreCounts,
+        this.scrollIgnoreDates,
+        targetEditorIndex
+      );
       targetEditor.revealRange(targetRange, revealType);
     }
   }
@@ -266,16 +276,41 @@ export class ScrollSynchronizer implements Disposable {
     return [sourceStartPos, sourceEndPos];
   }
 
-  private updatedIgnore(index: number): number {
+  private updatedIgnore(
+    ignoreCounts: number[],
+    ignoreDates: number[],
+    editorIndex: number
+  ): number {
     const time = new Date().getTime();
     const result =
       Math.pow(
         this.eventDecayPerSec,
-        Math.min(20, (time - this.lastIgnoreChange[index]) / 1000)
-      ) * this.ignoreEditor[index];
-    this.ignoreEditor[index] = result;
-    this.lastIgnoreChange[index] = time;
+        Math.min(20, (time - ignoreDates[editorIndex]) / 1000)
+      ) * ignoreCounts[editorIndex];
+    ignoreCounts[editorIndex] = result;
+    ignoreDates[editorIndex] = time;
     return result;
+  }
+
+  private decreaseIgnore(
+    ignoreCounts: number[],
+    ignoreDates: number[],
+    editorIndex: number
+  ): boolean {
+    if (this.updatedIgnore(ignoreCounts, ignoreDates, editorIndex) > 0.5) {
+      ignoreCounts[editorIndex]--;
+      return true;
+    }
+    return false;
+  }
+
+  private increaseIgnore(
+    ignoreCounts: number[],
+    ignoreDates: number[],
+    editorIndex: number
+  ): void {
+    this.updatedIgnore(ignoreCounts, ignoreDates, editorIndex);
+    ignoreCounts[editorIndex]++;
   }
 
   private async handleDidChangeTextEditorVisibleRanges({
@@ -285,8 +320,13 @@ export class ScrollSynchronizer implements Disposable {
     if (editorIndex === -1) {
       return;
     }
-    if (this.updatedIgnore(editorIndex) > 0.5) {
-      this.ignoreEditor[editorIndex]--;
+    if (
+      this.decreaseIgnore(
+        this.scrollIgnoreCounts,
+        this.scrollIgnoreDates,
+        editorIndex
+      )
+    ) {
       return;
     }
     await this.syncVisibleRanges(textEditor, editorIndex);
@@ -307,6 +347,58 @@ export class ScrollSynchronizer implements Disposable {
         if (cacheValue0 !== undefined) {
           cacheValue0[fromIndex] = undefined;
         }
+      }
+    }
+  }
+
+  private async handleDidChangeTextEditorSelection(
+    event: vscode.TextEditorSelectionChangeEvent
+  ): Promise<void> {
+    const sourceEditor = event.textEditor;
+    const sourceEditorIndex = this.editors.indexOf(sourceEditor);
+    if (sourceEditorIndex === -1) {
+      return;
+    }
+    if (
+      this.decreaseIgnore(
+        this.selectionIgnoreCounts,
+        this.selectionIgnoreDates,
+        sourceEditorIndex
+      )
+    ) {
+      return;
+    }
+    for (
+      let targetEditorIndex = 0;
+      targetEditorIndex < this.editors.length;
+      targetEditorIndex++
+    ) {
+      const targetEditor = this.editors[targetEditorIndex];
+      if (!targetEditor.selection.isEmpty) {
+        continue;
+      }
+      if (targetEditor !== event.textEditor) {
+        const mappedPosition = await this.translatePosition(
+          sourceEditor.selection.end.line + 0.5,
+          sourceEditorIndex,
+          targetEditorIndex
+        );
+        if (mappedPosition === undefined) {
+          continue;
+        }
+        const mappedLine = Math.floor(mappedPosition);
+        const character = sourceEditor.selection.end.character;
+        targetEditor.selection = new vscode.Selection(
+          mappedLine,
+          character,
+          mappedLine,
+          character
+        );
+        this.increaseIgnore(
+          this.selectionIgnoreCounts,
+          this.selectionIgnoreDates,
+          targetEditorIndex
+        );
       }
     }
   }
