@@ -10,6 +10,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.7.1] - 2020-09-04
+
 ### Fixed
 
 - Reverted addition of command “Switch diff layout temporarily…”
@@ -195,7 +197,8 @@ This will be the first version published on the
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.7.0...HEAD
+[unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.7.1
 [0.7.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.7.0
 [0.6.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.6.0
 [0.5.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.5.0
