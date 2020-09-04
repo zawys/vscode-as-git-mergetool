@@ -138,7 +138,7 @@
           "enumDescriptions": [
             "Classical layout with diffs in 3 columns: \nBase→Local | Base→Merged | Base→Remote.",
             "Like 3DiffToBase, but rows instead of 3 columns: \nBase→Local // \nBase→Merged // \nBase→Remote. \nUseful for long lines.",
-            "Like 3DiffToBase, but the right editor is moved below left editor, leaving much space for the merged file: \n(Base→Local // Base→Remote) | Base→Merged. \nBest used with “scrollSynchronizationMethod” set to “center”.",
+            "Like 3DiffToBase, but the right editor is moved below left editor, leaving much space for the merged file: \n(Base→Local // Base→Remote) | Base→Merged.",
             "Layout with 4 tiles: \nBase→Local | Remote→Merged // \nBase→Remote | Local→Merged. \nThe idea is to see local changes on the top, remote changes on the bottom; and to try to align the right edits to the ones on the left.",
             "Layout with 4 tiles: \nBase→Local | Base→Remote // \nRemote→Merged | Local→Merged. \nThe idea is to see local changes on the left, remote changes on the right; and to try to align the bottom edits to the ones on the top. \nUseful for long lines."
           ],

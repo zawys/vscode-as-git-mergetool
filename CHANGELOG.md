@@ -16,7 +16,6 @@ and this project adheres to
 
 - Layout `3DiffToBaseMergedRight` with the merged file editor
   taking up the whole right half.
-  Best used with scroll synchronization method set to `center`.
 - Command “Switch diff layout temporarily…”; also available on the status bar
 - Synchronization of the cursor position
 - Command “Reset temporary settings activated on diff layout start”
