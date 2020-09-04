@@ -26,8 +26,8 @@ export class DiffLayouterManager implements vscode.Disposable {
       disposabe.dispose();
     }
     this.disposables = [
-      vscode.workspace.onDidOpenTextDocument(
-        this.handleDidOpenTextDocument.bind(this)
+      vscode.window.onDidChangeVisibleTextEditors(
+        this.handleDidChangeVisibleTextEditors.bind(this)
       ),
       vscode.commands.registerCommand(
         focusPreviousConflictCommandID,
@@ -51,7 +51,7 @@ export class DiffLayouterManager implements vscode.Disposable {
       ),
     ];
     for (const editor of vscode.window.visibleTextEditors) {
-      if (await this.handleDidOpenTextDocument(editor.document)) {
+      if (await this.handleDidOpenURI(editor.document.uri)) {
         return;
       }
     }
@@ -290,20 +290,23 @@ export class DiffLayouterManager implements vscode.Disposable {
     this.activateSwitchLayoutStatusBarItem();
   }
 
-  /**
-   *
-   * @param document opened TextDocument
-   * @returns whether a layouter is active afterwards
-   */
-  private handleDidOpenTextDocument(
-    document: vscode.TextDocument
-  ): Promise<boolean> {
-    return this.handleDidOpenURI(document.uri);
+  private async handleDidChangeVisibleTextEditors(
+    editors: vscode.TextEditor[]
+  ) {
+    for (const editor of editors) {
+      await this.handleDidOpenURI(editor.document.uri);
+    }
   }
 
   private async handleDidOpenURI(uRI: vscode.Uri): Promise<boolean> {
+    if (this.layouter !== undefined && !this.layouter.isActive) {
+      return false;
+    }
     const diffedURIs = getDiffedURIs(uRI);
     if (diffedURIs === undefined || !(await filesExist(diffedURIs))) {
+      return false;
+    }
+    if (this.layouter !== undefined && !this.layouter.isActive) {
       return false;
     }
     this.didMergetoolReact.fire();

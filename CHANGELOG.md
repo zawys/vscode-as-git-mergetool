@@ -15,6 +15,11 @@ and this project adheres to
 - Command “Switch diff layout temporarily…”; also available on the status bar.
   Reapplied from v0.7.0 with fixes.
 
+### Fixed
+
+- Diff editor layouts were being reopened on closing them
+  when some extensions were enabled which caused additional “open” events.
+
 ## [0.7.1] - 2020-09-04
 
 ### Fixed
