@@ -19,6 +19,8 @@ and this project adheres to
 
 - Diff editor layouts were being reopened on closing them
   when some extensions were enabled which caused additional “open” events.
+- Prevent a seeming deadlock (“…other operation pending…”)
+  by making the dialog asking for reset confirmation modal.
 
 ## [0.7.1] - 2020-09-04
 

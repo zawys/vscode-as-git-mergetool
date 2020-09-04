@@ -396,14 +396,13 @@ export class MergetoolUI {
     ) {
       const resetOnceItem = { title: "Reset" };
       const resetAlwaysItem = { title: "Always reset" };
-      const cancelItem = { title: "Cancel" };
       const warningResult = await vscode.window.showWarningMessage(
         "The merged file has possibly been changed. " +
           "Continuing will reset the merged file. " +
           "A backup will be stored under “<merged file>.<date>.vsc-orig”.",
+        { modal: true },
         resetOnceItem,
-        resetAlwaysItem,
-        cancelItem
+        resetAlwaysItem
       );
       if (warningResult === resetAlwaysItem) {
         await this.vSCodeConfigurator.set(
