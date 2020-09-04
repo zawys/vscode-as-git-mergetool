@@ -154,11 +154,10 @@
         },
         "vscode-as-git-mergetool.scrollSynchronizationMethod": {
           "type": "string",
-          "default": "interval",
+          "default": "centered interval",
           "enum": [
-            "interval",
-            "top",
-            "center"
+            "centered interval",
+            "top"
           ],
           "description": "Vertical position in the editor at which the extension shall try to align the contents such that corresponding lines match.",
           "scope": "window"

@@ -55,7 +55,9 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
           },
         ],
       }),
-      temporarySideBySideSettingsManager
+      temporarySideBySideSettingsManager,
+      undefined,
+      1 / 3
     );
   }
 }

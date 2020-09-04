@@ -16,6 +16,11 @@ and this project adheres to
   taking up the whole right half.
   Best used with scroll synchronization method set to `center`.
 
+### Changed
+
+- Merge the best of the scroll synchronization methods
+  `centered` and `interval` into one, replacing them.
+
 ## [0.6.0] - 2020-09-03
 
 This will be the first version published on the

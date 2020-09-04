@@ -99,7 +99,13 @@ export class SplitDiffLayouter implements DiffLayouter {
         )
       );
       this.watchingDisposables.push(
-        await ScrollSynchronizer.create(this.editors, this.mergeEditorIndex),
+        await ScrollSynchronizer.create(
+          this.editors,
+          this.mergeEditorIndex,
+          undefined,
+          undefined,
+          this.mappedIntervalRelativeSize
+        ),
         ...this.createStatusBarItems()
       );
       return true;
@@ -192,7 +198,8 @@ export class SplitDiffLayouter implements DiffLayouter {
       diffedURIs: DiffedURIs
     ) => LayoutDescription,
     private readonly temporarySideBySideSettingsManager = defaultTemporarySideBySideSettingsManagerLazy.value,
-    private readonly vSCodeConfigurator = defaultVSCodeConfigurator
+    private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
+    private readonly mappedIntervalRelativeSize?: number
   ) {}
 
   private watchingDisposables: vscode.Disposable[] = [];
