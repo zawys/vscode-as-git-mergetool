@@ -10,6 +10,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- Reverted addition of command “Switch diff layout temporarily…”
+
 ## [0.7.0] - 2020-09-04
 
 ### Added

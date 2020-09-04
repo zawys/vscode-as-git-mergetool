@@ -15,7 +15,7 @@ import {
 } from "./diffLayouter";
 
 export class SplitDiffLayouter implements DiffLayouter {
-  public async tryActivate(onlyGrid = false): Promise<boolean> {
+  public async tryActivate(): Promise<boolean> {
     await this.monitor.enter();
     try {
       if (this.monitor.someoneIsWaiting || this._isEmployed) {
@@ -26,12 +26,10 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.watchingDisposables.push(
         ...watchDiffedURIs(this.diffedURIs, () => void this.deactivate())
       );
-      if (!onlyGrid) {
-        await this.temporarySettingsManager.activateSettings();
-        await vscode.commands.executeCommand("workbench.action.closeSidebar");
-        await vscode.commands.executeCommand("workbench.action.closePanel");
-      }
+      await this.temporarySettingsManager.activateSettings();
       const layoutDescription = this.createLayoutDescription(this.diffedURIs);
+      await vscode.commands.executeCommand("workbench.action.closeSidebar");
+      await vscode.commands.executeCommand("workbench.action.closePanel");
       await vscode.commands.executeCommand(
         "vscode.setEditorLayout",
         layoutDescription
@@ -116,10 +114,7 @@ export class SplitDiffLayouter implements DiffLayouter {
     }
   }
 
-  public async deactivate(
-    onlyGrid = false,
-    gridAndSidebarAreOk = false
-  ): Promise<void> {
+  public async deactivate(gridIsOk = false): Promise<void> {
     await this.monitor.enter();
     try {
       if (!this.isEmployed) {
@@ -128,7 +123,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       this._isActive = false;
       this.dispose();
 
-      if (!gridAndSidebarAreOk) {
+      if (!gridIsOk) {
         if (
           this.vSCodeConfigurator.get(quickLayoutDeactivationSettingID) ===
           true
@@ -140,18 +135,12 @@ export class SplitDiffLayouter implements DiffLayouter {
         } else {
           await this.closeTopEditorOfEachGroupIfOurs();
         }
-        if (!onlyGrid) {
-          // focus sidebar to have it open
-          await vscode.commands.executeCommand(
-            "workbench.action.focusSideBar"
-          );
-          await vscode.commands.executeCommand(focusFirstEditorGroupCommandID);
-        }
+        // focus sidebar to have it open
+        await vscode.commands.executeCommand("workbench.action.focusSideBar");
+        await vscode.commands.executeCommand(focusFirstEditorGroupCommandID);
       }
 
-      if (!onlyGrid) {
-        await this.temporarySettingsManager.resetSettings();
-      }
+      await this.temporarySettingsManager.resetSettings();
 
       this.editors = [];
       this.mergeEditor = undefined;
@@ -373,7 +362,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       "workbench.action.moveEditorToFirstGroup"
     );
     await this.closeTopEditorOfEachGroupIfOurs(true, false);
-    await this.deactivate(undefined, true);
+    await this.deactivate(true);
   }
 }
 export function focusMergeConflict(

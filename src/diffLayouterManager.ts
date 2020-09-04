@@ -45,10 +45,6 @@ export class DiffLayouterManager implements vscode.Disposable {
         resetMergedFileCommandID,
         this.resetMergedFile.bind(this)
       ),
-      vscode.commands.registerCommand(
-        switchLayoutCommandID,
-        this.switchLayout.bind(this)
-      ),
     ];
     for (const editor of vscode.window.visibleTextEditors) {
       if (await this.handleDidOpenTextDocument(editor.document)) {
@@ -63,7 +59,6 @@ export class DiffLayouterManager implements vscode.Disposable {
     try {
       await this.layouter?.deactivate();
       this.layouter = undefined;
-      this.layouterFactory = undefined;
     } finally {
       await this.layouterManagerMonitor.leave();
     }
@@ -120,23 +115,17 @@ export class DiffLayouterManager implements vscode.Disposable {
     public readonly vSCodeConfigurator: VSCodeConfigurator,
     public readonly temporarySettingsManager: TemporarySettingsManager,
     public readonly factories: DiffLayouterFactory[] = [
+      new FourTransferRightLayouterFactory(),
       new ThreeDiffToBaseLayouterFactory(),
+      new FourTransferDownLayouterFactory(),
       new ThreeDiffToBaseRowsLayouterFactory(),
       new ThreeDiffToBaseMergedRightLayouterFactory(),
-      new FourTransferRightLayouterFactory(),
-      new FourTransferDownLayouterFactory(),
     ]
   ) {
     if (factories.length === 0) {
       throw new Error("internal error: no factory registered");
     }
-    const defaultFactory = factories.find(
-      (factory) => factory.settingValue === "4TransferRight"
-    );
-    if (defaultFactory === undefined) {
-      throw new Error("could not find default factory");
-    }
-    this.defaultFactory = defaultFactory;
+    this.defaultFactory = factories[0];
   }
 
   public async resetMergedFile(): Promise<void> {
@@ -169,6 +158,7 @@ export class DiffLayouterManager implements vscode.Disposable {
         return true;
       }
 
+      const oldLayouter = this.layouter;
       const newLayouterFactory = await this.getLayoutFactory();
       if (newLayouterFactory === undefined) {
         return false;
@@ -179,65 +169,25 @@ export class DiffLayouterManager implements vscode.Disposable {
       await vscode.commands.executeCommand(
         "workbench.action.closeActiveEditor"
       );
-      await this.activateLayouter(diffedURIs, newLayouterFactory);
+      await oldLayouter?.deactivate();
+
+      this.layouter = newLayouterFactory.create(
+        this.layouterMonitor,
+        this.temporarySettingsManager,
+        diffedURIs,
+        this.vSCodeConfigurator
+      );
+      this.layouter.onDidDeactivate(
+        this.handleLayouterDidDeactivate.bind(this)
+      );
+      await this.layouter.tryActivate();
     } finally {
       await this.layouterManagerMonitor.leave();
     }
-    if (this.layouter !== undefined) {
-      this.didLayoutActivate.fire(this.layouter);
-    }
+    this.didLayoutActivate.fire(this.layouter);
     return true;
   }
 
-  public async switchLayout(layoutName?: unknown): Promise<void> {
-    if (this.layouter?.diffedURIs === undefined) {
-      void vscode.window.showErrorMessage(
-        "This requires the diff layout to be active"
-      );
-      return;
-    }
-    let targetFactory: DiffLayouterFactory | undefined;
-    if (typeof layoutName === "string") {
-      targetFactory = this.factories.find(
-        (factory) => factory.settingValue === layoutName
-      );
-    }
-    if (targetFactory === undefined) {
-      const pickResult = await vscode.window.showQuickPick(
-        this.factories
-          .filter((factory) => factory !== this.layouterFactory)
-          .map((factory) => factory.settingValue)
-      );
-      if (pickResult === undefined) {
-        return;
-      }
-      targetFactory = this.factories.find(
-        (factory) => factory.settingValue === pickResult
-      );
-      if (targetFactory === undefined) {
-        return;
-      }
-    }
-    if (
-      targetFactory === this.layouterFactory ||
-      this.layouter?.diffedURIs === undefined
-    ) {
-      void vscode.window.showErrorMessage(
-        "The situation has changed meanwhile. Please try again."
-      );
-    }
-    await this.layouterManagerMonitor.enter();
-    try {
-      await this.activateLayouter(this.layouter.diffedURIs, targetFactory);
-    } finally {
-      await this.layouterManagerMonitor.leave();
-    }
-    if (this.layouter !== undefined) {
-      this.didLayoutActivate.fire(this.layouter);
-    }
-  }
-
-  private layouterFactory: DiffLayouterFactory | undefined;
   private layouter: DiffLayouter | undefined;
   private readonly layouterMonitor = new Monitor();
   private readonly layouterManagerMonitor = new Monitor();
@@ -248,47 +198,6 @@ export class DiffLayouterManager implements vscode.Disposable {
   >();
   private readonly didLayoutActivate = new vscode.EventEmitter<DiffLayouter>();
   private readonly didMergetoolReact = new vscode.EventEmitter<void>();
-  private switchLayoutStatusBarItem: vscode.StatusBarItem | undefined;
-
-  private activateSwitchLayoutStatusBarItem(): void {
-    if (this.switchLayoutStatusBarItem !== undefined) {
-      return;
-    }
-    this.switchLayoutStatusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Left,
-      5
-    );
-    this.switchLayoutStatusBarItem.text = "$(editor-layout)";
-    this.switchLayoutStatusBarItem.command = switchLayoutCommandID;
-    this.switchLayoutStatusBarItem.tooltip = "Switch diff editor layout…";
-    this.switchLayoutStatusBarItem.show();
-  }
-
-  private deactivateSwitchLayoutStatusBarItem(): void {
-    this.switchLayoutStatusBarItem?.dispose();
-    this.switchLayoutStatusBarItem = undefined;
-  }
-
-  private async activateLayouter(
-    diffedURIs: DiffedURIs,
-    newLayouterFactory: DiffLayouterFactory
-  ): Promise<void> {
-    const oldLayouter = this.layouter;
-    if (oldLayouter !== undefined) {
-      await oldLayouter.deactivate(true);
-    }
-
-    this.layouterFactory = newLayouterFactory;
-    this.layouter = newLayouterFactory.create(
-      this.layouterMonitor,
-      this.temporarySettingsManager,
-      diffedURIs,
-      this.vSCodeConfigurator
-    );
-    this.layouter.onDidDeactivate(this.handleLayouterDidDeactivate.bind(this));
-    await this.layouter.tryActivate(oldLayouter !== undefined);
-    this.activateSwitchLayoutStatusBarItem();
-  }
 
   /**
    *
@@ -311,7 +220,6 @@ export class DiffLayouterManager implements vscode.Disposable {
   }
 
   private async handleLayouterDidDeactivate(layouter: DiffLayouter) {
-    this.deactivateSwitchLayoutStatusBarItem();
     this.didLayoutDeactivate.fire(layouter);
     if (!layouter.wasInitiatedByMergetool) {
       const text = await new Promise<string | undefined>((resolve) =>
@@ -377,4 +285,3 @@ export class DiffLayouterManager implements vscode.Disposable {
 export const layoutSettingID = `${extensionID}.layout`;
 export const deactivateLayoutCommandID = `${extensionID}.deactivateLayout`;
 export const resetMergedFileCommandID = `${extensionID}.resetMergedFile`;
-export const switchLayoutCommandID = "vscode-as-git-mergetool.switchLayout";

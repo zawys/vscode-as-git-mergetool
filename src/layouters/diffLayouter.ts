@@ -11,7 +11,7 @@ export interface DiffLayouter extends vscode.Disposable {
    *
    * @returns if layout could be activated.
    */
-  tryActivate(onlyGrid?: boolean): Promise<boolean>;
+  tryActivate(): Promise<boolean>;
 
   /**
    * Save the merge result.
@@ -21,7 +21,7 @@ export interface DiffLayouter extends vscode.Disposable {
   /**
    * Switch back to previous layout.
    */
-  deactivate(onlyGrid?: boolean): Promise<void>;
+  deactivate(): Promise<void>;
 
   /**
    * Focus merge conflict.
