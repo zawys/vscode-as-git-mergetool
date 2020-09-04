@@ -4,18 +4,31 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "compile",
       "type": "npm",
-      "script": "compile",
-      "problemMatcher": "$tsc",
+      "script": "watch",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
       "presentation": {
-        "reveal": "silent",
-        "clear": true
+        "reveal": "never"
       },
       "group": {
         "kind": "build",
         "isDefault": true
+      },
+      "runOptions": {
+        "instanceLimit": 1,
+        "runOn": "folderOpen"
       }
+    },
+    {
+      "label": "copy_files",
+      "type": "npm",
+      "script": "copy_files",
+      "presentation": {
+        "reveal": "silent",
+        "clear": true
+      },
+      "group": "build"
     },
     {
       "label": "start_test_for_debugging",
@@ -27,7 +40,7 @@
         }
       },
       "runOptions": {
-        "instanceLimit": 1,
+        "instanceLimit": 1
       },
       "presentation": {
         "echo": true,
@@ -39,21 +52,21 @@
       },
       "isBackground": true,
       "problemMatcher": {
-        "pattern":[
+        "pattern": [
           {
             "regexp": "^([^\\\\s].*)\\\\((\\\\d+,\\\\d+)\\\\):\\\\s*(.*)$",
             "file": 1,
             "location": 2,
             "message": 3
-          },
+          }
         ],
         "background": {
           "activeOnStart": true,
           "beginsPattern": "$never^",
-          "endsPattern": "^Debugging test .+\\. Waiting on port",
+          "endsPattern": "^Debugging test .+\\. Waiting on port"
         }
       },
-      "dependsOn": ["compile"]
-    },
-  ],
+      "dependsOn": ["watch", "copy_files"]
+    }
+  ]
 }

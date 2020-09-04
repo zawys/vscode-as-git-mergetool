@@ -241,7 +241,8 @@
     ]
   },
   "scripts": {
-    "compile": "tsc -p ./ && cpy --parents --cwd=./src '**/*' '!**/*.ts' ../out/src",
+    "compile": "tsc -p ./ && yarn run copy_files",
+    "copy_files": "cpy --parents --cwd=./src '**/*' '!**/*.ts' ../out/src",
     "watch": "tsc -watch -p ./",
     "clean": "rm -rf out packages",
     "recompile": "yarn run clean && yarn run compile",
