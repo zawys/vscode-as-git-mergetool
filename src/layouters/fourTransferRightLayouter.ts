@@ -1,20 +1,22 @@
-import { Monitor } from "../monitor";
-import { DiffLayouter, DiffLayouterFactory } from "./diffLayouter";
-import { defaultTemporarySideBySideSettingsManagerLazy } from "../temporarySettingsManager";
-import {
-  SplitDiffLayouter,
-  GroupOrientation,
-  diffEditorSymbol,
-} from "./splitDiffLayouter";
 import { DiffedURIs } from "../diffedURIs";
+import { Monitor } from "../monitor";
+import { TemporarySettingsManager } from "../temporarySettingsManager";
+import { VSCodeConfigurator } from "../vSCodeConfigurator";
+import { DiffLayouter, DiffLayouterFactory } from "./diffLayouter";
+import {
+  diffEditorSymbol,
+  GroupOrientation,
+  SplitDiffLayouter,
+} from "./splitDiffLayouter";
 
 export class FourTransferRightLayouterFactory implements DiffLayouterFactory {
   public readonly settingValue = "4TransferRight";
 
   public create(
     monitor: Monitor,
-    temporarySideBySideSettingsManager = defaultTemporarySideBySideSettingsManagerLazy.value,
-    diffedURIs: DiffedURIs
+    temporarySettingsManager: TemporarySettingsManager,
+    diffedURIs: DiffedURIs,
+    vSCodeConfigurator: VSCodeConfigurator
   ): DiffLayouter {
     const leftSize = 0.5;
     const rightSize = 1 - leftSize;
@@ -67,7 +69,8 @@ export class FourTransferRightLayouterFactory implements DiffLayouterFactory {
           },
         ],
       }),
-      temporarySideBySideSettingsManager
+      temporarySettingsManager,
+      vSCodeConfigurator
     );
   }
 }

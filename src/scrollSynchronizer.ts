@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { Disposable } from "vscode";
 import { getStats } from "./fsHandy";
 import { extensionID } from "./iDs";
-import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
+import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class ScrollSynchronizer implements Disposable {
   public dispose(): void {
@@ -14,8 +14,8 @@ export class ScrollSynchronizer implements Disposable {
 
   public static async create(
     editors: vscode.TextEditor[],
+    vSCodeConfigurator: VSCodeConfigurator,
     synchronizationSourceOnStartIndex?: number,
-    vSCodeConfigurator = defaultVSCodeConfigurator,
     syncMethod?: ScrollSyncMethod,
     mappedIntervalRelativeSize?: number
   ): Promise<ScrollSynchronizer> {

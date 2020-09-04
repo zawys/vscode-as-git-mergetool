@@ -1,8 +1,9 @@
-import { DiffedURIs, asURIList } from "../diffedURIs";
 import * as vscode from "vscode";
-import { Monitor } from "../monitor";
-import { TemporarySideBySideSettingsManager } from "../temporarySettingsManager";
+import { asURIList, DiffedURIs } from "../diffedURIs";
 import { extensionID } from "../iDs";
+import { Monitor } from "../monitor";
+import { TemporarySettingsManager } from "../temporarySettingsManager";
+import { VSCodeConfigurator } from "../vSCodeConfigurator";
 
 export interface DiffLayouter {
   /**
@@ -60,8 +61,9 @@ export interface DiffLayouterFactory {
 
   create(
     monitor: Monitor,
-    temporarySideBySideSettingsManager: TemporarySideBySideSettingsManager,
-    diffedURIs: DiffedURIs
+    temporarySettingsManager: TemporarySettingsManager,
+    diffedURIs: DiffedURIs,
+    vSCodeConfigurator: VSCodeConfigurator
   ): DiffLayouter;
 }
 

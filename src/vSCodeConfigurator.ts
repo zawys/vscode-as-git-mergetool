@@ -33,8 +33,6 @@ export class VSCodeConfigurator {
   }
 }
 
-export const defaultVSCodeConfigurator = new VSCodeConfigurator();
-
 export function separateSmallestKey(
   section: string
 ): [string | undefined, string] {

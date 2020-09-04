@@ -1,8 +1,8 @@
 import * as assert from "assert";
 
 import {
-  defaultVSCodeConfigurator,
   separateSmallestKey,
+  VSCodeConfigurator,
 } from "../../../../vSCodeConfigurator";
 import { hrtime } from "process";
 import { extensionID } from "../../../../iDs";
@@ -23,7 +23,7 @@ suite("separateSmallestKey", () => {
 });
 
 suite("VSCodeConfigurator", () => {
-  const sut = defaultVSCodeConfigurator;
+  const sut = new VSCodeConfigurator();
 
   test("persists settings", async () => {
     const key = `${extensionID}.layout`;

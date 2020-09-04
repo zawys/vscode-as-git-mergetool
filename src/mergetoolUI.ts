@@ -9,7 +9,7 @@ import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
 import { MergetoolProcessManager } from "./mergetoolProcessManager";
 import { Monitor } from "./monitor";
 import { displayProcessExitInteractively } from "./terminalProcessManager";
-import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
+import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class MergetoolUI {
   public register(): void {
@@ -340,7 +340,7 @@ export class MergetoolUI {
 
   public constructor(
     private readonly diffLayouterManager: DiffLayouterManager,
-    private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
+    private readonly vSCodeConfigurator: VSCodeConfigurator,
     private readonly monitor = new Monitor()
   ) {}
 
@@ -526,7 +526,7 @@ export class MergetoolUI {
   private async jumpToCommitMsg() {
     await vscode.commands.executeCommand("workbench.scm.focus");
     if (
-      defaultVSCodeConfigurator.get(editCommitMessageAfterMergetoolSettingID)
+      this.vSCodeConfigurator.get(editCommitMessageAfterMergetoolSettingID)
     ) {
       const workspaceRoot = getWorkingDirectoryUriInteractively();
       if (workspaceRoot !== undefined) {

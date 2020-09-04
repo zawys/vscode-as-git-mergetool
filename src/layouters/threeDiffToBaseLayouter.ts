@@ -1,20 +1,22 @@
-import { Monitor } from "../monitor";
-import { DiffLayouter, DiffLayouterFactory } from "./diffLayouter";
-import { defaultTemporarySideBySideSettingsManagerLazy } from "../temporarySettingsManager";
-import {
-  SplitDiffLayouter,
-  GroupOrientation,
-  diffEditorSymbol,
-} from "./splitDiffLayouter";
 import { DiffedURIs } from "../diffedURIs";
+import { Monitor } from "../monitor";
+import { TemporarySettingsManager } from "../temporarySettingsManager";
+import { VSCodeConfigurator } from "../vSCodeConfigurator";
+import { DiffLayouter, DiffLayouterFactory } from "./diffLayouter";
+import {
+  diffEditorSymbol,
+  GroupOrientation,
+  SplitDiffLayouter,
+} from "./splitDiffLayouter";
 
 export class ThreeDiffToBaseLayouterFactory implements DiffLayouterFactory {
   public readonly settingValue = "3DiffToBase";
 
   public create(
     monitor: Monitor,
-    temporarySideBySideSettingsManager = defaultTemporarySideBySideSettingsManagerLazy.value,
-    diffedURIs: DiffedURIs
+    temporarySettingsManager: TemporarySettingsManager,
+    diffedURIs: DiffedURIs,
+    vSCodeConfigurator: VSCodeConfigurator
   ): DiffLayouter {
     return new SplitDiffLayouter(
       monitor,
@@ -49,7 +51,8 @@ export class ThreeDiffToBaseLayouterFactory implements DiffLayouterFactory {
           },
         ],
       }),
-      temporarySideBySideSettingsManager
+      temporarySettingsManager,
+      vSCodeConfigurator
     );
   }
 }

@@ -4,8 +4,8 @@ import { extensionID } from "../iDs";
 import { mergeConflictIndicatorRE } from "../mergeConflictDetector";
 import { Monitor } from "../monitor";
 import { ScrollSynchronizer } from "../scrollSynchronizer";
-import { defaultTemporarySideBySideSettingsManagerLazy } from "../temporarySettingsManager";
-import { defaultVSCodeConfigurator } from "../vSCodeConfigurator";
+import { TemporarySettingsManager } from "../temporarySettingsManager";
+import { VSCodeConfigurator } from "../vSCodeConfigurator";
 import {
   DiffLayouter,
   focusNextConflictCommandID,
@@ -26,7 +26,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.watchingDisposables.push(
         ...watchDiffedURIs(this.diffedURIs, () => void this.deactivate())
       );
-      await this.temporarySideBySideSettingsManager.activateSettings();
+      await this.temporarySettingsManager.activateSettings();
       const layoutDescription = this.createLayoutDescription(this.diffedURIs);
       await vscode.commands.executeCommand("workbench.action.closeSidebar");
       await vscode.commands.executeCommand("workbench.action.closePanel");
@@ -101,8 +101,8 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.watchingDisposables.push(
         await ScrollSynchronizer.create(
           this.editors,
+          this.vSCodeConfigurator,
           this.mergeEditorIndex,
-          undefined,
           undefined,
           this.mappedIntervalRelativeSize
         ),
@@ -143,7 +143,7 @@ export class SplitDiffLayouter implements DiffLayouter {
         await vscode.commands.executeCommand(focusFirstEditorGroupCommandID);
       }
 
-      await this.temporarySideBySideSettingsManager.resetSettings();
+      await this.temporarySettingsManager.resetSettings();
 
       this.editors = [];
       this.mergeEditor = undefined;
@@ -197,8 +197,8 @@ export class SplitDiffLayouter implements DiffLayouter {
     private readonly createLayoutDescription: (
       diffedURIs: DiffedURIs
     ) => LayoutDescription,
-    private readonly temporarySideBySideSettingsManager = defaultTemporarySideBySideSettingsManagerLazy.value,
-    private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
+    private readonly temporarySettingsManager: TemporarySettingsManager,
+    private readonly vSCodeConfigurator: VSCodeConfigurator,
     private readonly mappedIntervalRelativeSize?: number
   ) {}
 

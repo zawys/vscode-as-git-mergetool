@@ -17,8 +17,8 @@ import { ThreeDiffToBaseMergedRightLayouterFactory } from "./layouters/threeDiff
 import { ThreeDiffToBaseRowsLayouterFactory } from "./layouters/threeDiffToBaseRowsLayouter";
 import { containsMergeConflictIndicators } from "./mergeConflictDetector";
 import { Monitor } from "./monitor";
-import { defaultTemporarySideBySideSettingsManagerLazy } from "./temporarySettingsManager";
-import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
+import { TemporarySettingsManager } from "./temporarySettingsManager";
+import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class DiffLayouterManager {
   public async register(): Promise<void> {
@@ -51,7 +51,7 @@ export class DiffLayouterManager {
         return;
       }
     }
-    await this.temporarySideBySideSettingsManager.value.resetSettings();
+    await this.temporarySettingsManager.resetSettings();
   }
 
   public async deactivateLayout(): Promise<void> {
@@ -112,15 +112,15 @@ export class DiffLayouterManager {
   }
 
   public constructor(
-    private readonly factories: DiffLayouterFactory[] = [
+    public readonly vSCodeConfigurator: VSCodeConfigurator,
+    public readonly temporarySettingsManager: TemporarySettingsManager,
+    public readonly factories: DiffLayouterFactory[] = [
       new FourTransferRightLayouterFactory(),
       new ThreeDiffToBaseLayouterFactory(),
       new FourTransferDownLayouterFactory(),
       new ThreeDiffToBaseRowsLayouterFactory(),
       new ThreeDiffToBaseMergedRightLayouterFactory(),
-    ],
-    private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
-    private readonly temporarySideBySideSettingsManager = defaultTemporarySideBySideSettingsManagerLazy
+    ]
   ) {
     if (factories.length === 0) {
       throw new Error("internal error: no factory registered");
@@ -173,8 +173,9 @@ export class DiffLayouterManager {
 
       this.layouter = newLayouterFactory.create(
         this.layouterMonitor,
-        this.temporarySideBySideSettingsManager.value,
-        diffedURIs
+        this.temporarySettingsManager,
+        diffedURIs,
+        this.vSCodeConfigurator
       );
       this.layouter.onDidDeactivate(
         this.handleLayouterDidDeactivate.bind(this)

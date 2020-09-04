@@ -5,10 +5,7 @@ import {
   getGitPathInteractively,
   getWorkingDirectoryUri,
 } from "./getPathsWithinVSCode";
-import {
-  defaultVSCodeConfigurator,
-  VSCodeConfigurator,
-} from "./vSCodeConfigurator";
+import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
 export const settingsAssistantOnStartupID = `${extensionID}.settingsAssistantOnStartup`;
 
@@ -321,9 +318,7 @@ export class SettingsAssistantCreator {
     }
   }
 
-  constructor(
-    private readonly vSCodeConfigurator = defaultVSCodeConfigurator
-  ) {}
+  constructor(private readonly vSCodeConfigurator: VSCodeConfigurator) {}
 }
 
 class Option implements vscode.MessageItem {

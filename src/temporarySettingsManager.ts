@@ -1,10 +1,9 @@
-import { defaultVSCodeConfigurator } from "./vSCodeConfigurator";
+import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { Monitor } from "./monitor";
 import { extensionID } from "./iDs";
 import { defaultExtensionContextManager } from "./extensionContextManager";
-import { Lazy } from "./lazy";
 
-export class TemporarySideBySideSettingsManager {
+export class TemporarySettingsManager {
   public async activateSettings(): Promise<void> {
     await this.monitor.enter();
     try {
@@ -62,7 +61,7 @@ export class TemporarySideBySideSettingsManager {
   }
 
   public constructor(
-    private readonly vSCodeConfigurator = defaultVSCodeConfigurator,
+    private readonly vSCodeConfigurator: VSCodeConfigurator,
     private readonly monitor = new Monitor(),
     private readonly targetSettings: StorageState = {
       "diffEditor.renderSideBySide": false,
@@ -95,10 +94,6 @@ export class TemporarySideBySideSettingsManager {
     await this.storageState.update(key, value);
   }
 }
-
-export const defaultTemporarySideBySideSettingsManagerLazy = new Lazy(
-  () => new TemporarySideBySideSettingsManager()
-);
 
 type StorageState = { [k: string]: unknown };
 
