@@ -98,10 +98,15 @@
         "command": "vscode-as-git-mergetool.mergeArbitraryFiles",
         "title": "Merge arbitrary files",
         "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.resetTemporarySettings",
+        "title": "Reset temporary settings activated on diff layout start",
+        "category": "Git Mergetool"
       }
     ],
     "configuration": {
-      "title": "VS Code as Git Mergetool",
+      "title": "Git Mergetool",
       "properties": {
         "vscode-as-git-mergetool.settingsAssistantOnStartup": {
           "type": "boolean",

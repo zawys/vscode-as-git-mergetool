@@ -20,13 +20,14 @@ export async function activate(
 }
 
 // this method is called when your extension is deactivated
-export async function deactivate(): Promise<void> {
-  await extensionAPI?.deactivate();
+export function deactivate(): void {
+  extensionAPI?.deactivate();
   extensionAPI = undefined;
 }
 
 export class ExtensionAPI {
   public async activate(): Promise<void> {
+    this.temporarySettingsManager.register();
     await this.diffLayouterManager.register();
     this.mergetoolUI.register();
     this.arbitraryFilesMerger.register();
@@ -36,16 +37,19 @@ export class ExtensionAPI {
     );
   }
 
-  public async deactivate(): Promise<void> {
+  public deactivate(): void {
     if (this.timer !== undefined) {
       clearTimeout(this.timer);
     }
     this.mergetoolUI.dispose();
-    await this.diffLayouterManager.dispose();
+    this.temporarySettingsManager.dispose();
+    this.arbitraryFilesMerger.dispose();
+    this.diffLayouterManager.dispose();
   }
 
   public constructor(
     vSCodeConfigurator?: VSCodeConfigurator,
+    temporarySettingsManager?: TemporarySettingsManager,
     diffLayouterManager?: DiffLayouterManager,
     mergetoolUI?: mergetool.MergetoolUI,
     arbitraryFilesMerger?: ArbitraryFilesMerger,
@@ -54,14 +58,17 @@ export class ExtensionAPI {
     const vSCodeConfiguratorProvider = new Lazy(
       () => vSCodeConfigurator || new VSCodeConfigurator()
     );
-    if (diffLayouterManager === undefined) {
-      const vSCodeConfigurator = vSCodeConfiguratorProvider.value;
-      const temporarySettingsManager = new TemporarySettingsManager(
-        vSCodeConfigurator
+    if (temporarySettingsManager === undefined) {
+      this.temporarySettingsManager = new TemporarySettingsManager(
+        vSCodeConfiguratorProvider.value
       );
+    } else {
+      this.temporarySettingsManager = temporarySettingsManager;
+    }
+    if (diffLayouterManager === undefined) {
       this.diffLayouterManager = new DiffLayouterManager(
-        vSCodeConfigurator,
-        temporarySettingsManager
+        vSCodeConfiguratorProvider.value,
+        this.temporarySettingsManager
       );
     } else {
       this.diffLayouterManager = diffLayouterManager;
@@ -89,6 +96,7 @@ export class ExtensionAPI {
     }
   }
 
+  public readonly temporarySettingsManager: TemporarySettingsManager;
   public readonly diffLayouterManager: DiffLayouterManager;
   public readonly mergetoolUI: mergetool.MergetoolUI;
   public readonly arbitraryFilesMerger: ArbitraryFilesMerger;

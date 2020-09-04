@@ -2,8 +2,9 @@ import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { Monitor } from "./monitor";
 import { extensionID } from "./iDs";
 import { defaultExtensionContextManager } from "./extensionContextManager";
+import { commands, Disposable } from "vscode";
 
-export class TemporarySettingsManager {
+export class TemporarySettingsManager implements Disposable {
   public async activateSettings(): Promise<void> {
     await this.monitor.enter();
     try {
@@ -60,6 +61,24 @@ export class TemporarySettingsManager {
     }
   }
 
+  public register(): void {
+    this.disposables.push(
+      commands.registerCommand(
+        "vscode-as-git-mergetool.resetTemporarySettings",
+        async () => {
+          await this.resetSettings();
+        }
+      )
+    );
+  }
+
+  public dispose(): void {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+    this.disposables = [];
+  }
+
   public constructor(
     private readonly vSCodeConfigurator: VSCodeConfigurator,
     private readonly monitor = new Monitor(),
@@ -77,6 +96,7 @@ export class TemporarySettingsManager {
   }
 
   private targetIDs: string[];
+  private disposables: Disposable[] = [];
 
   private getStorageState(key: string): StorageState {
     const value = this.storageState.get(key);

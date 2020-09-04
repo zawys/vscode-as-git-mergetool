@@ -5,7 +5,7 @@ import { Monitor } from "../monitor";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";
 
-export interface DiffLayouter {
+export interface DiffLayouter extends vscode.Disposable {
   /**
    * Try start layout.
    *

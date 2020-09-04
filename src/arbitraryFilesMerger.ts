@@ -9,17 +9,20 @@ import { getGitPathInteractively } from "./getPathsWithinVSCode";
 import { extensionID } from "./iDs";
 import { Lazy } from "./lazy";
 
-export class ArbitraryFilesMerger {
+export class ArbitraryFilesMerger implements vscode.Disposable {
   public register(): void {
-    for (const disposabe of this.disposables) {
-      disposabe.dispose();
-    }
     this.disposables = [
       vscode.commands.registerCommand(
         mergeArbitraryFilesCommandID,
         this.mergeArbitraryFiles.bind(this)
       ),
     ];
+  }
+
+  public dispose(): void {
+    for (const disposabe of this.disposables) {
+      disposabe.dispose();
+    }
   }
 
   public async mergeArbitraryFiles(): Promise<boolean> {

@@ -20,7 +20,7 @@ import { Monitor } from "./monitor";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
-export class DiffLayouterManager {
+export class DiffLayouterManager implements vscode.Disposable {
   public async register(): Promise<void> {
     for (const disposabe of this.disposables) {
       disposabe.dispose();
@@ -103,12 +103,12 @@ export class DiffLayouterManager {
       : undefined;
   }
 
-  public async dispose(): Promise<void> {
+  public dispose(): void {
     for (const disposable of this.disposables) {
       disposable.dispose();
     }
     this.disposables = [];
-    await this.deactivateLayout();
+    this.layouter?.dispose();
   }
 
   public constructor(

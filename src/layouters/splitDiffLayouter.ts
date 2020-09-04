@@ -121,10 +121,7 @@ export class SplitDiffLayouter implements DiffLayouter {
         return;
       }
       this._isActive = false;
-      for (const disposable of this.watchingDisposables) {
-        disposable.dispose();
-      }
-      this.watchingDisposables = [];
+      this.dispose();
 
       if (!gridIsOk) {
         if (
@@ -189,6 +186,13 @@ export class SplitDiffLayouter implements DiffLayouter {
       return undefined;
     }
     return focusMergeConflict(this.mergeEditor, type);
+  }
+
+  public dispose(): void {
+    for (const disposable of this.watchingDisposables) {
+      disposable.dispose();
+    }
+    this.watchingDisposables = [];
   }
 
   public constructor(
