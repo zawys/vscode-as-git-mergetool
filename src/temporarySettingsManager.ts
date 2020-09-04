@@ -63,12 +63,9 @@ export class TemporarySettingsManager implements Disposable {
 
   public register(): void {
     this.disposables.push(
-      commands.registerCommand(
-        "vscode-as-git-mergetool.resetTemporarySettings",
-        async () => {
-          await this.resetSettings();
-        }
-      )
+      commands.registerCommand(resetTemporarySettingsCommandID, async () => {
+        await this.resetSettings();
+      })
     );
   }
 
@@ -119,3 +116,5 @@ type StorageState = { [k: string]: unknown };
 
 const origActualKey = `${extensionID}.temporarySettings.origActual`;
 const origTargetKey = `${extensionID}.temporarySettings.origTarget`;
+const resetTemporarySettingsCommandID =
+  "vscode-as-git-mergetool.resetTemporarySettings";

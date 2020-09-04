@@ -96,12 +96,17 @@
       },
       {
         "command": "vscode-as-git-mergetool.mergeArbitraryFiles",
-        "title": "Merge arbitrary files",
+        "title": "Merge arbitrary files…",
         "category": "Git Mergetool"
       },
       {
         "command": "vscode-as-git-mergetool.resetTemporarySettings",
         "title": "Reset temporary settings activated on diff layout start",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.switchLayout",
+        "title": "Switch diff editor layout temporarily…",
         "category": "Git Mergetool"
       }
     ],
@@ -242,6 +247,10 @@
       {
         "key": "shift+alt+m a",
         "command": "vscode-as-git-mergetool.gitMergeAbort"
+      },
+      {
+        "key": "shift+alt+m l",
+        "command": "vscode-as-git-mergetool.switchLayout"
       }
     ]
   },

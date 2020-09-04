@@ -10,6 +10,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Command “Switch diff layout temporarily…”; also available on the status bar.
+  Reapplied from v0.7.0 with fixes.
+
 ## [0.7.1] - 2020-09-04
 
 ### Fixed
