@@ -24,6 +24,10 @@ and this project adheres to
 - Merge the best of the scroll synchronization methods
   `centered` and `interval` into one, replacing them.
 
+### Fixed
+
+- Do not create a backup on close when the merged file is unchanged.
+
 ## [0.6.0] - 2020-09-03
 
 This will be the first version published on the

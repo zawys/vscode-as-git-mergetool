@@ -315,11 +315,10 @@ export class MergetoolUI {
       return;
     }
     this.disposing = true;
-    const mergedPath = this._mergeSituation?.merged.fsPath;
     this.disposeStatusBarItems();
     this.registeredDisposables.forEach((item) => void item?.dispose());
     this.registeredDisposables = new Set();
-    void this.disposeProcessManager(mergedPath);
+    void this.disposeProcessManager();
   }
 
   public get mergeSituation(): DiffedURIs | undefined {
@@ -366,15 +365,17 @@ export class MergetoolUI {
     return true;
   }
 
-  private async disposeProcessManager(
-    mergedPath: string | undefined
-  ): Promise<void> {
+  private async disposeProcessManager(): Promise<void> {
     if (this._processManager === undefined) {
       return;
     }
-    this._processManager.doHardStop =
-      mergedPath === undefined ||
-      !(await this.createMergedFileBackup(mergedPath));
+    this._processManager.doHardStop = !(
+      (await this.mergedEqualsBackupFileContents()) ||
+      (this._mergeSituation !== undefined &&
+        (await this.createMergedFileBackup(
+          this._mergeSituation?.merged.fsPath
+        )))
+    );
     this._processManager.dispose();
   }
 
@@ -386,8 +387,7 @@ export class MergetoolUI {
       return false;
     }
     const mergedPath = this._mergeSituation.merged.fsPath;
-    const backupPath = this._mergeSituation.backup.fsPath;
-    if (await fileContentsEqual(mergedPath, backupPath)) {
+    if (await this.mergedEqualsBackupFileContents()) {
       return true;
     }
     if (
@@ -418,6 +418,18 @@ export class MergetoolUI {
       return false;
     }
     return await this.createMergedFileBackup(mergedPath);
+  }
+
+  private async mergedEqualsBackupFileContents(): Promise<boolean> {
+    if (
+      this._mergeSituation === undefined ||
+      this._mergeSituation.backup === undefined
+    ) {
+      return false;
+    }
+    const mergedPath = this._mergeSituation.merged.fsPath;
+    const backupPath = this._mergeSituation.backup.fsPath;
+    return await fileContentsEqual(mergedPath, backupPath);
   }
 
   private async createMergedFileBackup(mergedPath: string): Promise<boolean> {
