@@ -196,14 +196,6 @@ export class ScrollSynchronizer implements Disposable {
               0
             )
           );
-          if (
-            (sourceEditorIndex === 1 && targetEditorIndex === 2) ||
-            (sourceEditorIndex === 2 && targetEditorIndex === 1)
-          ) {
-            vscode.window.setStatusBarMessage(
-              `mapped positions [${mappedSourceStartPos}, ${mappedSourceEndPos}] to lines [${targetRange.start.line}, ${targetRange.end.line}]`
-            );
-          }
         }
       }
 
