@@ -10,7 +10,9 @@
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
+      "stopOnEntry": true,
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/extension.js"],
       "preLaunchTask": "build:dev"
     },
     {
@@ -26,7 +28,8 @@
       "timeout": 10000,
       "outFiles": [
         "${workspaceFolder}/out/src/**/*.js",
-        "${workspaceFolder}/out/test/**/*.js"
+        "${workspaceFolder}/out/test/**/*.js",
+        "${workspaceFolder}/dist/extension.js"
       ]
     }
   ]

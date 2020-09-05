@@ -10,6 +10,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- Bundle extension with [Parcel](https://v2.parceljs.org/)
+- Include only necessary files in the package
+
 ## [0.7.2] - 2020-09-04
 
 ### Added

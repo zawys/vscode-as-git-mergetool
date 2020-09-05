@@ -2,6 +2,7 @@
 /media/
 /node_modules/
 /out/
+/dist/
 /packages/
 /dist/
 .eslintrc.js

@@ -6,4 +6,4 @@
 yarn-error.log
 .env
 .precommit_stash_exists
-.cache
+.parcel-cache

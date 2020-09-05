@@ -1,3 +1,4 @@
+import "regenerator-runtime";
 import * as vscode from "vscode";
 import * as mergetool from "./mergetoolUI";
 import { SettingsAssistantCreator } from "./settingsAssistant";

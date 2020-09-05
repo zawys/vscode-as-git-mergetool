@@ -6,6 +6,5 @@
 !CHANGELOG.md
 !package.json
 !.vscodeignore
-!out/src/**/*.js
+!dist/**/*.js
 !media/packaged
-!node_modules

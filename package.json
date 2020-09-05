@@ -19,7 +19,19 @@
     "*"
   ],
   "icon": "media/packaged/icon.png",
-  "main": "out/src/extension.js",
+  "main": "dist/extension.js",
+  "source": "src/extension.ts",
+  "targets": {
+    "main": {
+      "context": "node",
+      "includeNodeModules": {
+        "vscode": false,
+        "node-pty": false
+      },
+      "isLibrary": true,
+      "outputFormat": "commonjs"
+    }
+  },
   "bugs": {
     "url": "https://github.com/zawys/vscode-as-git-mergetool/issues"
   },
@@ -257,18 +269,20 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "clean": "rm -rf out packages dist",
+    "clean": "rm -rf out packages dist .cache",
     "recompile": "yarn run clean && yarn run compile",
     "lint": "eslint src test --ext ts --max-warnings=0",
     "copy_files": "cpy --parents --cwd=./test '**/*' '!**/*.ts' ../out/test",
-    "pretest": "yarn install && yarn run recompile && yarn run copy_files && yarn run lint",
+    "pretest": "yarn install && yarn run recompile && yarn run copy_files && yarn run bundle && yarn run lint",
     "test": "yarn run test:only",
     "test:only": "node ./out/test/runTests.js",
-    "pretest:dev": "yarn run compile && yarn run copy_files",
+    "pretest:dev": "yarn run compile && yarn run bundle:dev && yarn run copy_files",
     "test:dev": "yarn run test:only",
     "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
-    "build:dev": "yarn run compile",
-    "build": "yarn run clean && yarn run recompile && yarn run package",
+    "bundle:dev": "parcel build --target main --no-minify ${npm_package_source}",
+    "bundle": "parcel build --target main --no-cache --detailed-report 10 ${npm_package_source}",
+    "build:dev": "yarn run bundle:dev",
+    "build": "yarn run clean && yarn run bundle && yarn run package",
     "working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
     "index_is_clean": "git diff --staged --quiet && git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
     "format": "prettier --ignore-path .gitignore --write .",
@@ -288,6 +302,7 @@
     }
   },
   "devDependencies": {
+    "@parcel/transformer-typescript-tsc": "^2.0.0-nightly.*",
     "@types/diff": "^4.0.2",
     "@types/glob": "^7.1.3",
     "@types/mocha": "^8.0.3",
@@ -308,6 +323,7 @@
     "husky": "^4.2.5",
     "mocha": "^8.1.3",
     "node-pty": "^0.9.0",
+    "parcel": "^2.0.0-beta.1",
     "prettier": "^2.1.1",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.2",
@@ -317,6 +333,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "diff": "^4.0.2",
+    "regenerator-runtime": "^0.13.7",
     "which": "^2.0.2"
   }
 }
