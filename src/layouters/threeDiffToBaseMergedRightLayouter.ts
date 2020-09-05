@@ -35,9 +35,11 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
             break;
           case Zoom.top:
             topSize = 0.95;
+            leftSize = 0.58;
             break;
           case Zoom.bottom:
             topSize = 0.05;
+            leftSize = 0.58;
             break;
         }
         const bottomSize = 1 - topSize;
@@ -54,6 +56,7 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
                   oldUri: diffedURIs.base,
                   newUri: diffedURIs.local,
                   title: "(1) Current changes [readonly]",
+                  notFocussable: zoom === Zoom.right || zoom === Zoom.bottom,
                   save: false,
                 },
                 {
@@ -62,6 +65,7 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
                   oldUri: diffedURIs.base,
                   newUri: diffedURIs.remote,
                   title: "(2) Incoming changes [readonly]",
+                  notFocussable: zoom === Zoom.right || zoom === Zoom.top,
                   save: false,
                 },
               ],
@@ -73,6 +77,7 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
               newUri: diffedURIs.merged,
               title: "(3) Merged changes",
               save: true,
+              notFocussable: zoom === Zoom.left,
               isMergeEditor: true,
             },
           ],

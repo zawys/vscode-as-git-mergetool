@@ -34,48 +34,53 @@ export class SplitDiffLayouter implements DiffLayouter {
       }
       const layoutDescription = await this.setLayoutInner(zoom);
 
-      // iterate through editors in depth-first manner
-      const stack: [EditorGroupDescription, number][] = [];
-      let element: GroupOrEditorDescription = layoutDescription;
-      let indexInGroup = 0;
-      let column = 1;
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        if (element.type === diffEditorSymbol) {
+      let editorIndex = 0;
+      let focussed = -1;
+      let alternativeFocussed = -1;
+      await this.iterateOverLayout(
+        layoutDescription,
+        async (editorDescription) => {
           await vscode.commands.executeCommand(
             "vscode.diff",
-            element.oldUri,
-            element.newUri,
-            element.title,
+            editorDescription.oldUri,
+            editorDescription.newUri,
+            editorDescription.title,
             {
-              viewColumn: column,
+              viewColumn: editorIndex + 1,
               preview: true,
               preserveFocus: false,
             }
           );
+          if (focussed === -1 && !editorDescription.notFocussable) {
+            if (editorDescription.isMergeEditor) {
+              focussed = editorIndex;
+            } else if (alternativeFocussed === -1) {
+              alternativeFocussed = editorIndex;
+            }
+          }
           const editor = vscode.window.activeTextEditor;
           if (editor !== undefined) {
-            if (element.isMergeEditor) {
-              this.mergeEditor = editor;
-              this.mergeEditorIndex = this.editors.length;
-            }
             this.editors.push(editor);
-            if (element.save) {
+            if (
+              editorDescription.isMergeEditor &&
+              this.mergeEditor === undefined
+            ) {
+              this.mergeEditor = editor;
+              this.mergeEditorIndex = editorIndex;
+            }
+            if (editorDescription.save) {
               this.editorsToSave.push(editor);
             }
           }
-          column++;
-        } else if (indexInGroup < element.groups.length) {
-          stack.push([element, indexInGroup + 1]);
-          element = element.groups[indexInGroup];
-          indexInGroup = 0;
-          continue;
+          editorIndex++;
         }
-        const top = stack.pop();
-        if (top === undefined) {
-          break;
+      );
+      if (focussed === -1) {
+        if (alternativeFocussed === -1) {
+          focussed = 0;
+        } else {
+          focussed = alternativeFocussed;
         }
-        [element, indexInGroup] = top;
       }
 
       this.remainingEditors = this.editors.length;
@@ -83,12 +88,12 @@ export class SplitDiffLayouter implements DiffLayouter {
         this.mergeEditor !== undefined &&
         this.mergeEditorIndex !== undefined
       ) {
-        if (!focusMergeConflict(this.mergeEditor, SearchType.first)) {
+        if (!cursorToMergeConflict(this.mergeEditor, SearchType.first)) {
           void vscode.window.showInformationMessage(
             "The merged file does not contain conflict indicators."
           );
         }
-        await focusColumn(this.mergeEditorIndex);
+        await focusColumn(focussed);
       }
       this._isActivating = false;
       this._isActive = true;
@@ -193,7 +198,7 @@ export class SplitDiffLayouter implements DiffLayouter {
     if (this.mergeEditor === undefined) {
       return undefined;
     }
-    return focusMergeConflict(this.mergeEditor, type);
+    return cursorToMergeConflict(this.mergeEditor, type);
   }
 
   public dispose(): void {
@@ -209,7 +214,44 @@ export class SplitDiffLayouter implements DiffLayouter {
       if (!this.isActive) {
         return;
       }
-      await this.setLayoutInner(zoom);
+      const layoutDescription = await this.setLayoutInner(zoom);
+      let editorIndex = 0;
+      const focussable: boolean[] = [];
+      let focussed = -1;
+      let alternativeFocussed = -1;
+      if (
+        await this.iterateOverLayout(
+          layoutDescription,
+          (editorDescription) => {
+            focussable.push(!editorDescription.notFocussable);
+            if (focussed === -1 && !editorDescription.notFocussable) {
+              if (editorDescription.isMergeEditor) {
+                focussed = editorIndex;
+              } else if (alternativeFocussed === -1) {
+                alternativeFocussed = editorIndex;
+              }
+            }
+            editorIndex++;
+          }
+        )
+      ) {
+        return;
+      }
+      if (focussed === -1) {
+        if (alternativeFocussed === -1) {
+          return;
+        } else {
+          focussed = alternativeFocussed;
+        }
+      }
+      const activeEditorIndex = (this.editors as (
+        | vscode.TextEditor
+        | undefined
+      )[]).indexOf(vscode.window.activeTextEditor);
+      if (focussable[activeEditorIndex]) {
+        return;
+      }
+      await focusColumn(focussed);
     } finally {
       await this.monitor.leave();
     }
@@ -238,6 +280,37 @@ export class SplitDiffLayouter implements DiffLayouter {
   private mergeEditorIndex: number | undefined;
   private remainingEditors = 0;
   private _wasInitiatedByMergetool = false;
+
+  private async iterateOverLayout(
+    layoutDescription: LayoutDescription,
+    action: (
+      diffEditorDescription: DiffEditorDescription
+    ) => boolean | void | Promise<boolean | void>
+  ): Promise<boolean> {
+    // iterate through editors in depth-first manner
+    const stack: [EditorGroupDescription, number][] = [];
+    let element: GroupOrEditorDescription = layoutDescription;
+    let indexInGroup = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (element.type === diffEditorSymbol) {
+        if ((await action(element)) === true) {
+          return true;
+        }
+      } else if (indexInGroup < element.groups.length) {
+        stack.push([element, indexInGroup + 1]);
+        element = element.groups[indexInGroup];
+        indexInGroup = 0;
+        continue;
+      }
+      const top = stack.pop();
+      if (top === undefined) {
+        break;
+      }
+      [element, indexInGroup] = top;
+    }
+    return false;
+  }
 
   private async setLayoutInner(zoom: Zoom): Promise<LayoutDescription> {
     const layoutDescription = this.createLayoutDescription(
@@ -398,7 +471,7 @@ export class SplitDiffLayouter implements DiffLayouter {
     await this.deactivate(undefined, true);
   }
 }
-export function focusMergeConflict(
+export function cursorToMergeConflict(
   editor: vscode.TextEditor,
   type: SearchType
 ): boolean {
@@ -431,8 +504,8 @@ export function focusMergeConflict(
   }
 }
 
-export async function focusColumn(column: number): Promise<void> {
-  const focusEditorGroupCommandID = focusEditorGroupCommandIDs[column];
+export async function focusColumn(columnIndex: number): Promise<void> {
+  const focusEditorGroupCommandID = focusEditorGroupCommandIDs[columnIndex];
   if (focusEditorGroupCommandID !== undefined) {
     await vscode.commands.executeCommand(focusEditorGroupCommandID);
   }
@@ -471,6 +544,7 @@ export interface DiffEditorDescription extends LayoutElementDescription {
   newUri: vscode.Uri;
   title: string;
   save: boolean;
+  notFocussable?: boolean;
   isMergeEditor?: boolean;
 }
 
