@@ -36,6 +36,7 @@
     "serializable",
     "submodules",
     "unpackaged",
+    "unpublish",
     "unstash",
     "upvoting",
     "vsce",

@@ -21,10 +21,14 @@ directly in VS Code.
   which allows that VS Code is invoked
   when an external `git mergetool` is executed.
 - Shows a 3- or 4-pane diff layout when VS Code opens a merge situation.
-- Synchronizes the scroll position of the editors according to a text diff.
+  These layouts can be switched during merging.
+  There is an additional mechanism called “zooming”,
+  allowing to quickly change layout proportions using keyboard shortcuts.
+- Synchronizes the scroll and cursor position of the editors
+  according to a text diff.
 - Provides commands for launching/continuing/stopping `git mergetool`,
-  as well as a “super” command guiding through the whole merge process
-  by invoking other commands as appropriate.
+  as well as a super command guiding through the whole merge process
+  by invoking other commands as appropriate (by default `shift+alt+m` `m`).
 - Adds key bindings for commands most useful during merge (`shift+alt+m` …).
   See the contributions tab in VS Code or
   the `keybindings` section in [`package.json`](package.json).

@@ -10,9 +10,22 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.8.0] - 2020-09-05
+
+### Note
+
+I have rebuilt and re-signed the packages of versions v0.6.0–v0.7.2
+as in these packages were files which I did not want to publish.
+As it is
+[impossible to unpublish a specific version](https://github.com/microsoft/vscode-vsce/issues/176)
+on the Marketplace,
+I needed to temporarily completely purge the project from the Marketplace.
+If—against my hope—that should have caused any trouble, please file an issue.
+
 ### Added
 
-- *Zoom*: Quickly changing the layout sizes using keyboard shortcuts.
+- *Zoom*: Quickly change the layout proportions using keyboard shortcuts:
+  `shift+alt+m ↑`, `shift+alt+m ↓`, etc.; `shift+alt+m backspace` to reset.
 
 ## [0.7.3] - 2020-09-05
 
@@ -222,7 +235,8 @@ This will be the first version published on the
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.7.3...HEAD
+[unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.8.0
 [0.7.3]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.7.3
 [0.7.2]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.7.2
 [0.7.1]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.7.1
