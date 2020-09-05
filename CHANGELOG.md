@@ -13,6 +13,7 @@ and this project adheres to
 ### Added
 
 - Status bar items for zooming
+- Make diffed files except merge result readonly.
 
 ## [0.8.0] - 2020-09-05
 

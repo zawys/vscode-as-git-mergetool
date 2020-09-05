@@ -5,6 +5,7 @@ import { DiffLayouterManager } from "./diffLayouterManager";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { Lazy } from "./lazy";
 import * as mergetool from "./mergetoolUI";
+import { ReadonlyDocumentProviderManager } from "./readonlyDocumentProvider";
 import { SettingsAssistantCreator } from "./settingsAssistant";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
@@ -30,6 +31,7 @@ export function deactivate(): void {
 export class ExtensionAPI {
   public async activate(): Promise<void> {
     // inverse order as below
+    this.readonlyDocumentProviderManager.register();
     this.temporarySettingsManager.register();
     this.zoomManager.register();
     await this.diffLayouterManager.register();
@@ -51,10 +53,12 @@ export class ExtensionAPI {
     this.diffLayouterManager.dispose();
     this.zoomManager.dispose();
     this.temporarySettingsManager.dispose();
+    this.readonlyDocumentProviderManager.dispose();
   }
 
   public constructor(
     vSCodeConfigurator?: VSCodeConfigurator,
+    readonlyDocumentProviderManager?: ReadonlyDocumentProviderManager,
     zoomManager?: ZoomManager,
     temporarySettingsManager?: TemporarySettingsManager,
     diffLayouterManager?: DiffLayouterManager,
@@ -65,48 +69,39 @@ export class ExtensionAPI {
     const vSCodeConfiguratorProvider = new Lazy(
       () => vSCodeConfigurator || new VSCodeConfigurator()
     );
-    if (zoomManager === undefined) {
-      this.zoomManager = new ZoomManager();
-    } else {
-      this.zoomManager = zoomManager;
-    }
-    if (temporarySettingsManager === undefined) {
-      this.temporarySettingsManager = new TemporarySettingsManager(
-        vSCodeConfiguratorProvider.value
-      );
-    } else {
-      this.temporarySettingsManager = temporarySettingsManager;
-    }
-    if (diffLayouterManager === undefined) {
-      this.diffLayouterManager = new DiffLayouterManager(
-        vSCodeConfiguratorProvider.value,
-        this.zoomManager,
-        this.temporarySettingsManager
-      );
-    } else {
-      this.diffLayouterManager = diffLayouterManager;
-    }
-    if (mergetoolUI === undefined) {
-      this.mergetoolUI = new mergetool.MergetoolUI(
-        this.diffLayouterManager,
-        vSCodeConfiguratorProvider.value
-      );
-    } else {
-      this.mergetoolUI = mergetoolUI;
-    }
-    if (arbitraryFilesMerger === undefined) {
-      this.arbitraryFilesMerger = new ArbitraryFilesMerger(
-        this.diffLayouterManager
-      );
-    } else {
-      this.arbitraryFilesMerger = arbitraryFilesMerger;
-    }
-    if (settingsAssistantCreatorFactory === undefined) {
-      this.settingsAssistantCreatorFactory = () =>
-        new SettingsAssistantCreator(vSCodeConfiguratorProvider.value);
-    } else {
-      this.settingsAssistantCreatorFactory = settingsAssistantCreatorFactory;
-    }
+    this.readonlyDocumentProviderManager =
+      readonlyDocumentProviderManager !== undefined
+        ? readonlyDocumentProviderManager
+        : new ReadonlyDocumentProviderManager();
+    this.zoomManager =
+      zoomManager !== undefined ? zoomManager : new ZoomManager();
+    this.temporarySettingsManager =
+      temporarySettingsManager !== undefined
+        ? temporarySettingsManager
+        : new TemporarySettingsManager(vSCodeConfiguratorProvider.value);
+    this.diffLayouterManager =
+      diffLayouterManager !== undefined
+        ? diffLayouterManager
+        : new DiffLayouterManager(
+            vSCodeConfiguratorProvider.value,
+            this.zoomManager,
+            this.temporarySettingsManager
+          );
+    this.mergetoolUI =
+      mergetoolUI !== undefined
+        ? mergetoolUI
+        : new mergetool.MergetoolUI(
+            this.diffLayouterManager,
+            vSCodeConfiguratorProvider.value
+          );
+    this.arbitraryFilesMerger =
+      arbitraryFilesMerger !== undefined
+        ? arbitraryFilesMerger
+        : new ArbitraryFilesMerger(this.diffLayouterManager);
+    this.settingsAssistantCreatorFactory =
+      settingsAssistantCreatorFactory !== undefined
+        ? settingsAssistantCreatorFactory
+        : () => new SettingsAssistantCreator(vSCodeConfiguratorProvider.value);
   }
 
   public readonly temporarySettingsManager: TemporarySettingsManager;
@@ -115,5 +110,6 @@ export class ExtensionAPI {
   public readonly mergetoolUI: mergetool.MergetoolUI;
   public readonly arbitraryFilesMerger: ArbitraryFilesMerger;
   public readonly settingsAssistantCreatorFactory: () => SettingsAssistantCreator;
+  public readonly readonlyDocumentProviderManager: ReadonlyDocumentProviderManager;
   private timer: NodeJS.Timeout | undefined = undefined;
 }

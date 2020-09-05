@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { getStats } from "./fsHandy";
+import { readonlyScheme } from "./readonlyDocumentProvider";
 
 export function getDiffedURIs(baseURI: vscode.Uri): DiffedURIs | undefined {
   const parseResult = parseBaseFileNameRE.exec(baseURI.path);
@@ -9,17 +10,17 @@ export function getDiffedURIs(baseURI: vscode.Uri): DiffedURIs | undefined {
   const baseFileName = parseResult[1];
   const restWOGit = parseResult[3];
   const extension = parseResult[4];
-  function joinBasePath(parts: string[]) {
+  function joinBasePath(parts: string[], scheme: string) {
     return vscode.Uri.joinPath(baseURI, parts.join("")).with({
-      scheme: "file",
+      scheme,
     });
   }
   return new DiffedURIs(
-    joinBasePath(["../", baseFileName, "_BASE_", restWOGit]),
-    joinBasePath(["../", baseFileName, "_LOCAL_", restWOGit]),
-    joinBasePath(["../", baseFileName, "_REMOTE_", restWOGit]),
-    joinBasePath(["../", baseFileName, extension]),
-    joinBasePath(["../", baseFileName, "_BACKUP_", restWOGit])
+    joinBasePath(["../", baseFileName, "_BASE_", restWOGit], readonlyScheme),
+    joinBasePath(["../", baseFileName, "_LOCAL_", restWOGit], readonlyScheme),
+    joinBasePath(["../", baseFileName, "_REMOTE_", restWOGit], readonlyScheme),
+    joinBasePath(["../", baseFileName, extension], "file"),
+    joinBasePath(["../", baseFileName, "_BACKUP_", restWOGit], readonlyScheme)
   );
 }
 

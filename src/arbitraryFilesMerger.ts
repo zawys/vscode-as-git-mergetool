@@ -8,6 +8,7 @@ import { DiffLayouterManager } from "./diffLayouterManager";
 import { getGitPathInteractively } from "./getPathsWithinVSCode";
 import { extensionID } from "./iDs";
 import { Lazy } from "./lazy";
+import { readonlyFileURI } from "./readonlyDocumentProvider";
 
 export class ArbitraryFilesMerger implements vscode.Disposable {
   public register(): void {
@@ -79,9 +80,9 @@ export class ArbitraryFilesMerger implements vscode.Disposable {
       }
     }
     const diffedURIs: DiffedURIs = new DiffedURIs(
-      vscode.Uri.file(selectionResult.base.fsPath),
-      vscode.Uri.file(selectionResult.local.fsPath),
-      vscode.Uri.file(selectionResult.remote.fsPath),
+      readonlyFileURI(selectionResult.base.fsPath),
+      readonlyFileURI(selectionResult.local.fsPath),
+      readonlyFileURI(selectionResult.remote.fsPath),
       vscode.Uri.file(selectionResult.merged.fsPath)
     );
     return await this.diffLayouterManager.openDiffedURIs(diffedURIs);

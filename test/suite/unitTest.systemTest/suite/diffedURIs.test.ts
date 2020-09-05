@@ -2,6 +2,7 @@ import * as assert from "assert";
 
 import * as vscode from "vscode";
 import * as diffedURIs from "../../../../src/diffedURIs";
+import { readonlyScheme } from "../../../../src/readonlyDocumentProvider";
 
 suite("parseBaseFileNameRE", () => {
   const sut: RegExp = diffedURIs.parseBaseFileNameRE;
@@ -83,16 +84,16 @@ suite("getDiffedURIs", () => {
     assert(actual?.equals(expected));
   });
 
-  test("the returned paths have file scheme", () => {
+  test("the returned paths have file or readonly-file scheme respectively", () => {
     const input = vscode.Uri.file(
       "/somewhere/to_merge_BASE_12345.txt.git"
     ).with({ scheme: "git" });
     const actual = sut(input);
-    assert.strictEqual(actual?.base.scheme, "file", "base");
-    assert.strictEqual(actual?.local.scheme, "file", "local");
-    assert.strictEqual(actual?.remote.scheme, "file", "remote");
+    assert.strictEqual(actual?.base.scheme, readonlyScheme, "base");
+    assert.strictEqual(actual?.local.scheme, readonlyScheme, "local");
+    assert.strictEqual(actual?.remote.scheme, readonlyScheme, "remote");
     assert.strictEqual(actual?.merged.scheme, "file", "merged");
-    assert.strictEqual(actual?.backup?.scheme, "file", "merged");
+    assert.strictEqual(actual?.backup?.scheme, readonlyScheme, "merged");
   });
 
   test("return valid paths when other capitals part is input", () => {
