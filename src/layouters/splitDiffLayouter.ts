@@ -76,11 +76,7 @@ export class SplitDiffLayouter implements DiffLayouter {
         }
       );
       if (focussed === -1) {
-        if (alternativeFocussed === -1) {
-          focussed = 0;
-        } else {
-          focussed = alternativeFocussed;
-        }
+        focussed = alternativeFocussed;
       }
 
       this.remainingEditors = this.editors.length;
@@ -93,7 +89,9 @@ export class SplitDiffLayouter implements DiffLayouter {
             "The merged file does not contain conflict indicators."
           );
         }
-        await focusColumn(focussed);
+        if (focussed !== -1) {
+          await focusColumn(focussed);
+        }
       }
       this._isActivating = false;
       this._isActive = true;
@@ -102,16 +100,8 @@ export class SplitDiffLayouter implements DiffLayouter {
           this.handleDidChangeVisibleTextEditors.bind(this)
         )
       );
-      this.watchingDisposables.push(
-        await ScrollSynchronizer.create(
-          this.editors,
-          this.vSCodeConfigurator,
-          this.mergeEditorIndex,
-          undefined,
-          this.mappedIntervalRelativeSize
-        ),
-        ...this.createStatusBarItems()
-      );
+      await this.createScrollSynchronizer(this.mergeEditorIndex);
+      this.watchingDisposables.push(...this.createStatusBarItems());
       return true;
     } finally {
       await this.monitor.leave();
@@ -206,6 +196,8 @@ export class SplitDiffLayouter implements DiffLayouter {
       disposable.dispose();
     }
     this.watchingDisposables = [];
+    this.scrollSynchronizer?.dispose();
+    this.scrollSynchronizer = undefined;
   }
 
   public async setLayout(zoom: Zoom): Promise<void> {
@@ -214,44 +206,48 @@ export class SplitDiffLayouter implements DiffLayouter {
       if (!this.isActive) {
         return;
       }
+      this.scrollSynchronizer?.dispose();
+      this.scrollSynchronizer = undefined;
       const layoutDescription = await this.setLayoutInner(zoom);
       let editorIndex = 0;
       const focussable: boolean[] = [];
       let focussed = -1;
       let alternativeFocussed = -1;
-      if (
-        await this.iterateOverLayout(
-          layoutDescription,
-          (editorDescription) => {
-            focussable.push(!editorDescription.notFocussable);
-            if (focussed === -1 && !editorDescription.notFocussable) {
-              if (editorDescription.isMergeEditor) {
-                focussed = editorIndex;
-              } else if (alternativeFocussed === -1) {
-                alternativeFocussed = editorIndex;
-              }
-            }
-            editorIndex++;
+      await this.iterateOverLayout(layoutDescription, (editorDescription) => {
+        focussable.push(!editorDescription.notFocussable);
+        if (focussed === -1 && !editorDescription.notFocussable) {
+          if (editorDescription.isMergeEditor) {
+            focussed = editorIndex;
+          } else if (alternativeFocussed === -1) {
+            alternativeFocussed = editorIndex;
           }
-        )
-      ) {
-        return;
-      }
-      if (focussed === -1) {
-        if (alternativeFocussed === -1) {
-          return;
-        } else {
-          focussed = alternativeFocussed;
         }
+        editorIndex++;
+      });
+      if (focussed === -1) {
+        focussed = alternativeFocussed;
       }
       const activeEditorIndex = (this.editors as (
         | vscode.TextEditor
         | undefined
       )[]).indexOf(vscode.window.activeTextEditor);
-      if (focussable[activeEditorIndex]) {
-        return;
+      if (!focussable[activeEditorIndex]) {
+        await focusColumn(focussed);
+      } else {
+        focussed = activeEditorIndex;
       }
-      await focusColumn(focussed);
+      const activeEditor = vscode.window.activeTextEditor;
+      if (activeEditor === undefined) {
+        focussed = -1;
+      } else {
+        activeEditor.revealRange(
+          activeEditor.selection,
+          vscode.TextEditorRevealType.InCenterIfOutsideViewport
+        );
+      }
+      await this.createScrollSynchronizer(
+        focussed === -1 ? undefined : focussed
+      );
     } finally {
       await this.monitor.leave();
     }
@@ -280,13 +276,26 @@ export class SplitDiffLayouter implements DiffLayouter {
   private mergeEditorIndex: number | undefined;
   private remainingEditors = 0;
   private _wasInitiatedByMergetool = false;
+  private scrollSynchronizer: ScrollSynchronizer | undefined;
+
+  private async createScrollSynchronizer(
+    synchronizationSourceOnStartIndex?: number
+  ) {
+    this.scrollSynchronizer = await ScrollSynchronizer.create(
+      this.editors,
+      this.vSCodeConfigurator,
+      synchronizationSourceOnStartIndex,
+      undefined,
+      this.mappedIntervalRelativeSize
+    );
+  }
 
   private async iterateOverLayout(
     layoutDescription: LayoutDescription,
     action: (
       diffEditorDescription: DiffEditorDescription
-    ) => boolean | void | Promise<boolean | void>
-  ): Promise<boolean> {
+    ) => void | Promise<void>
+  ): Promise<void> {
     // iterate through editors in depth-first manner
     const stack: [EditorGroupDescription, number][] = [];
     let element: GroupOrEditorDescription = layoutDescription;
@@ -294,9 +303,7 @@ export class SplitDiffLayouter implements DiffLayouter {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       if (element.type === diffEditorSymbol) {
-        if ((await action(element)) === true) {
-          return true;
-        }
+        await action(element);
       } else if (indexInGroup < element.groups.length) {
         stack.push([element, indexInGroup + 1]);
         element = element.groups[indexInGroup];
@@ -309,7 +316,6 @@ export class SplitDiffLayouter implements DiffLayouter {
       }
       [element, indexInGroup] = top;
     }
-    return false;
   }
 
   private async setLayoutInner(zoom: Zoom): Promise<LayoutDescription> {
