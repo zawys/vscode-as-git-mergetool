@@ -120,6 +120,36 @@
         "command": "vscode-as-git-mergetool.switchLayout",
         "title": "Switch diff editor layout temporarily…",
         "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.zoomDefault",
+        "title": "zoom: default",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.zoomCenter",
+        "title": "zoom: center",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.zoomLeft",
+        "title": "zoom: left",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.zoomRight",
+        "title": "zoom: right",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.zoomTop",
+        "title": "zoom: top",
+        "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.zoomBottom",
+        "title": "zoom: bottom",
+        "category": "Git Mergetool"
       }
     ],
     "configuration": {
@@ -263,6 +293,30 @@
       {
         "key": "shift+alt+m l",
         "command": "vscode-as-git-mergetool.switchLayout"
+      },
+      {
+        "key": "shift+alt+m backspace",
+        "command": "vscode-as-git-mergetool.zoomDefault"
+      },
+      {
+        "key": "shift+alt+m space",
+        "command": "vscode-as-git-mergetool.zoomCenter"
+      },
+      {
+        "key": "shift+alt+m left",
+        "command": "vscode-as-git-mergetool.zoomLeft"
+      },
+      {
+        "key": "shift+alt+m right",
+        "command": "vscode-as-git-mergetool.zoomRight"
+      },
+      {
+        "key": "shift+alt+m up",
+        "command": "vscode-as-git-mergetool.zoomTop"
+      },
+      {
+        "key": "shift+alt+m down",
+        "command": "vscode-as-git-mergetool.zoomBottom"
       }
     ]
   },

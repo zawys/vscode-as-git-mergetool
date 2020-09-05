@@ -2,6 +2,7 @@ import { DiffedURIs } from "../diffedURIs";
 import { Monitor } from "../monitor";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";
+import { Zoom } from "../zoom";
 import { DiffLayouter, DiffLayouterFactory } from "./diffLayouter";
 import {
   diffEditorSymbol,
@@ -18,57 +19,77 @@ export class FourTransferRightLayouterFactory implements DiffLayouterFactory {
     diffedURIs: DiffedURIs,
     vSCodeConfigurator: VSCodeConfigurator
   ): DiffLayouter {
-    const leftSize = 0.5;
-    const rightSize = 1 - leftSize;
     return new SplitDiffLayouter(
       monitor,
       diffedURIs,
-      (diffedURIs) => ({
-        orientation: GroupOrientation.vertical,
-        groups: [
-          {
-            groups: [
-              {
-                type: diffEditorSymbol,
-                oldUri: diffedURIs.base,
-                newUri: diffedURIs.local,
-                title: "(1) Current changes on base [readonly]",
-                save: false,
-                size: leftSize,
-              },
-              {
-                type: diffEditorSymbol,
-                oldUri: diffedURIs.remote,
-                newUri: diffedURIs.merged,
-                title: "(2) Current changes on incoming",
-                save: true,
-                size: rightSize,
-                isMergeEditor: true,
-              },
-            ],
-          },
-          {
-            groups: [
-              {
-                type: diffEditorSymbol,
-                oldUri: diffedURIs.base,
-                newUri: diffedURIs.remote,
-                title: "(3) Incoming changes on base [readonly]",
-                save: false,
-                size: leftSize,
-              },
-              {
-                type: diffEditorSymbol,
-                oldUri: diffedURIs.local,
-                newUri: diffedURIs.merged,
-                title: "(4) Incoming changes on current",
-                save: true,
-                size: rightSize,
-              },
-            ],
-          },
-        ],
-      }),
+      (diffedURIs, zoom: Zoom) => {
+        let leftSize = 0.5;
+        let topSize = 0.5;
+        switch (zoom) {
+          case Zoom.top:
+            topSize = 0.95;
+            break;
+          case Zoom.bottom:
+            topSize = 0.05;
+            break;
+          case Zoom.left:
+            leftSize = 0.95;
+            break;
+          case Zoom.right:
+            leftSize = 0.05;
+            break;
+        }
+        const rightSize = 1 - leftSize;
+        const bottomSize = 1 - topSize;
+        return {
+          orientation: GroupOrientation.vertical,
+          groups: [
+            {
+              size: topSize,
+              groups: [
+                {
+                  type: diffEditorSymbol,
+                  oldUri: diffedURIs.base,
+                  newUri: diffedURIs.local,
+                  title: "(1) Current changes on base [readonly]",
+                  save: false,
+                  size: leftSize,
+                },
+                {
+                  type: diffEditorSymbol,
+                  oldUri: diffedURIs.remote,
+                  newUri: diffedURIs.merged,
+                  title: "(2) Current changes on incoming",
+                  save: true,
+                  size: rightSize,
+                  isMergeEditor: true,
+                },
+              ],
+            },
+            {
+              size: bottomSize,
+              groups: [
+                {
+                  type: diffEditorSymbol,
+                  oldUri: diffedURIs.base,
+                  newUri: diffedURIs.remote,
+                  title: "(3) Incoming changes on base [readonly]",
+                  save: false,
+                  size: leftSize,
+                },
+                {
+                  type: diffEditorSymbol,
+                  oldUri: diffedURIs.local,
+                  newUri: diffedURIs.merged,
+                  title: "(4) Incoming changes on current",
+                  save: true,
+                  size: rightSize,
+                },
+              ],
+            },
+          ],
+        };
+      },
       temporarySettingsManager,
       vSCodeConfigurator
     );

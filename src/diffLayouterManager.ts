@@ -19,6 +19,7 @@ import { containsMergeConflictIndicators } from "./mergeConflictDetector";
 import { Monitor } from "./monitor";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
+import { Zoom, ZoomListener } from "./zoom";
 
 export class DiffLayouterManager implements vscode.Disposable {
   public async register(): Promise<void> {
@@ -48,6 +49,9 @@ export class DiffLayouterManager implements vscode.Disposable {
       vscode.commands.registerCommand(
         switchLayoutCommandID,
         this.switchLayout.bind(this)
+      ),
+      this.zoomListener.onWasZoomRequested(
+        this.handleWasZoomRequested.bind(this)
       ),
     ];
     for (const editor of vscode.window.visibleTextEditors) {
@@ -118,6 +122,7 @@ export class DiffLayouterManager implements vscode.Disposable {
 
   public constructor(
     public readonly vSCodeConfigurator: VSCodeConfigurator,
+    public readonly zoomListener: ZoomListener,
     public readonly temporarySettingsManager: TemporarySettingsManager,
     public readonly factories: DiffLayouterFactory[] = [
       new ThreeDiffToBaseLayouterFactory(),
@@ -286,7 +291,7 @@ export class DiffLayouterManager implements vscode.Disposable {
       this.vSCodeConfigurator
     );
     this.layouter.onDidDeactivate(this.handleLayouterDidDeactivate.bind(this));
-    await this.layouter.tryActivate(oldLayouter !== undefined);
+    await this.layouter.tryActivate(Zoom.default, oldLayouter !== undefined);
     this.activateSwitchLayoutStatusBarItem();
   }
 
@@ -374,6 +379,24 @@ export class DiffLayouterManager implements vscode.Disposable {
         );
       }
       layoutSetting = this.defaultFactory.settingValue;
+    }
+  }
+
+  private async handleWasZoomRequested(zoom: Zoom): Promise<void> {
+    await this.layouterManagerMonitor.enter();
+    try {
+      if (this.layouterManagerMonitor.someoneIsWaiting) {
+        return;
+      }
+      if (!this.layouter?.isActive) {
+        void vscode.window.showErrorMessage(
+          "Diff layout must be active to use zoom commands."
+        );
+        return;
+      }
+      await this.layouter.setLayout(zoom);
+    } finally {
+      await this.layouterManagerMonitor.leave();
     }
   }
 }

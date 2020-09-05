@@ -8,6 +8,7 @@ import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { Lazy } from "./lazy";
+import { ZoomListener } from "./zoom";
 
 let extensionAPI: ExtensionAPI | undefined;
 
@@ -28,7 +29,9 @@ export function deactivate(): void {
 
 export class ExtensionAPI {
   public async activate(): Promise<void> {
+    // inverse order as below
     this.temporarySettingsManager.register();
+    this.zoomListener.register();
     await this.diffLayouterManager.register();
     this.mergetoolUI.register();
     this.arbitraryFilesMerger.register();
@@ -42,14 +45,17 @@ export class ExtensionAPI {
     if (this.timer !== undefined) {
       clearTimeout(this.timer);
     }
-    this.mergetoolUI.dispose();
-    this.temporarySettingsManager.dispose();
+    // inverse order as above
     this.arbitraryFilesMerger.dispose();
+    this.mergetoolUI.dispose();
     this.diffLayouterManager.dispose();
+    this.zoomListener.dispose();
+    this.temporarySettingsManager.dispose();
   }
 
   public constructor(
     vSCodeConfigurator?: VSCodeConfigurator,
+    zoomListener?: ZoomListener,
     temporarySettingsManager?: TemporarySettingsManager,
     diffLayouterManager?: DiffLayouterManager,
     mergetoolUI?: mergetool.MergetoolUI,
@@ -59,6 +65,11 @@ export class ExtensionAPI {
     const vSCodeConfiguratorProvider = new Lazy(
       () => vSCodeConfigurator || new VSCodeConfigurator()
     );
+    if (zoomListener === undefined) {
+      this.zoomListener = new ZoomListener();
+    } else {
+      this.zoomListener = zoomListener;
+    }
     if (temporarySettingsManager === undefined) {
       this.temporarySettingsManager = new TemporarySettingsManager(
         vSCodeConfiguratorProvider.value
@@ -69,6 +80,7 @@ export class ExtensionAPI {
     if (diffLayouterManager === undefined) {
       this.diffLayouterManager = new DiffLayouterManager(
         vSCodeConfiguratorProvider.value,
+        this.zoomListener,
         this.temporarySettingsManager
       );
     } else {
@@ -98,6 +110,7 @@ export class ExtensionAPI {
   }
 
   public readonly temporarySettingsManager: TemporarySettingsManager;
+  public readonly zoomListener: ZoomListener;
   public readonly diffLayouterManager: DiffLayouterManager;
   public readonly mergetoolUI: mergetool.MergetoolUI;
   public readonly arbitraryFilesMerger: ArbitraryFilesMerger;

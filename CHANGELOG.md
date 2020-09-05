@@ -10,6 +10,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- *Zoom*: Quickly changing the layout sizes using keyboard shortcuts.
+
 ## [0.7.3] - 2020-09-05
 
 ### Changed

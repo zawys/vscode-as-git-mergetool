@@ -6,6 +6,7 @@ import { Monitor } from "../monitor";
 import { ScrollSynchronizer } from "../scrollSynchronizer";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";
+import { Zoom } from "../zoom";
 import {
   DiffLayouter,
   focusNextConflictCommandID,
@@ -15,7 +16,7 @@ import {
 } from "./diffLayouter";
 
 export class SplitDiffLayouter implements DiffLayouter {
-  public async tryActivate(onlyGrid = false): Promise<boolean> {
+  public async tryActivate(zoom: Zoom, onlyGrid = false): Promise<boolean> {
     await this.monitor.enter();
     try {
       if (this.monitor.someoneIsWaiting || this._isEmployed) {
@@ -31,11 +32,7 @@ export class SplitDiffLayouter implements DiffLayouter {
         await vscode.commands.executeCommand("workbench.action.closeSidebar");
         await vscode.commands.executeCommand("workbench.action.closePanel");
       }
-      const layoutDescription = this.createLayoutDescription(this.diffedURIs);
-      await vscode.commands.executeCommand(
-        "vscode.setEditorLayout",
-        layoutDescription
-      );
+      const layoutDescription = await this.setLayoutInner(zoom);
 
       // iterate through editors in depth-first manner
       const stack: [EditorGroupDescription, number][] = [];
@@ -206,11 +203,24 @@ export class SplitDiffLayouter implements DiffLayouter {
     this.watchingDisposables = [];
   }
 
+  public async setLayout(zoom: Zoom): Promise<void> {
+    await this.monitor.enter();
+    try {
+      if (!this.isActive) {
+        return;
+      }
+      await this.setLayoutInner(zoom);
+    } finally {
+      await this.monitor.leave();
+    }
+  }
+
   public constructor(
     private readonly monitor: Monitor,
     public readonly diffedURIs: DiffedURIs,
     private readonly createLayoutDescription: (
-      diffedURIs: DiffedURIs
+      diffedURIs: DiffedURIs,
+      zoom: Zoom
     ) => LayoutDescription,
     private readonly temporarySettingsManager: TemporarySettingsManager,
     private readonly vSCodeConfigurator: VSCodeConfigurator,
@@ -228,6 +238,18 @@ export class SplitDiffLayouter implements DiffLayouter {
   private mergeEditorIndex: number | undefined;
   private remainingEditors = 0;
   private _wasInitiatedByMergetool = false;
+
+  private async setLayoutInner(zoom: Zoom): Promise<LayoutDescription> {
+    const layoutDescription = this.createLayoutDescription(
+      this.diffedURIs,
+      zoom
+    );
+    await vscode.commands.executeCommand(
+      "vscode.setEditorLayout",
+      layoutDescription
+    );
+    return layoutDescription;
+  }
 
   private createStatusBarItems(): vscode.StatusBarItem[] {
     let priority = 10;

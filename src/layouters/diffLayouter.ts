@@ -4,6 +4,7 @@ import { extensionID } from "../iDs";
 import { Monitor } from "../monitor";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";
+import { Zoom } from "../zoom";
 
 export interface DiffLayouter extends vscode.Disposable {
   /**
@@ -11,7 +12,12 @@ export interface DiffLayouter extends vscode.Disposable {
    *
    * @returns if layout could be activated.
    */
-  tryActivate(onlyGrid?: boolean): Promise<boolean>;
+  tryActivate(zoom: Zoom, onlyGrid?: boolean): Promise<boolean>;
+
+  /**
+   * Reset the layout.
+   */
+  setLayout(zoom: Zoom): Promise<void>;
 
   /**
    * Save the merge result.
