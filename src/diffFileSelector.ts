@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { FileType, getFileType, getRealPath, testFile } from "./fsHandy";
 import { getWorkingDirectoryUri } from "./getPathsWithinVSCode";
-import { extensionID } from "./iDs";
+import { extensionID, firstLetterUppercase } from "./iDs";
 
 export class DiffFileSelector {
   public async doSelection(): Promise<DiffFileSelectionResult | undefined> {
@@ -395,11 +395,4 @@ export class FileSelectionStateStore {
   private getKeyID(key: string): string {
     return `${this.iD}.${key}`;
   }
-}
-
-function firstLetterUppercase(value: string): string {
-  if (value.length === 0) {
-    return value;
-  }
-  return value[0].toLocaleUpperCase() + value.slice(1);
 }

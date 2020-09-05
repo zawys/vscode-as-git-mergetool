@@ -1,9 +1,9 @@
-import { DiffedURIs } from "../diffedURIs";
-import { Monitor } from "../monitor";
-import { TemporarySettingsManager } from "../temporarySettingsManager";
-import { VSCodeConfigurator } from "../vSCodeConfigurator";
 import { Zoom } from "../zoom";
-import { DiffLayouter, DiffLayouterFactory } from "./diffLayouter";
+import {
+  DiffLayouter,
+  DiffLayouterFactory,
+  DiffLayouterFactoryParameters,
+} from "./diffLayouter";
 import {
   diffEditorSymbol,
   GroupOrientation,
@@ -14,16 +14,11 @@ export class ThreeDiffToBaseRowsLayouterFactory
   implements DiffLayouterFactory {
   public readonly settingValue = "3DiffToBaseRows";
 
-  public create(
-    monitor: Monitor,
-    temporarySettingsManager: TemporarySettingsManager,
-    diffedURIs: DiffedURIs,
-    vSCodeConfigurator: VSCodeConfigurator
-  ): DiffLayouter {
-    return new SplitDiffLayouter(
-      monitor,
-      diffedURIs,
-      (diffedURIs, zoom) => {
+  public create(parameters: DiffLayouterFactoryParameters): DiffLayouter {
+    return new SplitDiffLayouter({
+      ...parameters,
+      supportedZooms: [Zoom.top, Zoom.center, Zoom.bottom],
+      createLayoutDescription: (diffedURIs, zoom) => {
         let topSize = 0.275;
         let centerSize = 0.45;
         switch (zoom) {
@@ -74,8 +69,6 @@ export class ThreeDiffToBaseRowsLayouterFactory
           ],
         };
       },
-      temporarySettingsManager,
-      vSCodeConfigurator
-    );
+    });
   }
 }

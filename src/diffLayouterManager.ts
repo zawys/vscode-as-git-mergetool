@@ -19,7 +19,7 @@ import { containsMergeConflictIndicators } from "./mergeConflictDetector";
 import { Monitor } from "./monitor";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
-import { Zoom, ZoomListener } from "./zoom";
+import { Zoom, ZoomManager } from "./zoom";
 
 export class DiffLayouterManager implements vscode.Disposable {
   public async register(): Promise<void> {
@@ -50,7 +50,7 @@ export class DiffLayouterManager implements vscode.Disposable {
         switchLayoutCommandID,
         this.switchLayout.bind(this)
       ),
-      this.zoomListener.onWasZoomRequested(
+      this.zoomManager.onWasZoomRequested(
         this.handleWasZoomRequested.bind(this)
       ),
     ];
@@ -118,30 +118,6 @@ export class DiffLayouterManager implements vscode.Disposable {
     }
     this.disposables = [];
     this.layouter?.dispose();
-  }
-
-  public constructor(
-    public readonly vSCodeConfigurator: VSCodeConfigurator,
-    public readonly zoomListener: ZoomListener,
-    public readonly temporarySettingsManager: TemporarySettingsManager,
-    public readonly factories: DiffLayouterFactory[] = [
-      new ThreeDiffToBaseLayouterFactory(),
-      new ThreeDiffToBaseRowsLayouterFactory(),
-      new ThreeDiffToBaseMergedRightLayouterFactory(),
-      new FourTransferRightLayouterFactory(),
-      new FourTransferDownLayouterFactory(),
-    ]
-  ) {
-    if (factories.length === 0) {
-      throw new Error("internal error: no factory registered");
-    }
-    const defaultFactory = factories.find(
-      (factory) => factory.settingValue === "4TransferRight"
-    );
-    if (defaultFactory === undefined) {
-      throw new Error("could not find default factory");
-    }
-    this.defaultFactory = defaultFactory;
   }
 
   public async resetMergedFile(): Promise<void> {
@@ -242,6 +218,30 @@ export class DiffLayouterManager implements vscode.Disposable {
     }
   }
 
+  public constructor(
+    public readonly vSCodeConfigurator: VSCodeConfigurator,
+    public readonly zoomManager: ZoomManager,
+    public readonly temporarySettingsManager: TemporarySettingsManager,
+    public readonly factories: DiffLayouterFactory[] = [
+      new ThreeDiffToBaseLayouterFactory(),
+      new ThreeDiffToBaseRowsLayouterFactory(),
+      new ThreeDiffToBaseMergedRightLayouterFactory(),
+      new FourTransferRightLayouterFactory(),
+      new FourTransferDownLayouterFactory(),
+    ]
+  ) {
+    if (factories.length === 0) {
+      throw new Error("internal error: no factory registered");
+    }
+    const defaultFactory = factories.find(
+      (factory) => factory.settingValue === "4TransferRight"
+    );
+    if (defaultFactory === undefined) {
+      throw new Error("could not find default factory");
+    }
+    this.defaultFactory = defaultFactory;
+  }
+
   private layouterFactory: DiffLayouterFactory | undefined;
   private layouter: DiffLayouter | undefined;
   private readonly layouterMonitor = new Monitor();
@@ -284,12 +284,13 @@ export class DiffLayouterManager implements vscode.Disposable {
     }
 
     this.layouterFactory = newLayouterFactory;
-    this.layouter = newLayouterFactory.create(
-      this.layouterMonitor,
-      this.temporarySettingsManager,
+    this.layouter = newLayouterFactory.create({
+      monitor: this.layouterMonitor,
+      temporarySettingsManager: this.temporarySettingsManager,
       diffedURIs,
-      this.vSCodeConfigurator
-    );
+      vSCodeConfigurator: this.vSCodeConfigurator,
+      zoomManager: this.zoomManager,
+    });
     this.layouter.onDidDeactivate(this.handleLayouterDidDeactivate.bind(this));
     await this.layouter.tryActivate(Zoom.default, oldLayouter !== undefined);
     this.activateSwitchLayoutStatusBarItem();

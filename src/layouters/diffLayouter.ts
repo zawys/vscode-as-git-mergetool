@@ -4,7 +4,7 @@ import { extensionID } from "../iDs";
 import { Monitor } from "../monitor";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";
-import { Zoom } from "../zoom";
+import { Zoom, ZoomManager } from "../zoom";
 
 export interface DiffLayouter extends vscode.Disposable {
   /**
@@ -62,15 +62,18 @@ export interface DiffLayouter extends vscode.Disposable {
   setWasInitiatedByMergetool(): void;
 }
 
+export interface DiffLayouterFactoryParameters {
+  readonly monitor: Monitor;
+  readonly diffedURIs: DiffedURIs;
+  readonly temporarySettingsManager: TemporarySettingsManager;
+  readonly vSCodeConfigurator: VSCodeConfigurator;
+  readonly zoomManager: ZoomManager;
+}
+
 export interface DiffLayouterFactory {
   readonly settingValue: string;
 
-  create(
-    monitor: Monitor,
-    temporarySettingsManager: TemporarySettingsManager,
-    diffedURIs: DiffedURIs,
-    vSCodeConfigurator: VSCodeConfigurator
-  ): DiffLayouter;
+  create(parameters: DiffLayouterFactoryParameters): DiffLayouter;
 }
 
 export function watchDiffedURIs(

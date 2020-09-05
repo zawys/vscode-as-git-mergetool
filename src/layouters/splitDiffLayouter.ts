@@ -6,9 +6,10 @@ import { Monitor } from "../monitor";
 import { ScrollSynchronizer } from "../scrollSynchronizer";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";
-import { Zoom } from "../zoom";
+import { Zoom, ZoomManager } from "../zoom";
 import {
   DiffLayouter,
+  DiffLayouterFactoryParameters,
   focusNextConflictCommandID,
   focusPreviousConflictCommandID,
   SearchType,
@@ -102,6 +103,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       );
       await this.createScrollSynchronizer(this.mergeEditorIndex);
       this.watchingDisposables.push(...this.createStatusBarItems());
+      this.zoomManager.createStatusBarItems(this.supportedZooms);
       return true;
     } finally {
       await this.monitor.leave();
@@ -196,6 +198,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       disposable.dispose();
     }
     this.watchingDisposables = [];
+    this.zoomManager.removeStatusBarItems();
     this.scrollSynchronizer?.dispose();
     this.scrollSynchronizer = undefined;
   }
@@ -253,17 +256,28 @@ export class SplitDiffLayouter implements DiffLayouter {
     }
   }
 
-  public constructor(
-    private readonly monitor: Monitor,
-    public readonly diffedURIs: DiffedURIs,
-    private readonly createLayoutDescription: (
-      diffedURIs: DiffedURIs,
-      zoom: Zoom
-    ) => LayoutDescription,
-    private readonly temporarySettingsManager: TemporarySettingsManager,
-    private readonly vSCodeConfigurator: VSCodeConfigurator,
-    private readonly mappedIntervalRelativeSize?: number
-  ) {}
+  public constructor(config: SplitDiffLayouterConfig) {
+    this.createLayoutDescription = config.createLayoutDescription;
+    this.diffedURIs = config.diffedURIs;
+    this.monitor = config.monitor;
+    this.supportedZooms = config.supportedZooms;
+    this.temporarySettingsManager = config.temporarySettingsManager;
+    this.vSCodeConfigurator = config.vSCodeConfigurator;
+    this.zoomManager = config.zoomManager;
+    this.mappedIntervalRelativeSize = config.mappedIntervalRelativeSize;
+  }
+
+  private readonly monitor: Monitor;
+  public readonly diffedURIs: DiffedURIs;
+  private readonly createLayoutDescription: (
+    diffedURIs: DiffedURIs,
+    zoom: Zoom
+  ) => LayoutDescription;
+  private readonly temporarySettingsManager: TemporarySettingsManager;
+  private readonly vSCodeConfigurator: VSCodeConfigurator;
+  private readonly mappedIntervalRelativeSize?: number;
+  private readonly zoomManager: ZoomManager;
+  private readonly supportedZooms: Zoom[];
 
   private watchingDisposables: vscode.Disposable[] = [];
   private editors: vscode.TextEditor[] = [];
@@ -582,6 +596,18 @@ const focusEditorGroupCommandIDs: {
   6: "workbench.action.focusSeventhEditorGroup",
   7: "workbench.action.focusEighthEditorGroup",
 };
+
+export interface SplitDiffLayouterSpecificConfig {
+  readonly createLayoutDescription: (
+    diffedURIs: DiffedURIs,
+    zoom: Zoom
+  ) => LayoutDescription;
+  readonly mappedIntervalRelativeSize?: number;
+  readonly supportedZooms: Zoom[];
+}
+
+export type SplitDiffLayouterConfig = DiffLayouterFactoryParameters &
+  SplitDiffLayouterSpecificConfig;
 
 export const focusPauseLengthOnCloseSettingID = `${extensionID}.workaroundFocusPauseLengthOnClose`;
 export const quickLayoutDeactivationSettingID = `${extensionID}.workaroundQuickLayoutDeactivation`;

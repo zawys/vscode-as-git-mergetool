@@ -10,6 +10,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Status bar items for zooming
+
 ## [0.8.0] - 2020-09-05
 
 ### Note

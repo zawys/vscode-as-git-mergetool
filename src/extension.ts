@@ -1,14 +1,14 @@
 import "regenerator-runtime";
 import * as vscode from "vscode";
-import * as mergetool from "./mergetoolUI";
-import { SettingsAssistantCreator } from "./settingsAssistant";
+import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { defaultExtensionContextManager } from "./extensionContextManager";
-import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";
-import { VSCodeConfigurator } from "./vSCodeConfigurator";
-import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { Lazy } from "./lazy";
-import { ZoomListener } from "./zoom";
+import * as mergetool from "./mergetoolUI";
+import { SettingsAssistantCreator } from "./settingsAssistant";
+import { TemporarySettingsManager } from "./temporarySettingsManager";
+import { VSCodeConfigurator } from "./vSCodeConfigurator";
+import { ZoomManager } from "./zoom";
 
 let extensionAPI: ExtensionAPI | undefined;
 
@@ -31,7 +31,7 @@ export class ExtensionAPI {
   public async activate(): Promise<void> {
     // inverse order as below
     this.temporarySettingsManager.register();
-    this.zoomListener.register();
+    this.zoomManager.register();
     await this.diffLayouterManager.register();
     this.mergetoolUI.register();
     this.arbitraryFilesMerger.register();
@@ -49,13 +49,13 @@ export class ExtensionAPI {
     this.arbitraryFilesMerger.dispose();
     this.mergetoolUI.dispose();
     this.diffLayouterManager.dispose();
-    this.zoomListener.dispose();
+    this.zoomManager.dispose();
     this.temporarySettingsManager.dispose();
   }
 
   public constructor(
     vSCodeConfigurator?: VSCodeConfigurator,
-    zoomListener?: ZoomListener,
+    zoomManager?: ZoomManager,
     temporarySettingsManager?: TemporarySettingsManager,
     diffLayouterManager?: DiffLayouterManager,
     mergetoolUI?: mergetool.MergetoolUI,
@@ -65,10 +65,10 @@ export class ExtensionAPI {
     const vSCodeConfiguratorProvider = new Lazy(
       () => vSCodeConfigurator || new VSCodeConfigurator()
     );
-    if (zoomListener === undefined) {
-      this.zoomListener = new ZoomListener();
+    if (zoomManager === undefined) {
+      this.zoomManager = new ZoomManager();
     } else {
-      this.zoomListener = zoomListener;
+      this.zoomManager = zoomManager;
     }
     if (temporarySettingsManager === undefined) {
       this.temporarySettingsManager = new TemporarySettingsManager(
@@ -80,7 +80,7 @@ export class ExtensionAPI {
     if (diffLayouterManager === undefined) {
       this.diffLayouterManager = new DiffLayouterManager(
         vSCodeConfiguratorProvider.value,
-        this.zoomListener,
+        this.zoomManager,
         this.temporarySettingsManager
       );
     } else {
@@ -110,7 +110,7 @@ export class ExtensionAPI {
   }
 
   public readonly temporarySettingsManager: TemporarySettingsManager;
-  public readonly zoomListener: ZoomListener;
+  public readonly zoomManager: ZoomManager;
   public readonly diffLayouterManager: DiffLayouterManager;
   public readonly mergetoolUI: mergetool.MergetoolUI;
   public readonly arbitraryFilesMerger: ArbitraryFilesMerger;

@@ -1,9 +1,9 @@
-import { DiffedURIs } from "../diffedURIs";
-import { Monitor } from "../monitor";
-import { TemporarySettingsManager } from "../temporarySettingsManager";
-import { VSCodeConfigurator } from "../vSCodeConfigurator";
 import { Zoom } from "../zoom";
-import { DiffLayouter, DiffLayouterFactory } from "./diffLayouter";
+import {
+  DiffLayouter,
+  DiffLayouterFactory,
+  DiffLayouterFactoryParameters,
+} from "./diffLayouter";
 import {
   diffEditorSymbol,
   GroupOrientation,
@@ -13,16 +13,11 @@ import {
 export class FourTransferDownLayouterFactory implements DiffLayouterFactory {
   public readonly settingValue = "4TransferDown";
 
-  public create(
-    monitor: Monitor,
-    temporarySettingsManager: TemporarySettingsManager,
-    diffedURIs: DiffedURIs,
-    vSCodeConfigurator: VSCodeConfigurator
-  ): DiffLayouter {
-    return new SplitDiffLayouter(
-      monitor,
-      diffedURIs,
-      (diffedURIs, zoom) => {
+  public create(parameters: DiffLayouterFactoryParameters): DiffLayouter {
+    return new SplitDiffLayouter({
+      ...parameters,
+      supportedZooms: [Zoom.left, Zoom.right, Zoom.top, Zoom.bottom],
+      createLayoutDescription: (diffedURIs, zoom) => {
         let leftSize = 0.5;
         let topSize = 0.45;
         switch (zoom) {
@@ -95,8 +90,6 @@ export class FourTransferDownLayouterFactory implements DiffLayouterFactory {
           ],
         };
       },
-      temporarySettingsManager,
-      vSCodeConfigurator
-    );
+    });
   }
 }
