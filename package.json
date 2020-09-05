@@ -323,7 +323,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "clean": "rm -rf out packages dist .cache",
+    "clean": "rm -rf out packages dist .parcel-cache",
     "recompile": "yarn run clean && yarn run compile",
     "lint": "eslint src test --ext ts --max-warnings=0",
     "copy_files": "cpy --parents --cwd=./test '**/*' '!**/*.ts' ../out/test",
