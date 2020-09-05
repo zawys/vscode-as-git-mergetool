@@ -10,8 +10,10 @@
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "stopOnEntry": true,
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--inspect-brk-extensions=3714"
+      ],
       "outFiles": ["${workspaceFolder}/dist/extension.js"],
       "preLaunchTask": "build:dev"
     },

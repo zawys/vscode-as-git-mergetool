@@ -27,7 +27,15 @@
       "script": "build:dev",
       "group": "build",
       "runOptions": {
-        "instanceLimit": 1
+        "instanceLimit": 1,
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
       }
     },
     {

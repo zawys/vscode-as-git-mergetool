@@ -282,7 +282,7 @@
     "bundle:dev": "parcel build --target main --no-minify ${npm_package_source}",
     "bundle": "parcel build --target main --no-cache --detailed-report 10 ${npm_package_source}",
     "build:dev": "yarn run bundle:dev",
-    "build": "yarn run clean && yarn run bundle && yarn run package",
+    "build": "yarn install && yarn run clean && yarn run bundle && yarn run package",
     "working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
     "index_is_clean": "git diff --staged --quiet && git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
     "format": "prettier --ignore-path .gitignore --write .",
