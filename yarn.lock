@@ -1682,7 +1682,7 @@
   dependencies:
     "@parcel/plugin" "2.0.0-beta.1"
 
-"@parcel/transformer-typescript-tsc@^2.0.0-nightly.*":
+"@parcel/transformer-typescript-tsc@^2.0.0-nightly.390":
   version "2.0.0-nightly.390"
   resolved "https://registry.yarnpkg.com/@parcel/transformer-typescript-tsc/-/transformer-typescript-tsc-2.0.0-nightly.390.tgz#8a88626b3f58f094d08dc7181ce06240013d7f32"
   integrity sha512-dusbdhwlgjEQRt5Iaw6HoQbtQOlup3zfF9ZAZeFpvt/uS/hfBNKfpV9/4syRR/fBA8JGeahz+RnlQ68XMMK0Ew==
