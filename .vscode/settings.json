@@ -11,6 +11,8 @@
   "cSpell.words": [
     "AGPL",
     "EDITMSG",
+    "Git",
+    "Git’s",
     "OLRE",
     "Pseudoterminal",
     "Symm",
@@ -28,11 +30,13 @@
     "precommit",
     "preversion",
     "quickstart",
+    "s",
     "screencast",
     "serializable",
     "submodules",
     "unpackaged",
     "unstash",
+    "upvoting",
     "vsce",
     "vsix",
     "zawys"

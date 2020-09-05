@@ -1,3 +1,4 @@
+/dist
 /out
 /node_modules
 /.vscode-test/
@@ -5,3 +6,4 @@
 yarn-error.log
 .env
 .precommit_stash_exists
+.cache

@@ -1,5 +1,9 @@
-.eslintrc.js
+/.vscode-test/
+/media/
+/node_modules/
 /out/
 /packages/
-/node_modules/
-/.vscode-test/
+/dist/
+.eslintrc.js
+yarn.lock
+

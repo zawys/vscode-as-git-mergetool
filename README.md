@@ -1,5 +1,5 @@
 <div align="center">
-<img width="64" height="64" src="./media/icon.png">
+<img width="64" height="64" src="media/packaged/icon.png">
 
 # VS Code as Git Mergetool
 
@@ -8,9 +8,9 @@
 This extension provides diff editor layouts for 3-way merges
 directly in VS Code.
 
-![Four pane merge](./media/four%20pane%20merge.png)
+![Four pane merge](media/four%20pane%20merge.png)
 
-[Demo screencast](./media/unpackaged/demo.mp4)
+[Demo screencast](media/demo.mp4)
 
 > Do you have a minute? You could help by upvoting needed API features.
 > See [Contribute](#Contribute).
@@ -27,7 +27,7 @@ directly in VS Code.
   by invoking other commands as appropriate.
 - Adds key bindings for commands most useful during merge (`shift+alt+m` …).
   See the contributions tab in VS Code or
-  the `keybindings` section in [`package.json`](./package.json).
+  the `keybindings` section in [`package.json`](package.json).
 - Optionally opens the Git commit message in an editor
   after a successful `git mergetool` execution
   (as a workaround for few Git extension bugs).
@@ -133,7 +133,7 @@ which provide no additional information or ideas.
 Run the steps listed in [section Build](#Build).
 
 Additionally, see the
-[VSC Extension Quickstart](./vsc-extension-quickstart.md).
+[VSC Extension Quickstart](vsc-extension-quickstart.md).
 
 You probably also want to install
 [VS Code Insiders](https://code.visualstudio.com/insiders/) to run the tests,
@@ -141,4 +141,4 @@ see [reason](https://code.visualstudio.com/api/working-with-extensions/testing-e
 
 ## Further info
 
-- [Change log](./CHANGELOG.md)
+- [Change log](CHANGELOG.md)

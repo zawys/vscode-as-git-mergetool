@@ -1,4 +1,4 @@
-import * as which from "which";
+import which = require("which");
 
 // This file is imported by the test runner and thus must not import `vscode`.
 

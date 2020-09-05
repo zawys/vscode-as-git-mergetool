@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
-import { nextMergeStepCommandID } from "../../../../mergetoolUI";
+import { nextMergeStepCommandID } from "../../../../src/mergetoolUI";
 import { getExtensionAPI } from "../../../getExtensionAPI";
 
 suite("extension", () => {

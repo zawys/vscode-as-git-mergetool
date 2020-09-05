@@ -2,7 +2,7 @@ import * as path from "path";
 import { runTests } from "vscode-test";
 import * as cp from "child_process";
 import * as fs from "fs";
-import { whichPromise } from "../getPaths";
+import { whichPromise } from "../src/getPaths";
 
 /**
  *
@@ -14,8 +14,8 @@ export async function runSystemTest(
 ): Promise<boolean> {
   // The folder containing the Extension Manifest package.json
   // Passed to `--extensionDevelopmentPath`.
-  // Relative to the location of the compiled files (`out/src/test`)
-  const extensionDevelopmentPath = path.resolve(__dirname, "../../../");
+  // Relative to the location of the compiled files (`out/test`)
+  const extensionDevelopmentPath = path.resolve(__dirname, "../../");
   // The path to test runner
   // Passed to --extensionTestsPath
   const extensionTestsPath = path.resolve(testDirectory, "./suite/index");

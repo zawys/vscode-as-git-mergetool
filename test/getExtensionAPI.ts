@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { ExtensionAPI } from "../extension";
-import { fullExtensionID } from "../iDs";
+import { ExtensionAPI } from "../src/extension";
+import { fullExtensionID } from "../src/iDs";
 
 export async function getExtensionAPI(): Promise<ExtensionAPI> {
   const extension = vscode.extensions.getExtension(fullExtensionID);
@@ -13,8 +13,12 @@ export async function getExtensionAPI(): Promise<ExtensionAPI> {
   }
   if (extensionAPI === undefined) {
     throw new Error("extension API not found");
-  } else if (!(extensionAPI instanceof ExtensionAPI)) {
+  } else if (
+    !(extensionAPI as ExtensionAPI).activate &&
+    !(extensionAPI as ExtensionAPI).deactivate &&
+    !(extensionAPI as ExtensionAPI).diffLayouterManager
+  ) {
     throw new TypeError("extensionAPI has unexpected type");
   }
-  return extensionAPI;
+  return extensionAPI as ExtensionAPI;
 }

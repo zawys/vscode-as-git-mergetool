@@ -4,6 +4,7 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "watch",
       "type": "npm",
       "script": "watch",
       "problemMatcher": "$tsc-watch",
@@ -21,19 +22,18 @@
       }
     },
     {
-      "label": "copy_files",
+      "label": "build:dev",
       "type": "npm",
-      "script": "copy_files",
-      "presentation": {
-        "reveal": "silent",
-        "clear": true
-      },
-      "group": "build"
+      "script": "build:dev",
+      "group": "build",
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "start_test_for_debugging",
       "type": "npm",
-      "script": "test:minimal",
+      "script": "test:dev",
       "options": {
         "env": {
           "DEBUG_CURRENT_FILE_PATH": "${file}"
@@ -44,7 +44,7 @@
       },
       "presentation": {
         "echo": true,
-        "reveal": "silent",
+        "reveal": "always",
         "focus": false,
         "panel": "shared",
         "showReuseMessage": true,
@@ -66,7 +66,7 @@
           "endsPattern": "^Debugging test .+\\. Waiting on port"
         }
       },
-      "dependsOn": ["watch", "copy_files"]
+      "dependsOn": []
     }
   ]
 }

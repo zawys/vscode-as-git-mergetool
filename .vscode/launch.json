@@ -10,26 +10,24 @@
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}"
-      ],
-      "outFiles": ["${workspaceFolder}/out/src/**/*.js"],
-      "preLaunchTask": "${defaultBuildTask}"
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "preLaunchTask": "build:dev"
     },
     {
       "name": "debug tests",
       "port": 3714,
       "request": "attach",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "type": "pwa-node",
       "preLaunchTask": "start_test_for_debugging",
       "continueOnAttach": true,
       "smartStep": true,
       "showAsyncStacks": true,
       "timeout": 10000,
-      "outFiles": ["${workspaceFolder}/out/src/**/*.js"],
-    },
+      "outFiles": [
+        "${workspaceFolder}/out/src/**/*.js",
+        "${workspaceFolder}/out/test/**/*.js"
+      ]
+    }
   ]
 }

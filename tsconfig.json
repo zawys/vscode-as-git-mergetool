@@ -5,7 +5,7 @@
     "outDir": "out",
     "lib": ["es6"],
     "sourceMap": true,
-    "rootDirs": ["src", "tools"],
+    "rootDirs": ["src", "test", "tools"],
     "strict": true /* enable all strict type-checking options */,
     /* Additional Checks */
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,

@@ -18,7 +18,7 @@
   "activationEvents": [
     "*"
   ],
-  "icon": "media/icon.png",
+  "icon": "media/packaged/icon.png",
   "main": "out/src/extension.js",
   "bugs": {
     "url": "https://github.com/zawys/vscode-as-git-mergetool/issues"
@@ -255,18 +255,20 @@
     ]
   },
   "scripts": {
-    "compile": "tsc -p ./ && yarn run copy_files",
-    "copy_files": "cpy --parents --cwd=./src '**/*' '!**/*.ts' ../out/src",
+    "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "clean": "rm -rf out packages",
+    "clean": "rm -rf out packages dist",
     "recompile": "yarn run clean && yarn run compile",
-    "lint": "eslint src --ext ts --max-warnings=0",
-    "pretest": "yarn install && yarn run recompile && yarn run lint",
+    "lint": "eslint src test --ext ts --max-warnings=0",
+    "copy_files": "cpy --parents --cwd=./test '**/*' '!**/*.ts' ../out/test",
+    "pretest": "yarn install && yarn run recompile && yarn run copy_files && yarn run lint",
     "test": "yarn run test:only",
-    "test:only": "node ./out/src/test/runTests.js",
-    "test:minimal": "yarn run compile && yarn run test:only",
+    "test:only": "node ./out/test/runTests.js",
+    "pretest:dev": "yarn run compile && yarn run copy_files",
+    "test:dev": "yarn run test:only",
     "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
-    "build": "yarn run recompile && yarn run package",
+    "build:dev": "yarn run compile",
+    "build": "yarn run clean && yarn run recompile && yarn run package",
     "working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
     "index_is_clean": "git diff --staged --quiet && git diff --quiet && ! git ls-files -o --exclude-standard | grep -q '.'",
     "format": "prettier --ignore-path .gitignore --write .",

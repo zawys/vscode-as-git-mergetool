@@ -1,7 +1,7 @@
 import * as assert from "assert";
 
 import * as vscode from "vscode";
-import * as diffedURIs from "../../../../diffedURIs";
+import * as diffedURIs from "../../../../src/diffedURIs";
 
 suite("parseBaseFileNameRE", () => {
   const sut: RegExp = diffedURIs.parseBaseFileNameRE;
