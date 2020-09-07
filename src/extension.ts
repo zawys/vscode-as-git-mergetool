@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { defaultExtensionContextManager } from "./extensionContextManager";
+import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
 import { Lazy } from "./lazy";
 import * as mergetool from "./mergetoolUI";
 import { ReadonlyDocumentProviderManager } from "./readonlyDocumentProvider";
@@ -61,6 +62,7 @@ export class ExtensionAPI {
     readonlyDocumentProviderManager?: ReadonlyDocumentProviderManager,
     zoomManager?: ZoomManager,
     temporarySettingsManager?: TemporarySettingsManager,
+    gitMergetoolReplacement?: GitMergetoolReplacement,
     diffLayouterManager?: DiffLayouterManager,
     mergetoolUI?: mergetool.MergetoolUI,
     arbitraryFilesMerger?: ArbitraryFilesMerger,
@@ -79,13 +81,18 @@ export class ExtensionAPI {
       temporarySettingsManager !== undefined
         ? temporarySettingsManager
         : new TemporarySettingsManager(vSCodeConfiguratorProvider.value);
+    this.gitMergetoolReplacement =
+      gitMergetoolReplacement !== undefined
+        ? gitMergetoolReplacement
+        : new GitMergetoolReplacement();
     this.diffLayouterManager =
       diffLayouterManager !== undefined
         ? diffLayouterManager
         : new DiffLayouterManager(
             vSCodeConfiguratorProvider.value,
             this.zoomManager,
-            this.temporarySettingsManager
+            this.temporarySettingsManager,
+            this.gitMergetoolReplacement
           );
     this.mergetoolUI =
       mergetoolUI !== undefined
@@ -106,6 +113,7 @@ export class ExtensionAPI {
 
   public readonly temporarySettingsManager: TemporarySettingsManager;
   public readonly zoomManager: ZoomManager;
+  public readonly gitMergetoolReplacement: GitMergetoolReplacement;
   public readonly diffLayouterManager: DiffLayouterManager;
   public readonly mergetoolUI: mergetool.MergetoolUI;
   public readonly arbitraryFilesMerger: ArbitraryFilesMerger;

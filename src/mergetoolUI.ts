@@ -225,6 +225,7 @@ export class MergetoolUI {
       );
       const term = await createBackgroundGitTerminal({
         shellArgs: ["commit", "--no-edit", `--file=${document.fileName}`],
+        cwd: vscode.Uri.joinPath(document.uri, "../.."),
       });
       if (term !== undefined) {
         term.show(true);

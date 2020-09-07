@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import { DiffedURIs, filesExist, getDiffedURIs } from "./diffedURIs";
 import { copy } from "./fsHandy";
+import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
 import { extensionID } from "./iDs";
 import {
   DiffLayouter,
@@ -222,6 +223,7 @@ export class DiffLayouterManager implements vscode.Disposable {
     public readonly vSCodeConfigurator: VSCodeConfigurator,
     public readonly zoomManager: ZoomManager,
     public readonly temporarySettingsManager: TemporarySettingsManager,
+    public readonly gitMergetoolReplacement: GitMergetoolReplacement,
     public readonly factories: DiffLayouterFactory[] = [
       new ThreeDiffToBaseLayouterFactory(),
       new ThreeDiffToBaseRowsLayouterFactory(),

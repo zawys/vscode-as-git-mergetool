@@ -1,7 +1,7 @@
-import * as cp from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
+import { execFilePromise } from "./childProcessHandy";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffFileSelector } from "./diffFileSelector";
 import { DiffLayouterManager } from "./diffLayouterManager";
@@ -37,28 +37,21 @@ export class ArbitraryFilesMerger implements vscode.Disposable {
     }
     const mergedPath = selectionResult.merged.fsPath;
     if (selectionResult.merged.validationResult?.emptyLoc === true) {
-      const gitResult = await new Promise<{
-        error: cp.ExecException | null;
-        stdout: string;
-        stderr: string;
-      }>((resolve) =>
-        cp.execFile(
-          gitPath,
-          [
-            "merge-file",
-            "--stdout",
-            selectionResult.local.fsPath,
-            selectionResult.base.fsPath,
-            selectionResult.remote.fsPath,
-          ],
-          {
-            cwd: path.dirname(mergedPath),
-            timeout: 10000,
-            windowsHide: true,
-          },
-          (error, stdout, stderr) => resolve({ error, stdout, stderr })
-        )
-      );
+      const gitResult = await execFilePromise({
+        filePath: gitPath,
+        arguments_: [
+          "merge-file",
+          "--stdout",
+          selectionResult.local.fsPath,
+          selectionResult.base.fsPath,
+          selectionResult.remote.fsPath,
+        ],
+        options: {
+          cwd: path.dirname(mergedPath),
+          timeout: 10000,
+          windowsHide: true,
+        },
+      });
       const error = gitResult.error;
       if (
         error !== null &&

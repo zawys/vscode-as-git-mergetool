@@ -6,6 +6,7 @@ import {
   getWorkingDirectoryUri,
 } from "./getPathsWithinVSCode";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
+import { formatExecFileError } from "./childProcessHandy";
 
 export const settingsAssistantOnStartupID = `${extensionID}.settingsAssistantOnStartup`;
 
@@ -235,8 +236,8 @@ export class GitConfigurator {
         (error, stdout, stderr) => {
           if (error) {
             reject(
-              `Setting git config ${key} failed with: ` +
-                `${error.message}\n${stdout}\n${stderr}`
+              `Setting Git configuration ${key} failed with: ` +
+                formatExecFileError({ error, stdout, stderr })
             );
           } else {
             resolve();
