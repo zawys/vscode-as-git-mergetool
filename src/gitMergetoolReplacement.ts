@@ -5,7 +5,7 @@ import {
   formatExecFileError,
 } from "./childProcessHandy";
 import { FileType, getFileType } from "./fsHandy";
-import { getGitPath } from "./getPaths";
+import { getVSCGitPath } from "./getPathsWithinVSCode";
 
 /**
  * Several approaches copied from git-mergetool which is under GPLv2.
@@ -19,7 +19,7 @@ export class GitMergetoolReplacement {
     const cwd = dirname(conflictPath);
     const filePath = relative(cwd, conflictPath);
     const absoluteVersionPath = resolvePath(filePath);
-    const gitPath = await getGitPath();
+    const gitPath = await getVSCGitPath();
     if (gitPath === undefined) {
       return { error: "Could not determine path of Git binary." };
     }

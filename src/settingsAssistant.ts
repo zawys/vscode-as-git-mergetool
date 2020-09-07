@@ -2,7 +2,7 @@ import * as cp from "child_process";
 import * as vscode from "vscode";
 import { extensionID } from "./iDs";
 import {
-  getGitPathInteractively,
+  getVSCGitPathInteractively,
   getWorkingDirectoryUri,
 } from "./getPathsWithinVSCode";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
@@ -301,7 +301,7 @@ export class SettingsAssistantCreator {
     if (!this.vSCodeConfigurator.get(settingsAssistantOnStartupID)) {
       return;
     }
-    const gitPath = await getGitPathInteractively();
+    const gitPath = await getVSCGitPathInteractively();
     const workingDirectory = getWorkingDirectoryUri();
     if (gitPath === undefined || workingDirectory === undefined) {
       return;

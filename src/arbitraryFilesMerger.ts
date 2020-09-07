@@ -5,7 +5,7 @@ import { execFilePromise } from "./childProcessHandy";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffFileSelector } from "./diffFileSelector";
 import { DiffLayouterManager } from "./diffLayouterManager";
-import { getGitPathInteractively } from "./getPathsWithinVSCode";
+import { getVSCGitPathInteractively } from "./getPathsWithinVSCode";
 import { extensionID } from "./iDs";
 import { Lazy } from "./lazy";
 import { readonlyFileURI } from "./readonlyDocumentProvider";
@@ -31,7 +31,7 @@ export class ArbitraryFilesMerger implements vscode.Disposable {
     if (selectionResult === undefined) {
       return false;
     }
-    const gitPath = await getGitPathInteractively();
+    const gitPath = await getVSCGitPathInteractively();
     if (gitPath === undefined) {
       return false;
     }

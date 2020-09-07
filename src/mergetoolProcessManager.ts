@@ -2,7 +2,7 @@ import * as process from "process";
 import * as vscode from "vscode";
 import { Disposable, Event, EventEmitter } from "vscode";
 import {
-  getGitPathInteractively,
+  getVSCGitPathInteractively,
   getWorkingDirectoryUriInteractively,
 } from "./getPathsWithinVSCode";
 import {
@@ -16,7 +16,7 @@ export class MergetoolProcessManager implements Disposable {
     if (!this.isInitial) {
       return false;
     }
-    const gitPath = await getGitPathInteractively();
+    const gitPath = await getVSCGitPathInteractively();
     if (gitPath === undefined || !this.isInitial) {
       return false;
     }

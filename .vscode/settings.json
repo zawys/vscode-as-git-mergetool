@@ -45,5 +45,15 @@
     "zawys"
   ],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "cSpell.ignorePaths": [
+    "**/package-lock.json",
+    "**/node_modules/**",
+    "**/.git/objects/**",
+    "src/@types/**",
+    "**/yarn.lock",
+    "dist",
+    "out",
+    "packages",
+  ]
 }

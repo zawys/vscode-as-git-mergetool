@@ -7,4 +7,4 @@
 /dist/
 .eslintrc.js
 yarn.lock
-
+/src/@types/
