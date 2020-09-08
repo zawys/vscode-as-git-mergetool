@@ -215,7 +215,6 @@ export class ScrollSynchronizer implements Disposable {
           targetEditorIndex
         );
         if (targetPos === undefined) {
-          console.log("targetPosition === undefined");
           targetPos = sourceSyncFraction * targetEditor.document.lineCount;
         }
         const targetLine =
