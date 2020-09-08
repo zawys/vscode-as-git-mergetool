@@ -605,10 +605,10 @@ export class MergetoolUI {
       if (this.mergeSituationInLayout) {
         this.statusBarItems.push(
           this.createStatusBarItem(
-            "$(check)" + (showLabel ? " Accept file" : ""),
+            "$(check)" + (showLabel ? "Next step" : ""),
             14,
-            gitMergetoolContinueCommandID,
-            "Consider current file merged and continue"
+            nextMergeStepCommandID,
+            "Go to next conflict, next file, or commit message"
           )
         );
         this.statusBarItems.push(

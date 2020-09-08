@@ -10,6 +10,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- The "next merge step" command introduced in [v0.4.0](#040---2020-08-30)
+  is now assigned to the check mark button in the status bar.
+
 ## [0.9.0] - 2020-09-05
 
 ### Added
