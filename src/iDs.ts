@@ -1,3 +1,6 @@
+// Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
+// See LICENSE file in repository root directory.
+
 export const extensionID = "vscode-as-git-mergetool";
 export const fullExtensionID = `zawys.${extensionID}`;
 export const labelsInStatusBarSettingID = `${extensionID}.labelsInStatusBar`;

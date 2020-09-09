@@ -1,3 +1,6 @@
+// Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
+// See LICENSE file in repository root directory.
+
 import { R_OK, W_OK } from "constants";
 import * as path from "path";
 import * as vscode from "vscode";

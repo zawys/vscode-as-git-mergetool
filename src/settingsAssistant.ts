@@ -1,3 +1,6 @@
+// Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
+// See LICENSE file in repository root directory.
+
 import * as cp from "child_process";
 import * as vscode from "vscode";
 import { extensionID } from "./iDs";

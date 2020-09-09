@@ -1,3 +1,6 @@
+// Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
+// See LICENSE file in repository root directory.
+
 import "regenerator-runtime";
 import * as vscode from "vscode";
 import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";

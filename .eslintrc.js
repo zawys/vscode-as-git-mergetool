@@ -13,6 +13,7 @@ module.exports = {
     "promise",
     "unicorn",
     "prettier",
+    "header",
   ],
   extends: [
     "eslint:recommended",
@@ -33,5 +34,19 @@ module.exports = {
     "unicorn/no-nested-ternary": "off",
     "unicorn/no-null": "off",
     "prettier/prettier": "warn",
+    "header/header": [
+      2,
+      "line",
+      [
+        {
+          pattern:
+            " Copyright \\(C\\) 2\\d{3}  zawys\\. Licensed under AGPL-3\\.0-or-later\\.",
+          template:
+            " Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.",
+        },
+        " See LICENSE file in repository root directory.",
+      ],
+      2,
+    ],
   },
 };

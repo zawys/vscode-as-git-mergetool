@@ -1,3 +1,6 @@
+// Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
+// See LICENSE file in repository root directory.
+
 import * as path from "path";
 import { runTests } from "vscode-test";
 import * as cp from "child_process";

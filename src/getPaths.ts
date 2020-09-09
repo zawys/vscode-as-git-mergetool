@@ -1,3 +1,6 @@
+// Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
+// See LICENSE file in repository root directory.
+
 import * as which from "which";
 
 // This file is imported by the test runner and thus must not import `vscode`.
