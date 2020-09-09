@@ -2,16 +2,25 @@
 // See LICENSE file in repository root directory.
 
 import * as which from "which";
+import { createUIError, UIError } from "./uIError";
 
 // This file is imported by the test runner and thus must not import `vscode`.
 
-let gitPathPromise: Promise<string | undefined> | undefined;
+let gitPathPromise: Promise<string | UIError> | undefined;
 
-export function getGitPath(): Promise<string | undefined> {
+export function getGitPath(): Promise<string | UIError> {
   if (gitPathPromise === undefined) {
-    gitPathPromise = whichPromise("git");
+    gitPathPromise = getGitPathInner();
   }
   return gitPathPromise;
+}
+
+export async function getGitPathInner(): Promise<string | UIError> {
+  const whichResult = await whichPromise("git");
+  if (whichResult === undefined) {
+    return createUIError("Could not find Git binary.");
+  }
+  return whichResult;
 }
 
 export function whichPromise(

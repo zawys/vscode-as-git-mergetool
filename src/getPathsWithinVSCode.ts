@@ -4,6 +4,7 @@
 import * as vscode from "vscode";
 import { GitExtension } from "./@types/git";
 import { getGitPath } from "./getPaths";
+import { UIError } from "./uIError";
 
 const pathSeparator = "/";
 function uriStartsWith(parent: vscode.Uri, child: vscode.Uri): boolean {
@@ -47,14 +48,14 @@ export function getWorkingDirectoryUriInteractively(): vscode.Uri | undefined {
   }
   return result;
 }
-let vSCGitPathPromise: Promise<string | undefined> | undefined;
-export function getVSCGitPath(): Promise<string | undefined> {
+let vSCGitPathPromise: Promise<string | UIError> | undefined;
+export function getVSCGitPath(): Promise<string | UIError> {
   if (vSCGitPathPromise === undefined) {
     vSCGitPathPromise = getVSCGitPathInner();
   }
   return vSCGitPathPromise;
 }
-async function getVSCGitPathInner(): Promise<string | undefined> {
+async function getVSCGitPathInner(): Promise<string | UIError> {
   const gitExtension = await vscode.extensions
     .getExtension<GitExtension>("vscode.git")
     ?.activate();
@@ -70,9 +71,9 @@ export async function getVSCGitPathInteractively(): Promise<
   string | undefined
 > {
   const gitPath = await getVSCGitPath();
-  if (gitPath) {
+  if (typeof gitPath === "string") {
     return gitPath;
   }
-  void vscode.window.showErrorMessage("Could not find Git binary.");
+  void vscode.window.showErrorMessage(gitPath.message);
   return undefined;
 }

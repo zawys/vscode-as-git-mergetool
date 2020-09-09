@@ -9,6 +9,7 @@ import {
 } from "./childProcessHandy";
 import { FileType, getFileType } from "./fsHandy";
 import { getVSCGitPath } from "./getPathsWithinVSCode";
+import { createUIError, isUIError, UIError } from "./uIError";
 
 /**
  * Several approaches copied from git-mergetool which is under GPLv2.
@@ -16,15 +17,13 @@ import { getVSCGitPath } from "./getPathsWithinVSCode";
 export class GitMergetoolReplacement {
   public async analyzeConflictSituation(
     conflictPath: string
-  ): Promise<
-    MergeConflictSituation | MergeNotApplicableResult | AnalysisError
-  > {
+  ): Promise<MergeConflictSituation | MergeNotApplicableResult | UIError> {
     const cwd = dirname(conflictPath);
     const filePath = relative(cwd, conflictPath);
     const absoluteVersionPath = resolvePath(filePath);
     const gitPath = await getVSCGitPath();
-    if (gitPath === undefined) {
-      return { error: "Could not determine path of Git binary." };
+    if (typeof gitPath !== "string") {
+      return gitPath;
     }
     const lsFilesResult = await execFileStdoutTrimEOL({
       filePath: gitPath,
@@ -32,9 +31,9 @@ export class GitMergetoolReplacement {
       options: { cwd },
     });
     if (typeof lsFilesResult !== "string") {
-      return {
-        error: `git ls-files threw: ${formatExecFileError(lsFilesResult)}`,
-      };
+      return createUIError(
+        `git ls-files threw: ${formatExecFileError(lsFilesResult)}`
+      );
     }
     if (lsFilesResult === "") {
       const fileType = await getFileType(resolvePath(conflictPath));
@@ -51,7 +50,7 @@ export class GitMergetoolReplacement {
     for (const entry of lsFilesResult.split("\n")) {
       const match = GitMergetoolReplacement.lsFilesURE.exec(entry);
       if (match === null || match.groups === undefined) {
-        return { error: "Could not parse output of git ls-files" };
+        return createUIError("Could not parse output of git ls-files");
       }
       const {
         mode,
@@ -60,18 +59,18 @@ export class GitMergetoolReplacement {
         path,
       }: { [k: string]: string | undefined } = match.groups;
       if (!mode || !object || !stage) {
-        return { error: "Could not parse output of git ls-files" };
+        return createUIError("Could not parse output of git ls-files");
       }
       const versionName = stageVersionNameMap[stage];
       if (versionName === undefined) {
-        return { error: "Unexpected output of ls-files" };
+        return createUIError("Unexpected output of ls-files");
       }
       const analysisResult = this.analyzeVCSEntry({
         mode,
         object,
         absPath: resolve(cwd, path),
       });
-      if ("error" in analysisResult) {
+      if (isUIError(analysisResult)) {
         return analysisResult;
       }
       versions[versionName] = analysisResult;
@@ -83,7 +82,7 @@ export class GitMergetoolReplacement {
           cwd,
           absoluteVersionPath
         );
-        if ("error" in analysisResult) {
+        if (isUIError(analysisResult)) {
           return analysisResult;
         }
         versions[versionName] = analysisResult;
@@ -95,16 +94,16 @@ export class GitMergetoolReplacement {
     gitPath: string,
     cwd: string,
     absoluteVersionPath: string
-  ): Promise<VCSEntry | AnalysisError> {
+  ): Promise<VCSEntry | UIError> {
     const lsTreeResult = await execFileStdoutTrimEOL({
       filePath: gitPath,
       arguments_: ["ls-tree", "HEAD", "--", absoluteVersionPath],
       options: { cwd },
     });
     if (typeof lsTreeResult !== "string") {
-      return {
-        error: `\`git ls-tree\` error: ${formatExecFileError(lsTreeResult)}`,
-      };
+      return createUIError(
+        `\`git ls-tree\` error: ${formatExecFileError(lsTreeResult)}`
+      );
     }
     return {
       type:
@@ -121,7 +120,7 @@ export class GitMergetoolReplacement {
     mode: string;
     object: string;
     absPath?: string;
-  }): VCSEntry | AnalysisError {
+  }): VCSEntry | UIError {
     const type: VCSEntryType | undefined =
       mode === "160000"
         ? VCSEntryType.subModule
@@ -155,10 +154,6 @@ export class GitMergetoolReplacement {
       options: { cwd },
     });
   }
-}
-
-export interface AnalysisError {
-  readonly error: string;
 }
 
 export interface MergeNotApplicableResult {
