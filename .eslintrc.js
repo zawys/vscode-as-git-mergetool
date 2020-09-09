@@ -48,5 +48,9 @@ module.exports = {
       ],
       2,
     ],
+    "unicorn/expiring-todo-comments": [
+      "error",
+      { terms: ["todo", "fixme", "xxx", "debug"] },
+    ],
   },
 };
