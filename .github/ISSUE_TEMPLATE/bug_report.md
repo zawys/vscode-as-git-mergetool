@@ -1,28 +1,32 @@
 ---
 name: Bug report
 about: Report something is not as expected
-title: ''
+title: ""
 labels: bug
 assignees: zawys
-
 ---
 
-**Steps to reproduce**
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+## Steps to reproduce
 
-**Expected behavior**
+1. 
+2. 
+3. 
+4. 
 
-
-**[Optional] screenshots**
+## Expected behavior
 
 
-**Environment**
- - Version of the extension: 
- - Operating system: 
- - VS Code version: [use Code command “Help: About”]
- - Other installed extensions (if applicable):
 
-**Additional context**
+## [Optional] screenshots
+
+
+
+## Environment
+
+- Version of the extension: 
+- Operating system: 
+- VS Code version [use Code command “Help: About”]: 
+- Other installed extensions (if applicable): 
+
+## Additional context
+

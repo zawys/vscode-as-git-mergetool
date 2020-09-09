@@ -55,5 +55,14 @@
     "dist",
     "out",
     "packages",
-  ]
+  ],
+  "files.associations": {
+    "**/.github/ISSUE_TEMPLATE/**/*.md": "plaintext"
+  },
+  "[plaintext]": {
+    "files.trimFinalNewlines": false,
+    "files.trimTrailingWhitespace": false,
+    "editor.formatOnSave": false,
+    "editor.trimAutoWhitespace": false
+  },
 }
