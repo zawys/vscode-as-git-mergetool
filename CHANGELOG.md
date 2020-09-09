@@ -10,6 +10,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- Tweaked the scrolling synchronizer so that one parameter less is required.
+  That makes the scrolling synchronization slightly non-deterministic,
+  but that should hopefully be not noticeable.
+  It should be slightly more stable now.
+
 ## [0.10.0] - 2020-09-09
 
 ### Changed

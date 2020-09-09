@@ -267,7 +267,6 @@ export class SplitDiffLayouter implements DiffLayouter {
     this.temporarySettingsManager = config.temporarySettingsManager;
     this.vSCodeConfigurator = config.vSCodeConfigurator;
     this.zoomManager = config.zoomManager;
-    this.mappedIntervalRelativeSize = config.mappedIntervalRelativeSize;
   }
 
   private readonly monitor: Monitor;
@@ -302,8 +301,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.editors,
       this.vSCodeConfigurator,
       synchronizationSourceOnStartIndex,
-      undefined,
-      this.mappedIntervalRelativeSize
+      undefined
     );
   }
 
@@ -605,7 +603,6 @@ export interface SplitDiffLayouterSpecificConfig {
     diffedURIs: DiffedURIs,
     zoom: Zoom
   ) => LayoutDescription;
-  readonly mappedIntervalRelativeSize?: number;
   readonly supportedZooms: Zoom[];
 }
 

@@ -21,7 +21,6 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
     return new SplitDiffLayouter({
       ...parameters,
       supportedZooms: [Zoom.top, Zoom.bottom, Zoom.left, Zoom.right],
-      mappedIntervalRelativeSize: 1 / 3,
       createLayoutDescription: (diffedURIs, zoom) => {
         let topSize = 0.5;
         let leftSize = 0.5;

@@ -19,8 +19,7 @@ export class ScrollSynchronizer implements Disposable {
     editors: vscode.TextEditor[],
     vSCodeConfigurator: VSCodeConfigurator,
     synchronizationSourceOnStartIndex?: number,
-    syncMethod?: ScrollSyncMethod,
-    mappedIntervalRelativeSize?: number
+    syncMethod?: ScrollSyncMethod
   ): Promise<ScrollSynchronizer> {
     const scrollIgnoreCounts = new Array<number>(editors.length).fill(
       synchronizationSourceOnStartIndex === undefined ? 0 : 1
@@ -47,8 +46,7 @@ export class ScrollSynchronizer implements Disposable {
       syncMethod,
       typeof surroundingLines === "number" && surroundingLines > 0
         ? surroundingLines
-        : 0,
-      mappedIntervalRelativeSize
+        : 0
     );
     if (synchronizationSourceOnStartIndex !== undefined) {
       await scrollSynchronizer.syncVisibleRanges(
@@ -75,15 +73,12 @@ export class ScrollSynchronizer implements Disposable {
           [k1: number]: undefined | LineMapper;
         };
   } = {};
-  private readonly mappedWeight0: number;
-  private readonly mappedWeight1: number;
 
   private constructor(
     private readonly editors: vscode.TextEditor[],
     private readonly scrollIgnoreCounts: number[],
     private readonly syncMethod: ScrollSyncMethod,
     private surroundingLines: number,
-    mappedIntervalRelativeSize = 0.5,
     private readonly startPosCorrection = surroundingLines - 1.3,
     private readonly centerPosCorrection = +0.5,
     private readonly eventDecayPerSec = 0.25
@@ -95,8 +90,6 @@ export class ScrollSynchronizer implements Disposable {
     this.selectionIgnoreCounts = new Array<number>(editors.length).fill(0);
     this.selectionIgnoreDates = new Array<number>(editors.length).fill(0);
     this.documents = this.editors.map((editor) => editor.document);
-    this.mappedWeight1 = (1 - mappedIntervalRelativeSize) / 2;
-    this.mappedWeight0 = 1 - this.mappedWeight1;
 
     this.disposables.push(
       vscode.window.onDidChangeTextEditorVisibleRanges(
@@ -154,11 +147,8 @@ export class ScrollSynchronizer implements Disposable {
 
       if (this.syncMethod === ScrollSyncMethod.centeredInterval) {
         const mappedSourceStartPos =
-          this.mappedWeight0 * sourceStartPos +
-          this.mappedWeight1 * sourceEndPos;
-        const mappedSourceEndPos =
-          this.mappedWeight1 * sourceStartPos +
-          this.mappedWeight0 * sourceEndPos;
+          0.75 * sourceStartPos + 0.25 * sourceEndPos;
+        const mappedSourceEndPos = 0.25 * sourceStartPos + 0.75 * sourceEndPos;
         const mappedDestinationStartPos = await this.translatePosition(
           mappedSourceStartPos,
           sourceEditorIndex,
@@ -173,16 +163,24 @@ export class ScrollSynchronizer implements Disposable {
           mappedDestinationStartPos !== undefined &&
           mappedDestinationEndPos !== undefined
         ) {
-          // rescale the mapped interval to the size of the "half window"
+          // rescale the mapped interval to the half size of the target editor
           const mappedIntervalCenter =
             (mappedDestinationEndPos + mappedDestinationStartPos) / 2;
-          const halfHalfWindowSize =
-            (mappedSourceEndPos - mappedSourceStartPos) / 2;
-          const rescaledStartPos = mappedIntervalCenter - halfHalfWindowSize;
-          const rescaledEndPos = mappedIntervalCenter + halfHalfWindowSize;
+          const [
+            targetEditorStartPos,
+            targetEditorEndPos,
+          ] = this.getScrollStartAndEndPos(targetEditor.visibleRanges);
+          const halfTargetIntervalSize =
+            (targetEditorEndPos - targetEditorStartPos) / 4;
+          const targetIntervalStartPos =
+            mappedIntervalCenter - halfTargetIntervalSize;
+          const targetIntervalEndPos =
+            mappedIntervalCenter + halfTargetIntervalSize;
 
-          const adaptedStartPos = rescaledStartPos + this.centerPosCorrection;
-          const adaptedEndPos = rescaledEndPos + this.centerPosCorrection;
+          const adaptedStartPos =
+            targetIntervalStartPos + this.centerPosCorrection;
+          const adaptedEndPos =
+            targetIntervalEndPos + this.centerPosCorrection;
           targetRange = new vscode.Range(
             new vscode.Position(
               Math.min(
