@@ -9,7 +9,7 @@
 ![GitHub watchers](https://img.shields.io/github/watchers/zawys/vscode-as-git-mergetool)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zawys/vscode-as-git-mergetool)
 ](https://github.com/zawys/vscode-as-git-mergetool)
-[![LiberaPay patron count](https://img.shields.io/liberapay/patrons/zawys.svg?logo=liberapay&style=so)](https://liberapay.com/on/github/zawys/)
+[![Liberapay patron count](https://img.shields.io/liberapay/patrons/zawys.svg?logo=liberapay&style=so)](https://liberapay.com/on/github/zawys/)
 
 </div>
 
