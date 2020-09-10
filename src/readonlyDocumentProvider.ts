@@ -8,6 +8,7 @@ import {
   workspace,
 } from "vscode";
 import { getContents } from "./fsHandy";
+import { RegisterableService } from "./registerableService";
 
 export const readonlyScheme = "readonly-file";
 
@@ -17,7 +18,7 @@ export class ReadonlyDocumentProvider implements TextDocumentContentProvider {
   }
 }
 
-export class ReadonlyDocumentProviderManager implements Disposable {
+export class ReadonlyDocumentProviderManager implements RegisterableService {
   public register(): void {
     this.dispose();
     this.registration = workspace.registerTextDocumentContentProvider(

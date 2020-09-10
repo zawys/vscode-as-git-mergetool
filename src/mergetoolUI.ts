@@ -11,10 +11,11 @@ import { extensionID, labelsInStatusBarSettingID } from "./iDs";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
 import { MergetoolProcessManager } from "./mergetoolProcessManager";
 import { Monitor } from "./monitor";
+import { RegisterableService } from "./registerableService";
 import { displayProcessExitInteractively } from "./terminalProcessManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
-export class MergetoolUI {
+export class MergetoolUI implements RegisterableService {
   public register(): void {
     const commands: [string, () => unknown][] = [
       /* eslint-disable @typescript-eslint/unbound-method */

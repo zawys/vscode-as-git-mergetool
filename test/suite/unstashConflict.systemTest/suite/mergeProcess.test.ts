@@ -11,12 +11,14 @@ suite("extension", () => {
     const extensionAPI = await getExtensionAPI();
     await vscode.commands.executeCommand(nextMergeStepCommandID);
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    assert(extensionAPI.mergetoolUI.mergeSituation !== undefined);
-    assert(extensionAPI.mergetoolUI.mergeSituationInLayout);
+    assert(extensionAPI.services.mergetoolUI.mergeSituation !== undefined);
+    assert(extensionAPI.services.mergetoolUI.mergeSituationInLayout);
     await vscode.commands.executeCommand("merge-conflict.accept.both");
     await new Promise((resolve) => setTimeout(resolve, 500));
     await vscode.commands.executeCommand(nextMergeStepCommandID);
     await new Promise((resolve) => setTimeout(resolve, 500));
-    assert(extensionAPI.mergetoolUI.processManager?.isRunning !== true);
+    assert(
+      extensionAPI.services.mergetoolUI.processManager?.isRunning !== true
+    );
   });
 });

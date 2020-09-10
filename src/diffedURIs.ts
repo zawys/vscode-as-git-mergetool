@@ -30,6 +30,16 @@ export function getDiffedURIs(baseURI: vscode.Uri): DiffedURIs | undefined {
 // The number in the file name is the PID of git-mergetool
 export const parseBaseFileNameRE = /\/([^/]*)_(BASE|REMOTE|LOCAL)_(\d+(.*?))(\.git)?$/;
 
+export function occursIn(
+  diffedURIs: DiffedURIs,
+  containedURI: vscode.Uri
+): boolean {
+  const containedURIPath = containedURI.path;
+  return asURIList(diffedURIs).some((diffedURI) => {
+    const diffedURIPath = diffedURI.path;
+    return pathsRoughlyEqual(containedURIPath, diffedURIPath);
+  });
+}
 export function asURIList(uRIs: DiffedURIs): vscode.Uri[] {
   const result = [uRIs.base, uRIs.local, uRIs.merged, uRIs.remote];
   if (uRIs.backup !== undefined) {

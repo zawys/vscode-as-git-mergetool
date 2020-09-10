@@ -12,8 +12,9 @@ import { getVSCGitPathInteractively } from "./getPathsWithinVSCode";
 import { extensionID } from "./iDs";
 import { Lazy } from "./lazy";
 import { readonlyFileURI } from "./readonlyDocumentProvider";
+import { RegisterableService } from "./registerableService";
 
-export class ArbitraryFilesMerger implements vscode.Disposable {
+export class ArbitraryFilesMerger implements RegisterableService {
   public register(): void {
     this.disposables = [
       vscode.commands.registerCommand(
@@ -81,7 +82,7 @@ export class ArbitraryFilesMerger implements vscode.Disposable {
       readonlyFileURI(selectionResult.remote.fsPath),
       vscode.Uri.file(selectionResult.merged.fsPath)
     );
-    return await this.diffLayouterManager.openDiffedURIs(diffedURIs);
+    return await this.diffLayouterManager.openDiffedURIs(diffedURIs, false);
   }
 
   public constructor(

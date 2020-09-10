@@ -3,13 +3,14 @@
 
 import * as cp from "child_process";
 import * as vscode from "vscode";
-import { extensionID } from "./iDs";
+import { formatExecFileError } from "./childProcessHandy";
 import {
   getVSCGitPathInteractively,
   getWorkingDirectoryUri,
 } from "./getPathsWithinVSCode";
+import { extensionID } from "./iDs";
+import { RegisterableService } from "./registerableService";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
-import { formatExecFileError } from "./childProcessHandy";
 
 export const settingsAssistantOnStartupID = `${extensionID}.settingsAssistantOnStartup`;
 
@@ -299,7 +300,17 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
   private static readonly workspaceValue = "in workspace";
 }
 
-export class SettingsAssistantCreator {
+export class SettingsAssistantCreator implements RegisterableService {
+  public register(): void {
+    this.timer = setTimeout(() => void this.tryLaunch(), 4000);
+  }
+
+  public dispose(): void {
+    if (this.timer !== undefined) {
+      clearTimeout(this.timer);
+    }
+  }
+
   public async tryLaunch(): Promise<void> {
     if (!this.vSCodeConfigurator.get(settingsAssistantOnStartupID)) {
       return;
@@ -322,7 +333,11 @@ export class SettingsAssistantCreator {
     }
   }
 
-  constructor(private readonly vSCodeConfigurator: VSCodeConfigurator) {}
+  public constructor(
+    private readonly vSCodeConfigurator: VSCodeConfigurator
+  ) {}
+
+  private timer: NodeJS.Timeout | undefined = undefined;
 }
 
 class Option implements vscode.MessageItem {

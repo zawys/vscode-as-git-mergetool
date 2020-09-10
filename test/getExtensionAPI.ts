@@ -17,9 +17,9 @@ export async function getExtensionAPI(): Promise<ExtensionAPI> {
   if (extensionAPI === undefined) {
     throw new Error("extension API not found");
   } else if (
-    !(extensionAPI as ExtensionAPI).activate &&
-    !(extensionAPI as ExtensionAPI).deactivate &&
-    !(extensionAPI as ExtensionAPI).diffLayouterManager
+    !(extensionAPI as ExtensionAPI).register &&
+    !(extensionAPI as ExtensionAPI).dispose &&
+    !(extensionAPI as ExtensionAPI).services?.diffLayouterManager
   ) {
     throw new TypeError("extensionAPI has unexpected type");
   }

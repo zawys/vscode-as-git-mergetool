@@ -333,7 +333,7 @@
     "pretest:dev": "yarn run compile && yarn run bundle:dev && yarn run copy_files",
     "test:dev": "yarn run test:only",
     "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
-    "bundle:dev": "parcel build --target main --no-minify ${npm_package_source}",
+    "bundle:dev": "parcel build --target main --no-minify --no-source-maps ${npm_package_source}",
     "bundle": "parcel build --target main --no-cache --detailed-report 10 ${npm_package_source}",
     "build:dev": "yarn run bundle:dev",
     "build": "yarn install && yarn run clean && yarn run bundle && yarn run package",

@@ -6,8 +6,9 @@ import { Monitor } from "./monitor";
 import { extensionID } from "./iDs";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { commands, Disposable } from "vscode";
+import { RegisterableService } from "./registerableService";
 
-export class TemporarySettingsManager implements Disposable {
+export class TemporarySettingsManager implements RegisterableService {
   public async activateSettings(): Promise<void> {
     await this.monitor.enter();
     try {

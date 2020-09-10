@@ -2,11 +2,14 @@
 // See LICENSE file in repository root directory.
 
 import { dirname, relative, resolve, resolve as resolvePath } from "path";
+import { Uri, window } from "vscode";
 import {
   execFileStdoutInteractivelyTrimEOL,
   execFileStdoutTrimEOL,
   formatExecFileError,
 } from "./childProcessHandy";
+import { DiffedURIs } from "./diffedURIs";
+import { DiffLayouterManager } from "./diffLayouterManager";
 import { FileType, getFileType } from "./fsHandy";
 import { getVSCGitPath } from "./getPathsWithinVSCode";
 import { createUIError, isUIError, UIError } from "./uIError";
@@ -15,6 +18,50 @@ import { createUIError, isUIError, UIError } from "./uIError";
  * Several approaches copied from git-mergetool which is under GPLv2.
  */
 export class GitMergetoolReplacement {
+  public async handleDidOpenURI(uRI: Uri): Promise<boolean> {
+    const situation = await this.analyzeConflictSituation(uRI.fsPath);
+    if (isUIError(situation) || isMergeNotApplicableResult(situation)) {
+      return false;
+    }
+    if (isRegularSituation(situation)) {
+      await this.diffLayouterManager.openDiffedURIs(
+        new DiffedURIs(
+          Uri.file(situation.base.absPath),
+          Uri.file(situation.local.absPath),
+          Uri.file(situation.remote.absPath),
+          // use the behavior of git-mergetool here; could be improved;
+          // i.e. allow to pick / edit the destination path
+          Uri.file(situation.local.absPath)
+        ),
+        true
+      );
+    }
+    void window.showInformationMessage("Not implemented: non-regular merge");
+    return false;
+  }
+  public async getConflictingFiles(cwd: string): Promise<string[] | UIError> {
+    const gitPath = await getVSCGitPath();
+    if (isUIError(gitPath)) {
+      return gitPath;
+    }
+    const gitDiffResult = await execFileStdoutTrimEOL({
+      filePath: gitPath,
+      arguments_: [
+        "-c",
+        "core.quotePath=false",
+        "diff",
+        "--name-only",
+        "--diff-filter=U",
+      ],
+      options: { cwd },
+    });
+    if (typeof gitDiffResult !== "string") {
+      return createUIError(
+        `\`git diff\` threw: ${formatExecFileError(gitDiffResult)}`
+      );
+    }
+    return gitDiffResult.split("\n").slice(0, -1);
+  }
   public async analyzeConflictSituation(
     conflictPath: string
   ): Promise<MergeConflictSituation | MergeNotApplicableResult | UIError> {
@@ -90,6 +137,34 @@ export class GitMergetoolReplacement {
     }
     return versions as MergeConflictSituation;
   }
+  public static lsFilesURE = /^(?<mode>\S+) (?<object>\S+) (?<stage>\S+)\t(?<path>.*)$/;
+  public async getGitDirectoryInteractively(
+    gitPath: string,
+    cwd: string
+  ): Promise<string | undefined> {
+    const result = await execFileStdoutInteractivelyTrimEOL({
+      filePath: gitPath,
+      arguments_: ["rev-parse", "--git-dir"],
+      options: { cwd },
+    });
+    if (result === undefined) {
+      return undefined;
+    }
+    return resolvePath(cwd, result);
+  }
+  public async getGitRoot(
+    gitPath: string,
+    cwd: string
+  ): Promise<string | undefined> {
+    return await execFileStdoutInteractivelyTrimEOL({
+      filePath: gitPath,
+      arguments_: ["rev-parse", "--show-toplevel"],
+      options: { cwd },
+    });
+  }
+  public constructor(
+    private readonly diffLayouterManager: DiffLayouterManager
+  ) {}
   private async analyzeNotExistingVCSEntry(
     gitPath: string,
     cwd: string,
@@ -129,35 +204,11 @@ export class GitMergetoolReplacement {
         : VCSEntryType.regularFile;
     return { type, object, absPath };
   }
-  public static lsFilesURE = /^(?<mode>\S+) (?<object>\S+) (?<stage>\S+)\t(?<path>.*)$/;
-  public async getGitDirectoryInteractively(
-    gitPath: string,
-    cwd: string
-  ): Promise<string | undefined> {
-    const result = await execFileStdoutInteractivelyTrimEOL({
-      filePath: gitPath,
-      arguments_: ["rev-parse", "--git-dir"],
-      options: { cwd },
-    });
-    if (result === undefined) {
-      return undefined;
-    }
-    return resolvePath(cwd, result);
-  }
-  public async getGitRoot(
-    gitPath: string,
-    cwd: string
-  ): Promise<string | undefined> {
-    return await execFileStdoutInteractivelyTrimEOL({
-      filePath: gitPath,
-      arguments_: ["rev-parse", "--show-toplevel"],
-      options: { cwd },
-    });
-  }
 }
 
+export const mergeNotApplicableResultTypeName = "MergeNotApplicableResult";
 export interface MergeNotApplicableResult {
-  readonly resultName: "MergeNotApplicableResult";
+  readonly typeName: typeof mergeNotApplicableResultTypeName;
   readonly type: MergeNotApplicableType;
 }
 export const enum MergeNotApplicableType {
@@ -165,13 +216,22 @@ export const enum MergeNotApplicableType {
   noMergeRequired,
 }
 export const fileNotFoundResult: MergeNotApplicableResult = {
-  resultName: "MergeNotApplicableResult",
+  typeName: mergeNotApplicableResultTypeName,
   type: MergeNotApplicableType.fileNotFound,
 };
 export const noMergeRequiredResult: MergeNotApplicableResult = {
-  resultName: "MergeNotApplicableResult",
+  typeName: mergeNotApplicableResultTypeName,
   type: MergeNotApplicableType.noMergeRequired,
 };
+export function isMergeNotApplicableResult(
+  x: unknown
+): x is MergeNotApplicableResult {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    (x as { typeName?: unknown }).typeName === mergeNotApplicableResultTypeName
+  );
+}
 
 type VersionName = "base" | "local" | "remote";
 const versionNames: VersionName[] = ["base", "local", "remote"];
@@ -189,4 +249,20 @@ export const enum VCSEntryType {
   regularFile,
   subModule,
   symbolicLink,
+}
+export function isRegularSituation(
+  situation: MergeConflictSituation
+): situation is MergeConflictSituation & {
+  base: { absPath: string };
+  local: { absPath: string };
+  remote: { absPath: string };
+} {
+  return (
+    situation.base.absPath !== undefined &&
+    situation.base.type === VCSEntryType.regularFile &&
+    situation.local.absPath !== undefined &&
+    situation.local.type === VCSEntryType.regularFile &&
+    situation.remote.absPath !== undefined &&
+    situation.remote.type === VCSEntryType.regularFile
+  );
 }

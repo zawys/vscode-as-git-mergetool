@@ -26,9 +26,9 @@
       "type": "pwa-node",
       "preLaunchTask": "start_test_for_debugging",
       "continueOnAttach": true,
-      "smartStep": true,
+      "sourceMaps": false,
       "showAsyncStacks": true,
-      "timeout": 10000,
+      "timeout": 5000,
       "outFiles": [
         "${workspaceFolder}/out/src/**/*.js",
         "${workspaceFolder}/out/test/**/*.js",

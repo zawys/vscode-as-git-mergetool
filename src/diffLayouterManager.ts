@@ -3,9 +3,8 @@
 
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { DiffedURIs, filesExist, getDiffedURIs } from "./diffedURIs";
+import { DiffedURIs } from "./diffedURIs";
 import { copy } from "./fsHandy";
-import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
 import { extensionID } from "./iDs";
 import {
   DiffLayouter,
@@ -21,19 +20,17 @@ import { ThreeDiffToBaseMergedRightLayouterFactory } from "./layouters/threeDiff
 import { ThreeDiffToBaseRowsLayouterFactory } from "./layouters/threeDiffToBaseRowsLayouter";
 import { containsMergeConflictIndicators } from "./mergeConflictDetector";
 import { Monitor } from "./monitor";
+import { RegisterableService } from "./registerableService";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { Zoom, ZoomManager } from "./zoom";
 
-export class DiffLayouterManager implements vscode.Disposable {
+export class DiffLayouterManager implements RegisterableService {
   public async register(): Promise<void> {
     for (const disposabe of this.disposables) {
       disposabe.dispose();
     }
     this.disposables = [
-      vscode.window.onDidChangeVisibleTextEditors(
-        this.handleDidChangeVisibleTextEditors.bind(this)
-      ),
       vscode.commands.registerCommand(
         focusPreviousConflictCommandID,
         this.focusMergeConflictInteractively.bind(this, SearchType.previous)
@@ -58,11 +55,6 @@ export class DiffLayouterManager implements vscode.Disposable {
         this.handleWasZoomRequested.bind(this)
       ),
     ];
-    for (const editor of vscode.window.visibleTextEditors) {
-      if (await this.handleDidOpenURI(editor.document.uri)) {
-        return;
-      }
-    }
     await this.temporarySettingsManager.resetSettings();
   }
 
@@ -116,6 +108,10 @@ export class DiffLayouterManager implements vscode.Disposable {
       : undefined;
   }
 
+  public get layoutSwitchInProgress(): boolean {
+    return this.layouter !== undefined && !this.layouter.isActive;
+  }
+
   public dispose(): void {
     for (const disposable of this.disposables) {
       disposable.dispose();
@@ -142,7 +138,10 @@ export class DiffLayouterManager implements vscode.Disposable {
     }
   }
 
-  public async openDiffedURIs(diffedURIs: DiffedURIs): Promise<boolean> {
+  public async openDiffedURIs(
+    diffedURIs: DiffedURIs,
+    closeActiveEditor: boolean
+  ): Promise<boolean> {
     await this.layouterManagerMonitor.enter();
     try {
       const activeDiffedURIs = this.layouter?.diffedURIs;
@@ -161,9 +160,11 @@ export class DiffLayouterManager implements vscode.Disposable {
 
       // point of no return
 
-      await vscode.commands.executeCommand(
-        "workbench.action.closeActiveEditor"
-      );
+      if (closeActiveEditor) {
+        await vscode.commands.executeCommand(
+          "workbench.action.closeActiveEditor"
+        );
+      }
       await this.activateLayouter(diffedURIs, newLayouterFactory);
     } finally {
       await this.layouterManagerMonitor.leave();
@@ -226,7 +227,6 @@ export class DiffLayouterManager implements vscode.Disposable {
     public readonly vSCodeConfigurator: VSCodeConfigurator,
     public readonly zoomManager: ZoomManager,
     public readonly temporarySettingsManager: TemporarySettingsManager,
-    public readonly gitMergetoolReplacement: GitMergetoolReplacement,
     public readonly factories: DiffLayouterFactory[] = [
       new ThreeDiffToBaseLayouterFactory(),
       new ThreeDiffToBaseRowsLayouterFactory(),
@@ -301,29 +301,6 @@ export class DiffLayouterManager implements vscode.Disposable {
     this.activateSwitchLayoutStatusBarItem();
   }
 
-  private async handleDidChangeVisibleTextEditors(
-    editors: vscode.TextEditor[]
-  ) {
-    for (const editor of editors) {
-      await this.handleDidOpenURI(editor.document.uri);
-    }
-  }
-
-  private async handleDidOpenURI(uRI: vscode.Uri): Promise<boolean> {
-    if (this.layouter !== undefined && !this.layouter.isActive) {
-      return false;
-    }
-    const diffedURIs = getDiffedURIs(uRI);
-    if (diffedURIs === undefined || !(await filesExist(diffedURIs))) {
-      return false;
-    }
-    if (this.layouter !== undefined && !this.layouter.isActive) {
-      return false;
-    }
-    this.didMergetoolReact.fire();
-    return await this.openDiffedURIs(diffedURIs);
-  }
-
   private async handleLayouterDidDeactivate(layouter: DiffLayouter) {
     this.layouter = undefined;
     this.deactivateSwitchLayoutStatusBarItem();
@@ -343,7 +320,7 @@ export class DiffLayouterManager implements vscode.Disposable {
           keepClosed
         );
         if (result === reopen) {
-          if (!(await this.openDiffedURIs(layouter.diffedURIs))) {
+          if (!(await this.openDiffedURIs(layouter.diffedURIs, false))) {
             void vscode.window.showErrorMessage(
               "Opening failed, probably because one of the files was removed."
             );

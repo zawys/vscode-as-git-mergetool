@@ -10,7 +10,7 @@ export function isUIError(x: unknown): x is UIError {
   return (
     typeof x === "object" &&
     x !== null &&
-    (x as { [k in "typeName"]?: unknown }).typeName === uIErrorTypeName
+    (x as { typeName?: unknown }).typeName === uIErrorTypeName
   );
 }
 export function createUIError(message: string): UIError {

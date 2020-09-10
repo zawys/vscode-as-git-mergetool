@@ -10,6 +10,7 @@ import {
   window,
 } from "vscode";
 import { extensionID, firstLetterUppercase } from "./iDs";
+import { RegisterableService } from "./registerableService";
 
 export const enum Zoom {
   default,
@@ -41,7 +42,7 @@ for (const [zoom, name, symbol] of [
   });
 }
 
-export class ZoomManager implements Disposable {
+export class ZoomManager implements RegisterableService {
   public register(): void {
     for (const [zoom, { commandID }] of allZooms.entries()) {
       commands.registerCommand(commandID, () => {
