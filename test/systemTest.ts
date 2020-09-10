@@ -101,13 +101,11 @@ const unzip = unwrappedWhich("unzip");
 export async function unpackToTemporaryDirectory(
   zipPath: string
 ): Promise<string> {
-  // TODO [2020-12-01] replace by trimEnd when DefinitelyTyped PR is merged.
-  // eslint-disable-next-line unicorn/prefer-trim-start-end
   const temporaryDirectoryPath = cp
     .spawnSync(await mktemp, ["-d"], {
       encoding: "utf-8",
     })
-    .stdout.trimRight();
+    .stdout.trimEnd();
   console.log(`unzipped at: ${temporaryDirectoryPath}`);
   cp.execFileSync(await unzip, [zipPath, "-d", temporaryDirectoryPath]);
   return temporaryDirectoryPath;
