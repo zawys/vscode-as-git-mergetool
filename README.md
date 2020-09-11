@@ -3,7 +3,8 @@
 
 # VS Code as Git Mergetool
 
-[![Visual Studio Marketplace downloads](https://img.shields.io/visual-studio-marketplace/i/zawys.vscode-as-git-mergetool)
+[![Visual Studio Marketplace installs](https://img.shields.io/visual-studio-marketplace/i/zawys.vscode-as-git-mergetool)
+![Visual Studio Marketplace downloads](https://img.shields.io/visual-studio-marketplace/d/zawys.vscode-as-git-mergetool)
 ![Visual Studio Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/zawys.vscode-as-git-mergetool)](https://marketplace.visualstudio.com/items?itemName=zawys.vscode-as-git-mergetool&ssr=false#review-details)
 [![GitHub stars](https://img.shields.io/github/stars/zawys/vscode-as-git-mergetool)
 ![GitHub watchers](https://img.shields.io/github/watchers/zawys/vscode-as-git-mergetool)
