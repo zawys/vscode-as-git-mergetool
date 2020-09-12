@@ -14,8 +14,8 @@
 
 </div>
 
-This extension provides diff editor layouts for 3-way merges
-directly in VS Code.
+This extension provides diff editor layouts and more
+for common-base merges (aka. “3-way merges”) directly in VS Code.
 
 ![Four pane merge](media/four%20pane%20merge.png)
 
