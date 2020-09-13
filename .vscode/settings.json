@@ -67,4 +67,7 @@
     "editor.formatOnSave": false,
     "editor.trimAutoWhitespace": false
   },
+  "codemetrics.basics.CodeLensHiddenUnder": 15,
+  "codemetrics.basics.ComplexityLevelNormal": 15,
+  "codemetrics.basics.ComplexityLevelHigh": 20,
 }

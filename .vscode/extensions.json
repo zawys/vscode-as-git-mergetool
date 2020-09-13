@@ -5,6 +5,9 @@
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "rlnt.keep-a-changelog",
-    "davidanson.vscode-markdownlint"
+    "davidanson.vscode-markdownlint",
+    "kisstkondoros.vscode-codemetrics",
+    "streetsidesoftware.code-spell-checker",
+    "msjsdiag.debugger-for-chrome",
   ]
 }
