@@ -1,14 +1,17 @@
+// Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
+// See LICENSE file in repository root directory.
+
 import { exit } from "process";
 import * as which from "which";
 import * as cp from "child_process";
 
 export async function runCommand(
   command: string,
-  args: string[]
+  arguments_: string[]
 ): Promise<number | null> {
   return await new Promise((resolve) => {
-    console.log(`+${command} ${args.join(" ")}`);
-    const process = cp.spawn(command, args, {
+    console.log(`+${command} ${arguments_.join(" ")}`);
+    const process = cp.spawn(command, arguments_, {
       stdio: "inherit",
     });
     process.on("exit", (code) => {
@@ -19,11 +22,11 @@ export async function runCommand(
 
 export function spawnAndCapture(
   file: string,
-  args: string[],
+  arguments_: string[],
   options?: cp.SpawnOptions
 ): cp.SpawnSyncReturns<string> {
-  console.log(`+${file} ${args.join(" ")}`);
-  const child = cp.spawnSync(file, args, {
+  console.log(`+${file} ${arguments_.join(" ")}`);
+  const child = cp.spawnSync(file, arguments_, {
     ...options,
     stdio: "pipe",
     encoding: "utf-8",
@@ -35,15 +38,15 @@ export function spawnAndCapture(
 
 export function asyncWhich(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    which(command, (err, path) => (err ? reject(err) : resolve(path)));
+    which(command, (error, path) => (error ? reject(error) : resolve(path)));
   });
 }
 
-export async function runAsync(run: () => Promise<number>) {
+export async function runAsync(run: () => Promise<number>): Promise<void> {
   try {
     exit(await run());
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error(error);
     exit(1);
   }
 }

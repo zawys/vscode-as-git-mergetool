@@ -17,7 +17,6 @@
         "isDefault": true
       },
       "runOptions": {
-        "instanceLimit": 1,
         "runOn": "folderOpen"
       }
     },
@@ -27,7 +26,7 @@
       "script": "build:dev",
       "group": "build",
       "runOptions": {
-        "instanceLimit": 1,
+        "instanceLimit": 1
       },
       "presentation": {
         "echo": true,
@@ -36,7 +35,8 @@
         "panel": "shared",
         "showReuseMessage": true,
         "clear": true
-      }
+      },
+      "problemMatcher": []
     },
     {
       "label": "start_test_for_debugging",
@@ -62,7 +62,7 @@
       "problemMatcher": {
         "pattern": [
           {
-            "regexp": "^([^\\\\s].*)\\\\((\\\\d+,\\\\d+)\\\\):\\\\s*(.*)$",
+            "regexp": "^(\\S.*)\\((\\d+,\\d+)\\):\\s*(.*)$",
             "file": 1,
             "location": 2,
             "message": 3
@@ -73,8 +73,7 @@
           "beginsPattern": "$never^",
           "endsPattern": "^Debugging test .+\\. Waiting on port"
         }
-      },
-      "dependsOn": []
+      }
     }
   ]
 }
