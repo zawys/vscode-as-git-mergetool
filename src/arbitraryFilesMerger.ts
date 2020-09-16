@@ -9,7 +9,7 @@ import { getVSCGitPathInteractively } from "./getPathsWithinVSCode";
 import { gitMergeFile } from "./gitMergeFile";
 import { extensionID } from "./iDs";
 import { Lazy } from "./lazy";
-import { readonlyFileURI } from "./readonlyDocumentProvider";
+import { ReadonlyDocumentProvider } from "./readonlyDocumentProvider";
 import { RegisterableService } from "./registerableService";
 import { isUIError } from "./uIError";
 
@@ -52,9 +52,15 @@ export class ArbitraryFilesMerger implements RegisterableService {
       }
     }
     const diffedURIs: DiffedURIs = new DiffedURIs(
-      readonlyFileURI(selectionResult.base.fsPath),
-      readonlyFileURI(selectionResult.local.fsPath),
-      readonlyFileURI(selectionResult.remote.fsPath),
+      this.readonlyDocumentProvider.readonlyFileURI(
+        selectionResult.base.fsPath
+      ),
+      this.readonlyDocumentProvider.readonlyFileURI(
+        selectionResult.local.fsPath
+      ),
+      this.readonlyDocumentProvider.readonlyFileURI(
+        selectionResult.remote.fsPath
+      ),
       vscode.Uri.file(selectionResult.merged.fsPath)
     );
     return await this.diffLayouterManager.openDiffedURIs(diffedURIs, false);
@@ -62,6 +68,7 @@ export class ArbitraryFilesMerger implements RegisterableService {
 
   public constructor(
     private readonly diffLayouterManager: DiffLayouterManager,
+    private readonly readonlyDocumentProvider: ReadonlyDocumentProvider,
     private diffFileSelectorLazy = new Lazy(() => new DiffFileSelector())
   ) {}
 

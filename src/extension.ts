@@ -5,11 +5,19 @@ import "regenerator-runtime";
 import * as vscode from "vscode";
 import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";
 import { DiffLayouterManager } from "./diffLayouterManager";
+import { DocumentProviderManager } from "./documentProviderManager";
 import { EditorOpenManager } from "./editorOpenManager";
+import {
+  createRegisteredDocumentProviderManager,
+  RegisteredDocumentContentProvider,
+} from "./registeredDocumentContentProvider";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
 import * as mergetool from "./mergetoolUI";
-import { ReadonlyDocumentProviderManager } from "./readonlyDocumentProvider";
+import {
+  createReadonlyDocumentProviderManager,
+  ReadonlyDocumentProvider,
+} from "./readonlyDocumentProvider";
 import { RegisterableService } from "./registerableService";
 import { SettingsAssistantCreator } from "./settingsAssistant";
 import { TemporaryFileOpenManager } from "./temporaryFileOpenManager";
@@ -59,8 +67,17 @@ export class ExtensionAPI implements RegisterableService {
 
     const readonlyDocumentProviderManager =
       services.readonlyDocumentProviderManager ||
-      new ReadonlyDocumentProviderManager();
+      createReadonlyDocumentProviderManager();
     registrationOrder.push(readonlyDocumentProviderManager);
+    const readonlyDocumentProvider =
+      readonlyDocumentProviderManager.documentProvider;
+
+    const registeredDocumentProviderManager =
+      services.registeredDocumentProviderManager ||
+      createRegisteredDocumentProviderManager();
+    registrationOrder.push(registeredDocumentProviderManager);
+    const registeredDocumentProvider =
+      registeredDocumentProviderManager.documentProvider;
 
     const zoomManager = services.zoomManager || new ZoomManager();
     registrationOrder.push(zoomManager);
@@ -81,11 +98,18 @@ export class ExtensionAPI implements RegisterableService {
 
     const gitMergetoolReplacement =
       services.gitMergetoolReplacement ||
-      new GitMergetoolReplacement(diffLayouterManager);
+      new GitMergetoolReplacement(
+        registeredDocumentProvider,
+        readonlyDocumentProvider,
+        diffLayouterManager
+      );
 
     const temporaryFileOpenManager =
       services.temporaryFileOpenManager ||
-      new TemporaryFileOpenManager(diffLayouterManager);
+      new TemporaryFileOpenManager(
+        diffLayouterManager,
+        readonlyDocumentProvider
+      );
 
     const mergetoolUI =
       services.mergetoolUI ||
@@ -103,7 +127,7 @@ export class ExtensionAPI implements RegisterableService {
 
     const arbitraryFilesMerger =
       services.arbitraryFilesMerger ||
-      new ArbitraryFilesMerger(diffLayouterManager);
+      new ArbitraryFilesMerger(diffLayouterManager, readonlyDocumentProvider);
     registrationOrder.push(arbitraryFilesMerger);
 
     const settingsAssistantCreator =
@@ -117,6 +141,7 @@ export class ExtensionAPI implements RegisterableService {
       gitMergetoolReplacement,
       mergetoolUI,
       readonlyDocumentProviderManager,
+      registeredDocumentProviderManager,
       settingsAssistantCreator,
       temporarySettingsManager,
       vSCodeConfigurator,
@@ -133,7 +158,12 @@ export class ExtensionAPI implements RegisterableService {
 
 export interface ExtensionServices {
   vSCodeConfigurator: VSCodeConfigurator;
-  readonlyDocumentProviderManager: ReadonlyDocumentProviderManager;
+  readonlyDocumentProviderManager: DocumentProviderManager<
+    ReadonlyDocumentProvider
+  >;
+  registeredDocumentProviderManager: DocumentProviderManager<
+    RegisteredDocumentContentProvider
+  >;
   zoomManager: ZoomManager;
   temporarySettingsManager: TemporarySettingsManager;
   gitMergetoolReplacement: GitMergetoolReplacement;

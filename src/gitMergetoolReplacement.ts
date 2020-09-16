@@ -11,8 +11,10 @@ import {
 import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { FileType, getFileType } from "./fsHandy";
+import { RegisteredDocumentContentProvider } from "./registeredDocumentContentProvider";
 import { getVSCGitPath } from "./getPathsWithinVSCode";
 import { createUIError, isUIError, UIError } from "./uIError";
+import { ReadonlyDocumentProvider } from "./readonlyDocumentProvider";
 
 /**
  * Several approaches copied from git-mergetool which is under GPLv2.
@@ -163,6 +165,8 @@ export class GitMergetoolReplacement {
     });
   }
   public constructor(
+    private readonly registeredDocumentProvider: RegisteredDocumentContentProvider,
+    private readonly readonlyDocumentProvider: ReadonlyDocumentProvider,
     private readonly diffLayouterManager: DiffLayouterManager
   ) {}
   private async analyzeNotExistingVCSEntry(

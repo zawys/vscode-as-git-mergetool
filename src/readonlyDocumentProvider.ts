@@ -1,39 +1,26 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import {
-  Disposable,
-  TextDocumentContentProvider,
-  Uri,
-  workspace,
-} from "vscode";
+import { TextDocumentContentProvider, Uri } from "vscode";
+import { DocumentProviderManager } from "./documentProviderManager";
 import { getContents } from "./fsHandy";
-import { RegisterableService } from "./registerableService";
-
-export const readonlyScheme = "readonly-file";
 
 export class ReadonlyDocumentProvider implements TextDocumentContentProvider {
-  async provideTextDocumentContent(uri: Uri): Promise<string> {
+  public async provideTextDocumentContent(uri: Uri): Promise<string> {
     return (await getContents(uri.fsPath)) || "";
   }
+  public readonlyFileURI(filePath: string): Uri {
+    return Uri.file(filePath).with({ scheme: this.scheme });
+  }
+  constructor(public readonly scheme: string) {}
 }
 
-export class ReadonlyDocumentProviderManager implements RegisterableService {
-  public register(): void {
-    this.dispose();
-    this.registration = workspace.registerTextDocumentContentProvider(
-      readonlyScheme,
-      new ReadonlyDocumentProvider()
-    );
-  }
-  dispose(): void {
-    this.registration?.dispose();
-    this.registration = undefined;
-  }
-
-  private registration: Disposable | undefined;
-}
-
-export function readonlyFileURI(filePath: string): Uri {
-  return Uri.file(filePath).with({ scheme: readonlyScheme });
+export function createReadonlyDocumentProviderManager(): DocumentProviderManager<
+  ReadonlyDocumentProvider
+> {
+  const readonlyScheme = "readonly-file";
+  return new DocumentProviderManager(
+    readonlyScheme,
+    new ReadonlyDocumentProvider(readonlyScheme)
+  );
 }
