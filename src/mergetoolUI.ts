@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
+import { generateFileNameStampUntil } from "./fileNameStamp";
 import { copy, fileContentsEqual, FileType, getFileType } from "./fsHandy";
 import { getWorkingDirectoryUriInteractively } from "./getPathsWithinVSCode";
 import { extensionID, labelsInStatusBarSettingID } from "./iDs";
@@ -13,6 +14,7 @@ import { MergetoolProcessManager } from "./mergetoolProcessManager";
 import { Monitor } from "./monitor";
 import { RegisterableService } from "./registerableService";
 import { displayProcessExitInteractively } from "./terminalProcessManager";
+import { createUIError, isUIError, UIError } from "./uIError";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class MergetoolUI implements RegisterableService {
@@ -437,14 +439,32 @@ export class MergetoolUI implements RegisterableService {
   }
 
   private async createMergedFileBackup(mergedPath: string): Promise<boolean> {
-    const newPath = `${mergedPath}.${new Date()
-      .toISOString()
-      .replace(/[.:]/g, "-")}.vsc-orig`;
-    if (!(await copy(mergedPath, newPath))) {
+    const newPathResult = await generateFileNameStampUntil((stamp) =>
+      this.getBackupPathFromStamp(mergedPath, stamp)
+    );
+    if (isUIError(newPathResult)) {
+      void vscode.window.showErrorMessage(newPathResult.message);
+      return false;
+    }
+    if (!(await copy(mergedPath, newPathResult))) {
       void vscode.window.showErrorMessage("Backup could not be saved.");
       return false;
     }
     return true;
+  }
+  private async getBackupPathFromStamp(
+    mergedPath: string,
+    stamp: string
+  ): Promise<string | false | UIError> {
+    const newPath = `${mergedPath}.${stamp}.vsc-orig`;
+    const fileType = await getFileType(newPath);
+    if (fileType === undefined) {
+      return createUIError(`Could not ascertain file type of ${newPath}.`);
+    }
+    if (fileType !== FileType.notExisting) {
+      return false;
+    }
+    return newPath;
   }
 
   private async reopenMergeSituationInner(): Promise<void> {
