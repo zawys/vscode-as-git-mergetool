@@ -2,6 +2,7 @@
 // See LICENSE file in repository root directory.
 
 import * as fs from "fs";
+import { createUIError, UIError } from "./uIError";
 
 export function getStats(path: string): Promise<fs.Stats | undefined> {
   return new Promise<fs.Stats | undefined>((resolve) => {
@@ -34,31 +35,23 @@ export async function getFileType(
   path: string
 ): Promise<FileType | undefined> {
   const stats = await getStats(path);
-  if (stats === undefined) {
-    return stats;
-  }
-  if (stats.isFile()) {
-    return FileType.regular;
-  }
-  if (stats.isDirectory()) {
-    return FileType.directory;
-  }
-  if (stats.isSocket()) {
-    return FileType.socket;
-  }
-  if (stats.isFIFO()) {
-    return FileType.fIFO;
-  }
-  if (stats.isSymbolicLink()) {
-    return FileType.symbolicLink;
-  }
-  if (stats.isBlockDevice()) {
-    return FileType.blockDevice;
-  }
-  if (stats.isCharacterDevice()) {
-    return FileType.characterDevice;
-  }
-  return FileType.notExisting;
+  return stats === undefined
+    ? undefined
+    : stats.isFile()
+    ? FileType.regular
+    : stats.isDirectory()
+    ? FileType.directory
+    : stats.isSocket()
+    ? FileType.socket
+    : stats.isFIFO()
+    ? FileType.fIFO
+    : stats.isSymbolicLink()
+    ? FileType.symbolicLink
+    : stats.isBlockDevice()
+    ? FileType.blockDevice
+    : stats.isCharacterDevice()
+    ? FileType.characterDevice
+    : FileType.notExisting;
 }
 
 export function testFile(path: string, mode: number): Promise<boolean> {
@@ -73,6 +66,25 @@ export function getContents(path: string): Promise<string | undefined> {
       resolve(error ? undefined : data);
     });
   });
+}
+
+export function setContents(
+  path: string,
+  contents: string
+): Promise<UIError | undefined> {
+  return new Promise<UIError | undefined>((resolve) => {
+    fs.writeFile(path, contents, (error) => {
+      resolve(
+        error !== null ? createUIError(formatErrnoException(error)) : undefined
+      );
+    });
+  });
+}
+
+export function formatErrnoException(result: NodeJS.ErrnoException): string {
+  return `${result.name}: ${result.message}. \nCode: ${
+    result.code || "unknown"
+  }; Error number: ${result.errno || "unknown"}`;
 }
 
 /**
@@ -102,6 +114,17 @@ export function copy(
 ): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     fs.copyFile(sourcePath, destinationPath, (error) => {
+      resolve(error === null);
+    });
+  });
+}
+
+export function rename(
+  sourcePath: string,
+  destinationPath: string
+): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    fs.rename(sourcePath, destinationPath, (error) => {
       resolve(error === null);
     });
   });
