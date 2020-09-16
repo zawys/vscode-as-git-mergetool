@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { Disposable } from "vscode";
 import { getStats } from "./fsHandy";
 import { extensionID } from "./iDs";
+import { showInternalError } from "./showInternalError";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class ScrollSynchronizer implements Disposable {
@@ -109,7 +110,7 @@ export class ScrollSynchronizer implements Disposable {
     sourceEditorIndex: number
   ): Promise<void> {
     if (this.editors[sourceEditorIndex] !== sourceEditor) {
-      void vscode.window.showErrorMessage("internal assumption violated");
+      showInternalError("this.editors[sourceEditorIndex] !== sourceEditor");
       return;
     }
 
@@ -428,7 +429,7 @@ export class ScrollSynchronizer implements Disposable {
       cacheValue0 === undefined ? undefined : cacheValue0[newEditorIndex];
 
     if (cacheValue1 === undefined) {
-      let cacheValue1Symm: LineMapper;
+      let cacheValue1Symm: LineMapper | undefined;
       const oldDocument = this.editors[oldEditorIndex].document;
       const newDocument = this.editors[newEditorIndex].document;
       if (oldDocument === newDocument) {
@@ -505,7 +506,7 @@ export class DiffLineMapper implements LineMapper {
   public static create(
     oldLines: string[],
     newLines: string[]
-  ): DiffLineMapper {
+  ): DiffLineMapper | undefined {
     const linesDiff = diff.diffArrays(oldLines, newLines);
     const mapping: MappingEntry[] = [];
     let currentOldIndex = 0;
@@ -537,7 +538,10 @@ export class DiffLineMapper implements LineMapper {
       }
       // start switching perspective
       if (part === undefined) {
-        throw new Error("Internal assumption failed");
+        showInternalError(
+          "bug in algorithm creating DiffLineMapper from mapping"
+        );
+        return;
       }
       if (!part.added) {
         currentOldIndex += part.value.length;

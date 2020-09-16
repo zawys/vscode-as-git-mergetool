@@ -35,6 +35,9 @@ suite("DiffLineMapper", () => {
         testCase.old.split(""),
         testCase.new.split("")
       );
+      if (sut === undefined) {
+        throw new Error("sut === undefined");
+      }
       // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
       const actual = sut.map(testCase.from);
       assert.strictEqual(
