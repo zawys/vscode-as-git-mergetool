@@ -24,6 +24,7 @@ import { TemporaryFileOpenManager } from "./temporaryFileOpenManager";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { ZoomManager } from "./zoom";
+import { setGracefulCleanup } from "tmp";
 
 let extensionAPI: ExtensionAPI | undefined;
 
@@ -44,6 +45,8 @@ export function deactivate(): void {
 
 export class ExtensionAPI implements RegisterableService {
   public async register(): Promise<void> {
+    setGracefulCleanup();
+
     // inverse order as below
     for (const service of this.registrationOrder) {
       await service.register();
