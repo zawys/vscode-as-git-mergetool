@@ -98,10 +98,6 @@ export class DiffLayouterManager implements RegisterableService {
   public get onDidLayoutActivate(): vscode.Event<DiffLayouter> {
     return this.didLayoutActivate.event;
   }
-  public get onDidLayoutReact(): vscode.Event<void> {
-    return this.didMergetoolReact.event;
-  }
-
   public get diffedURIs(): DiffedURIs | undefined {
     return this.layouter?.isActivating || this.layouter?.isActive
       ? this.layouter.diffedURIs
@@ -275,7 +271,6 @@ export class DiffLayouterManager implements RegisterableService {
     DiffLayouter
   >();
   private readonly didLayoutActivate = new vscode.EventEmitter<DiffLayouter>();
-  private readonly didMergetoolReact = new vscode.EventEmitter<void>();
   private switchLayoutStatusBarItem: vscode.StatusBarItem | undefined;
 
   private activateSwitchLayoutStatusBarItem(): void {

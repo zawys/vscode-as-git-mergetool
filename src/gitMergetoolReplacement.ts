@@ -15,6 +15,7 @@ import { RegisteredDocumentContentProvider } from "./registeredDocumentContentPr
 import { getVSCGitPath } from "./getPathsWithinVSCode";
 import { createUIError, isUIError, UIError } from "./uIError";
 import { ReadonlyDocumentProvider } from "./readonlyDocumentProvider";
+import { CommonMergeCommandsManager } from "./commonMergeCommandsManager";
 
 /**
  * Several approaches copied from git-mergetool which is under GPLv2.
@@ -167,7 +168,8 @@ export class GitMergetoolReplacement {
   public constructor(
     private readonly registeredDocumentProvider: RegisteredDocumentContentProvider,
     private readonly readonlyDocumentProvider: ReadonlyDocumentProvider,
-    private readonly diffLayouterManager: DiffLayouterManager
+    private readonly diffLayouterManager: DiffLayouterManager,
+    private readonly commonMergeCommandsManager: CommonMergeCommandsManager
   ) {}
   private async analyzeNotExistingVCSEntry(
     gitPath: string,

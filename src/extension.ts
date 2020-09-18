@@ -25,6 +25,7 @@ import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { ZoomManager } from "./zoom";
 import { setGracefulCleanup } from "tmp";
+import { CommonMergeCommandsManager } from "./commonMergeCommandsManager";
 
 let extensionAPI: ExtensionAPI | undefined;
 
@@ -99,12 +100,16 @@ export class ExtensionAPI implements RegisterableService {
       );
     registrationOrder.push(diffLayouterManager);
 
+    const commonMergeCommandsManager = new CommonMergeCommandsManager();
+    registrationOrder.push(commonMergeCommandsManager);
+
     const gitMergetoolReplacement =
       services.gitMergetoolReplacement ||
       new GitMergetoolReplacement(
         registeredDocumentProvider,
         readonlyDocumentProvider,
-        diffLayouterManager
+        diffLayouterManager,
+        commonMergeCommandsManager
       );
 
     const temporaryFileOpenManager =
@@ -116,7 +121,12 @@ export class ExtensionAPI implements RegisterableService {
 
     const mergetoolUI =
       services.mergetoolUI ||
-      new mergetool.MergetoolUI(diffLayouterManager, vSCodeConfigurator);
+      new mergetool.MergetoolUI(
+        diffLayouterManager,
+        vSCodeConfigurator,
+        temporaryFileOpenManager,
+        commonMergeCommandsManager
+      );
     registrationOrder.push(mergetoolUI);
 
     const editorOpenManager =
@@ -151,6 +161,7 @@ export class ExtensionAPI implements RegisterableService {
       zoomManager,
       temporaryFileOpenManager,
       editorOpenManager,
+      commonMergeCommandsManager,
     };
     this.registrationOrder = registrationOrder;
   }
@@ -176,4 +187,5 @@ export interface ExtensionServices {
   settingsAssistantCreator: SettingsAssistantCreator;
   temporaryFileOpenManager: TemporaryFileOpenManager;
   editorOpenManager: EditorOpenManager;
+  commonMergeCommandsManager: CommonMergeCommandsManager;
 }

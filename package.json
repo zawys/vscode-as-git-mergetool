@@ -45,8 +45,8 @@
         "category": "Git Mergetool"
       },
       {
-        "command": "vscode-as-git-mergetool.gitMergetoolContinue",
-        "title": "Accept file contents for merge and continue `git mergetool`",
+        "command": "vscode-as-git-mergetool.mergeContinue",
+        "title": "Stage file and continue merging other files",
         "enablement": "vscode-as-git-mergetool.gitMergetoolRunning == true",
         "category": "Git Mergetool"
       },

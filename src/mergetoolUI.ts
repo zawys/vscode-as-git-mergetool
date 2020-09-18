@@ -3,6 +3,12 @@
 
 import * as vscode from "vscode";
 import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
+import {
+  CommonMergeCommandHandler,
+  CommonMergeCommandsManager,
+  gitMergetoolStopCommandID,
+  nextMergeStepCommandID,
+} from "./commonMergeCommandsManager";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { generateFileNameStampUntil } from "./fileNameStamp";
@@ -13,22 +19,21 @@ import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
 import { MergetoolProcessManager } from "./mergetoolProcessManager";
 import { Monitor } from "./monitor";
 import { RegisterableService } from "./registerableService";
+import { TemporaryFileOpenManager } from "./temporaryFileOpenManager";
 import { displayProcessExitInteractively } from "./terminalProcessManager";
 import { createUIError, isUIError, UIError } from "./uIError";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
-export class MergetoolUI implements RegisterableService {
+export class MergetoolUI
+  implements RegisterableService, CommonMergeCommandHandler {
   public register(): void {
     const commands: [string, () => unknown][] = [
       /* eslint-disable @typescript-eslint/unbound-method */
       [gitMergetoolStartCommandID, this.startMergetool],
-      [gitMergetoolContinueCommandID, this.continueMergetool],
       [gitMergetoolSkipCommandID, this.skipFile],
-      [gitMergetoolStopCommandID, this.stopMergetoolInteractively],
       [gitMergetoolMergeSituationCommandID, this.reopenMergeSituation],
       [gitMergeAbortCommandID, this.abortMerge],
       [gitCommitCommandID, this.commitActiveCommitMessage],
-      [nextMergeStepCommandID, this.doNextStepInMergeProcess],
       /* eslint-enable @typescript-eslint/unbound-method */
     ];
     for (const [commandID, handler] of commands) {
@@ -47,7 +52,7 @@ export class MergetoolUI implements RegisterableService {
       )
     );
     this.registeredDisposables.add(
-      this.diffLayouterManager.onDidLayoutReact(() => {
+      this.temporaryFileOpenManager.onDidLayoutReact(() => {
         this._processManager?.setMergetoolReacted();
       })
     );
@@ -88,7 +93,7 @@ export class MergetoolUI implements RegisterableService {
     }
   }
 
-  public async continueMergetool(): Promise<void> {
+  public async continueMergeProcess(): Promise<void> {
     if (!this.checkMonitorNotInUse()) {
       return;
     }
@@ -151,7 +156,7 @@ export class MergetoolUI implements RegisterableService {
     }
   }
 
-  public async stopMergetoolInteractively(): Promise<void> {
+  public async stopMergeProcess(): Promise<void> {
     if (!this.checkMonitorNotInUse()) {
       return;
     }
@@ -312,7 +317,7 @@ export class MergetoolUI implements RegisterableService {
       SearchType.next
     );
     if (focusResult !== true) {
-      await this.continueMergetool();
+      await this.continueMergeProcess();
       return;
     }
   }
@@ -347,6 +352,8 @@ export class MergetoolUI implements RegisterableService {
   public constructor(
     private readonly diffLayouterManager: DiffLayouterManager,
     private readonly vSCodeConfigurator: VSCodeConfigurator,
+    private readonly temporaryFileOpenManager: TemporaryFileOpenManager,
+    private readonly commonMergeCommandsManager: CommonMergeCommandsManager,
     private readonly monitor = new Monitor()
   ) {}
 
@@ -525,6 +532,7 @@ export class MergetoolUI implements RegisterableService {
   private handleDidLayoutDeactivate() {
     if (this._mergeSituation !== undefined) {
       this.updateStatusBarItems();
+      this.updateCommonMergeCommandsListener();
     }
   }
 
@@ -532,12 +540,12 @@ export class MergetoolUI implements RegisterableService {
     if (this._mergeSituation === undefined) {
       this._mergeSituation = this.diffLayouterManager.diffedURIs;
       layouter.setWasInitiatedByMergetool();
-      if (this._mergeSituation !== undefined) {
-        this.updateStatusBarItems();
+      if (this._mergeSituation === undefined) {
+        return;
       }
-    } else {
-      this.updateStatusBarItems();
     }
+    this.updateStatusBarItems();
+    this.updateCommonMergeCommandsListener();
   }
 
   private async handleMergetoolStop(
@@ -681,16 +689,22 @@ export class MergetoolUI implements RegisterableService {
     result.show();
     return result;
   }
+
+  private updateCommonMergeCommandsListener(): void {
+    this.commonMergeCommandsManager.removeHandlers();
+    if (this._mergeSituation !== undefined) {
+      this.registeredDisposables.add(
+        this.commonMergeCommandsManager.addHandler(this)
+      );
+    }
+  }
 }
 
 export const gitMergetoolRunningID = `${extensionID}.gitMergetoolRunning`;
 export const gitMergetoolStartCommandID = `${extensionID}.gitMergetoolStart`;
-export const gitMergetoolContinueCommandID = `${extensionID}.gitMergetoolContinue`;
 export const gitMergetoolSkipCommandID = `${extensionID}.gitMergetoolSkip`;
-export const gitMergetoolStopCommandID = `${extensionID}.gitMergetoolStop`;
 export const gitMergetoolMergeSituationCommandID = `${extensionID}.gitMergetoolReopenMergeSituation`;
 export const gitMergeAbortCommandID = `${extensionID}.gitMergeAbort`;
 export const gitCommitCommandID = `${extensionID}.commit`;
-export const nextMergeStepCommandID = `${extensionID}.nextMergeStep`;
 export const editCommitMessageAfterMergetoolSettingID = `${extensionID}.editCommitMessageAfterMergetool`;
 export const askToConfirmResetWhenSkippingSettingID = `${extensionID}.askToConfirmResetWhenSkipping`;
