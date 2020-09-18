@@ -146,8 +146,12 @@ export class DiffLayouterManager implements RegisterableService {
     diffedURIs: DiffedURIs,
     closeActiveEditor: boolean,
     deactivationHandler?: () => void
-  ): Promise<boolean | vscode.Disposable> {
-    let result: vscode.Disposable | boolean = true;
+  ): Promise<boolean>;
+  public async openDiffedURIs(
+    diffedURIs: DiffedURIs,
+    closeActiveEditor: boolean,
+    deactivationHandler?: () => void
+  ): Promise<boolean> {
     await this.layouterManagerMonitor.enter();
     try {
       const activeDiffedURIs = this.layouter?.diffedURIs;
@@ -173,7 +177,12 @@ export class DiffLayouterManager implements RegisterableService {
       }
       await this.activateLayouter(diffedURIs, newLayouterFactory);
       if (deactivationHandler !== undefined) {
-        result = this.onDidLayoutDeactivate(deactivationHandler);
+        const result:
+          | vscode.Disposable
+          | undefined = this.onDidLayoutDeactivate(() => {
+          deactivationHandler();
+          result?.dispose();
+        });
       }
     } finally {
       await this.layouterManagerMonitor.leave();
@@ -181,7 +190,7 @@ export class DiffLayouterManager implements RegisterableService {
     if (this.layouter !== undefined) {
       this.didLayoutActivate.fire(this.layouter);
     }
-    return result;
+    return true;
   }
 
   public async switchLayout(layoutName?: unknown): Promise<void> {
