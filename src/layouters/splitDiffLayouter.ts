@@ -277,7 +277,6 @@ export class SplitDiffLayouter implements DiffLayouter {
   ) => LayoutDescription;
   private readonly temporarySettingsManager: TemporarySettingsManager;
   private readonly vSCodeConfigurator: VSCodeConfigurator;
-  private readonly mappedIntervalRelativeSize?: number;
   private readonly zoomManager: ZoomManager;
   private readonly supportedZooms: Zoom[];
 
