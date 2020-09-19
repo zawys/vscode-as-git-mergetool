@@ -8,7 +8,9 @@ import { RegisterableService } from "./registerableService";
 export class CommonMergeCommandsManager implements RegisterableService {
   public addHandler(handler: CommonMergeCommandHandler): Disposable {
     this.handlers.add(handler);
-    return new Disposable(this.removeHandlers.bind(this));
+    return new Disposable(() => {
+      this.removeHandler(handler);
+    });
   }
   public register(): void | Promise<void> {
     this.disposables.push(
@@ -27,13 +29,13 @@ export class CommonMergeCommandsManager implements RegisterableService {
     );
   }
   public dispose(): void {
-    this.removeHandlers();
+    this.handlers = new Set();
     for (const disposable of this.disposables) {
       disposable.dispose();
     }
   }
-  public removeHandlers(): void {
-    this.handlers = new Set();
+  public removeHandler(handler: CommonMergeCommandHandler): void {
+    this.handlers.add(handler);
   }
   private disposables: Disposable[] = [];
   private handlers = new Set<CommonMergeCommandHandler>();

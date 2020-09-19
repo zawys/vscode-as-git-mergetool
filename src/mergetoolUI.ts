@@ -328,6 +328,8 @@ export class MergetoolUI
     }
     this.disposing = true;
     this.disposeStatusBarItems();
+    // `this.removeCommonMergeCommandsHandler();` not necessary,
+    // as it is registered in `this.registeredDisposables`.
     this.registeredDisposables.forEach((item) => void item?.dispose());
     this.registeredDisposables = new Set();
     void this.disposeProcessManager();
@@ -522,6 +524,7 @@ export class MergetoolUI
     );
     await this.diffLayouterManager.deactivateLayout();
     this.disposeStatusBarItems();
+    this.removeCommonMergeCommandsHandler();
     this._mergeSituation = undefined;
     if (this._processManager !== undefined) {
       void this._processManager.startStopping();
@@ -532,7 +535,7 @@ export class MergetoolUI
   private handleDidLayoutDeactivate() {
     if (this._mergeSituation !== undefined) {
       this.updateStatusBarItems();
-      this.updateCommonMergeCommandsListener();
+      this.updateCommonMergeCommandsHandler();
     }
   }
 
@@ -545,7 +548,7 @@ export class MergetoolUI
       }
     }
     this.updateStatusBarItems();
-    this.updateCommonMergeCommandsListener();
+    this.updateCommonMergeCommandsHandler();
   }
 
   private async handleMergetoolStop(
@@ -689,9 +692,11 @@ export class MergetoolUI
     result.show();
     return result;
   }
-
-  private updateCommonMergeCommandsListener(): void {
-    this.commonMergeCommandsManager.removeHandlers();
+  private removeCommonMergeCommandsHandler(): void {
+    this.commonMergeCommandsManager.removeHandler(this);
+  }
+  private updateCommonMergeCommandsHandler(): void {
+    this.removeCommonMergeCommandsHandler();
     if (this._mergeSituation !== undefined) {
       this.registeredDisposables.add(
         this.commonMergeCommandsManager.addHandler(this)
