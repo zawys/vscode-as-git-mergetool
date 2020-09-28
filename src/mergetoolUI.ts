@@ -316,8 +316,13 @@ export class MergetoolUI
     const focusResult = this.diffLayouterManager.focusMergeConflict(
       SearchType.next
     );
-    if (focusResult !== true) {
+    if (focusResult === false) {
       await this.continueMergeProcess();
+      return;
+    } else if (focusResult === undefined) {
+      void vscode.window.showErrorMessage(
+        "Could not determine conflict indicators"
+      );
       return;
     }
   }
