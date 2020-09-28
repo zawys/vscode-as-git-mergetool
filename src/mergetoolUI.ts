@@ -455,8 +455,11 @@ export class MergetoolUI
       void vscode.window.showErrorMessage(newPathResult.message);
       return false;
     }
-    if (!(await copy(mergedPath, newPathResult))) {
-      void vscode.window.showErrorMessage("Backup could not be saved.");
+    const copyResult = await copy(mergedPath, newPathResult);
+    if (isUIError(copyResult)) {
+      void vscode.window.showErrorMessage(
+        `Backup could not be saved: ${copyResult.message}`
+      );
       return false;
     }
     return true;

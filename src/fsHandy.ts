@@ -111,10 +111,12 @@ export async function fileContentsEqual(
 export function copy(
   sourcePath: string,
   destinationPath: string
-): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
+): Promise<UIError | undefined> {
+  return new Promise<UIError | undefined>((resolve) => {
     fs.copyFile(sourcePath, destinationPath, (error) => {
-      resolve(error === null);
+      resolve(
+        error === null ? undefined : createUIError(formatErrnoException(error))
+      );
     });
   });
 }

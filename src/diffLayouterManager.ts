@@ -22,6 +22,7 @@ import { containsMergeConflictIndicators } from "./mergeConflictDetector";
 import { Monitor } from "./monitor";
 import { RegisterableService } from "./registerableService";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
+import { isUIError } from "./uIError";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { Zoom, ZoomManager } from "./zoom";
 
@@ -128,8 +129,14 @@ export class DiffLayouterManager implements RegisterableService {
       void vscode.window.showErrorMessage("Backup file is unknown.");
       return;
     }
-    if (!(await copy(diffedURIs.backup.fsPath, diffedURIs.merged.fsPath))) {
-      void vscode.window.showErrorMessage("Resetting the merged file failed");
+    const copyResult = await copy(
+      diffedURIs.backup.fsPath,
+      diffedURIs.merged.fsPath
+    );
+    if (isUIError(copyResult)) {
+      void vscode.window.showErrorMessage(
+        `Resetting the merged file failed: ${copyResult.message}`
+      );
       return;
     }
   }
