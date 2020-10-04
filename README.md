@@ -124,14 +124,14 @@ by adding your 👍 to following issues
 But DO NOT post comments there
 which provide no additional information or ideas.
 
-- [#105625: API for reacting to and setting horizontal scroll position](https://github.com/microsoft/vscode/issues/105625):
-
-  For synchronized horizontal scrolling.
-
 - [#105487: Invoke initial command via process arguments](https://github.com/microsoft/vscode/issues/105487):
 
   For using the mergetool functionality
   via the command line independent from Git’s file naming convention.
+
+- [#105625: API for reacting to and setting horizontal scroll position](https://github.com/microsoft/vscode/issues/105625):
+
+  For synchronized horizontal scrolling.
 
 ## Build
 
