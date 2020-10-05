@@ -327,7 +327,7 @@
     "recompile": "yarn run clean && yarn run compile",
     "lint": "eslint src test tools --ext ts --max-warnings=0",
     "copy_files": "cpy --parents --cwd=./test '**/*' '!**/*.ts' ../out/test && cpy out/tools/extension.js out/tools/extension.js.map out/dist",
-    "pretest": "yarn install && yarn run recompile && yarn run copy_files && yarn run bundle && yarn run lint",
+    "pretest": "yarn install && yarn run recompile && yarn run lint && yarn run copy_files && yarn run bundle",
     "test": "yarn run test:only",
     "test:only": "node ./out/test/runTests.js",
     "test:dev": "yarn run copy_files && yarn run test:only",
