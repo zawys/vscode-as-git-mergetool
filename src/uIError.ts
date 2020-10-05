@@ -16,3 +16,12 @@ export function isUIError(x: unknown): x is UIError {
 export function createUIError(message: string): UIError {
   return { typeName: uIErrorTypeName, message };
 }
+
+export function combineUIErrors(errors: UIError[]): UIError {
+  return createUIError(
+    [
+      "Multiple errors occurred:",
+      ...errors.map((error) => error.message),
+    ].join("\n")
+  );
+}
