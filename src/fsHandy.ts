@@ -1,6 +1,7 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
+import { ENOENT } from "constants";
 import * as fs from "fs";
 import { createUIError, UIError } from "./uIError";
 
@@ -34,10 +35,25 @@ export enum FileType {
 export async function getFileType(
   path: string
 ): Promise<FileType | undefined> {
-  const stats = await getStats(path);
-  return stats === undefined
-    ? undefined
-    : stats.isFile()
+  const statResult = await new Promise<{
+    error: null | NodeJS.ErrnoException;
+    stats?: fs.Stats;
+  }>((resolve) => {
+    fs.stat(path, (error, stats) => {
+      resolve({ error, stats });
+    });
+  });
+  if (statResult.error !== null) {
+    if (statResult.error.errno === -ENOENT) {
+      return FileType.notExisting;
+    }
+    return undefined;
+  }
+  const stats = statResult.stats;
+  if (stats === undefined) {
+    return undefined;
+  }
+  return stats.isFile()
     ? FileType.regular
     : stats.isDirectory()
     ? FileType.directory
@@ -51,7 +67,7 @@ export async function getFileType(
     ? FileType.blockDevice
     : stats.isCharacterDevice()
     ? FileType.characterDevice
-    : FileType.notExisting;
+    : undefined;
 }
 
 export function testFile(path: string, mode: number): Promise<boolean> {
@@ -124,10 +140,55 @@ export function copy(
 export function rename(
   sourcePath: string,
   destinationPath: string
-): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
+): Promise<UIError | void> {
+  return new Promise<UIError | void>((resolve) => {
     fs.rename(sourcePath, destinationPath, (error) => {
-      resolve(error === null);
+      resolve(
+        error === null
+          ? undefined
+          : createUIError(
+              `Could not move ${sourcePath} to ${destinationPath}: ${formatErrnoException(
+                error
+              )}`
+            )
+      );
     });
+  });
+}
+
+export function remove(path: string): Promise<UIError | undefined> {
+  return new Promise<UIError | undefined>((resolve) => {
+    fs.unlink(path, (error) => {
+      resolve(
+        error === null ? undefined : createUIError(formatErrnoException(error))
+      );
+    });
+  });
+}
+
+export function mkdir(
+  path: string,
+  recursive = false,
+  mode?: string | number
+): Promise<UIError | void> {
+  return new Promise<UIError | undefined>((resolve) => {
+    fs.mkdir(
+      path,
+      {
+        recursive,
+        mode,
+      },
+      (error) => {
+        resolve(
+          error === null
+            ? undefined
+            : createUIError(
+                `Could not create directory ${path}: ${formatErrnoException(
+                  error
+                )}`
+              )
+        );
+      }
+    );
   });
 }
