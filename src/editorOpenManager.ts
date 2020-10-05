@@ -6,6 +6,7 @@ import { occursIn } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
 import { TemporaryFileOpenManager } from "./temporaryFileOpenManager";
+import { isUIError, UIError } from "./uIError";
 
 export class EditorOpenManager implements Disposable {
   public async register(): Promise<void> {
@@ -46,14 +47,30 @@ export class EditorOpenManager implements Disposable {
     if (diffedURIs !== undefined && occursIn(diffedURIs, uRI)) {
       return false;
     }
-    // if (await this.gitMergetoolReplacement.handleDidOpenURI(uRI)) {
+    // const gitMergetoolReplacementResult = await this.gitMergetoolReplacement.handleDidOpenURI(
+    //   uRI
+    // );
+    // if (isUIError(gitMergetoolReplacementResult)) {
+    //   this.showError(gitMergetoolReplacementResult);
+    // } else if (gitMergetoolReplacementResult === true) {
     //   console.log(`Opened ${uRI.fsPath} with gitMergetoolReplacement`);
     //   return true;
     // }
-    if (await this.temporaryFileOpenManager.handleDidOpenURI(uRI)) {
+    const temporaryFileOpenManagerResult = await this.temporaryFileOpenManager.handleDidOpenURI(
+      uRI
+    );
+    if (isUIError(temporaryFileOpenManagerResult)) {
+      this.showError(temporaryFileOpenManagerResult);
+    } else if (temporaryFileOpenManagerResult === true) {
       console.log(`Opened ${uRI.fsPath} with temporaryFileOpenManager`);
       return true;
     }
     return false;
+  }
+
+  private showError(error: UIError): void {
+    void window.showErrorMessage(
+      `Could not check opened document status: ${error.message}`
+    );
   }
 }
