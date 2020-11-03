@@ -84,7 +84,9 @@ export class GitMergetoolReplacement
     );
   }
   public dispose(): void {
-    // TODO [2020-12-01]: empty
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
   }
   public async handleDidOpenURI(uRI: Uri): Promise<boolean | UIError> {
     let pathsToIgnoreSetToken: unknown;
