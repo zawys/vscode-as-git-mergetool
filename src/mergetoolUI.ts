@@ -93,9 +93,9 @@ export class MergetoolUI
     }
   }
 
-  public async continueMergeProcess(): Promise<void> {
+  public async continueMergeProcess(): Promise<boolean> {
     if (!this.checkMonitorNotInUse()) {
-      return;
+      return true;
     }
     await this.monitor.enter();
     try {
@@ -104,7 +104,7 @@ export class MergetoolUI
         !this.assertMergetoolActiveInteractively() ||
         !this.assertMergeSituationOpenedInteractively()
       ) {
-        return;
+        return false;
       }
       const focusResult = this.diffLayouterManager.focusMergeConflict(
         SearchType.first
@@ -113,11 +113,11 @@ export class MergetoolUI
         void vscode.window.showErrorMessage(
           "Cannot retrieve merged file contents."
         );
-        return;
+        return true;
       }
       if (!focusResult) {
         await this.continueMergetoolInner();
-        return;
+        return true;
       }
     } finally {
       await this.monitor.leave();
@@ -131,7 +131,7 @@ export class MergetoolUI
       acceptIncludedIndicators
     );
     if (result !== acceptIncludedIndicators) {
-      return;
+      return true;
     }
     await this.monitor.enter();
     try {
@@ -142,33 +142,35 @@ export class MergetoolUI
         void vscode.window.showErrorMessage(
           "The situation has changed. Reopen the situation and try again."
         );
-        return;
+        return true;
       }
       if (
         !this.assertMergetoolActiveInteractively() ||
         !this.assertMergeSituationOpenedInteractively()
       ) {
-        return;
+        return true;
       }
       await this.continueMergetoolInner();
     } finally {
       await this.monitor.leave();
     }
+    return true;
   }
 
-  public async stopMergeProcess(): Promise<void> {
+  public async stopMergeProcess(): Promise<boolean> {
     if (!this.checkMonitorNotInUse()) {
-      return;
+      return true;
     }
     await this.monitor.enter();
     try {
       if (!this.assertMergetoolActiveInteractively()) {
-        return;
+        return false;
       }
       void (await this.stopMergetoolWithoutDataLossInner());
     } finally {
       await this.monitor.leave();
     }
+    return true;
   }
 
   public async abortMerge(): Promise<void> {
@@ -300,31 +302,33 @@ export class MergetoolUI
     }
   }
 
-  public async doNextStepInMergeProcess(): Promise<void> {
+  public async doNextStepInMergeProcess(): Promise<boolean> {
     if (!this.checkMonitorNotInUse()) {
-      return;
+      return true;
     }
     const document = vscode.window.activeTextEditor?.document;
     if (document?.languageId === "git-commit") {
       await this.commitActiveCommitMessage();
-      return;
+      return true;
     }
-    if (!this.mergeSituationInLayout) {
+    if (!this._processManager?.isAvailable) {
+      return false;
+    }
+    if (this.mergeSituationInLayout) {
       await this.startMergetool();
-      return;
+      return true;
     }
     const focusResult = this.diffLayouterManager.focusMergeConflict(
       SearchType.next
     );
     if (focusResult === false) {
       await this.continueMergeProcess();
-      return;
     } else if (focusResult === undefined) {
       void vscode.window.showErrorMessage(
         "Could not determine conflict indicators"
       );
-      return;
     }
+    return true;
   }
 
   public dispose(): void {

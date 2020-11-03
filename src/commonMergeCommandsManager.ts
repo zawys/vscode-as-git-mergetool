@@ -1,7 +1,7 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import { commands, Disposable } from "vscode";
+import { commands, Disposable, window } from "vscode";
 import { extensionID } from "./iDs";
 import { RegisterableService } from "./registerableService";
 
@@ -40,19 +40,25 @@ export class CommonMergeCommandsManager implements RegisterableService {
   private disposables: Disposable[] = [];
   private handlers = new Set<CommonMergeCommandHandler>();
   private handleContinueCommand(): void {
-    for (const handler of this.handlers) {
-      handler.continueMergeProcess();
-    }
+    void this.handleCommand((handler) => handler.continueMergeProcess());
   }
   private handleStopCommand(): void {
-    for (const handler of this.handlers) {
-      handler.stopMergeProcess();
-    }
+    void this.handleCommand((handler) => handler.stopMergeProcess());
   }
   private handleNextMergeStepCommand(): void {
+    void this.handleCommand((handler) => handler.doNextStepInMergeProcess());
+  }
+  private async handleCommand(
+    action: (handler: CommonMergeCommandHandler) => boolean | Promise<boolean>
+  ): Promise<void> {
     for (const handler of this.handlers) {
-      handler.doNextStepInMergeProcess();
+      if (await action(handler)) {
+        return;
+      }
     }
+    void window.showErrorMessage(
+      "Command not applicable in the current situation"
+    );
   }
 }
 
@@ -61,7 +67,7 @@ export const gitMergetoolStopCommandID = `${extensionID}.gitMergetoolStop`;
 export const nextMergeStepCommandID = `${extensionID}.nextMergeStep`;
 
 export interface CommonMergeCommandHandler {
-  stopMergeProcess(): void;
-  continueMergeProcess(): void;
-  doNextStepInMergeProcess(): void;
+  stopMergeProcess(): boolean | Promise<boolean>;
+  continueMergeProcess(): boolean | Promise<boolean>;
+  doNextStepInMergeProcess(): boolean | Promise<boolean>;
 }

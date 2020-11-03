@@ -8,6 +8,7 @@ import { mergeConflictIndicatorRE } from "../mergeConflictDetector";
 import { Monitor } from "../monitor";
 import { ScrollSynchronizer } from "../scrollSynchronizer";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
+import { createUIError, UIError } from "../uIError";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";
 import { Zoom, ZoomManager } from "../zoom";
 import {
@@ -104,6 +105,12 @@ export class SplitDiffLayouter implements DiffLayouter {
           this.handleDidChangeVisibleTextEditors.bind(this)
         )
       );
+      // debug [2020-12-01]
+      // console.log(
+      //   `this.mergeEditorIndex: ${
+      //     this.mergeEditorIndex === undefined ? "undef" : this.mergeEditorIndex
+      //   }`
+      // );
       await this.createScrollSynchronizer(this.mergeEditorIndex);
       this.watchingDisposables.push(...this.createStatusBarItems());
       this.zoomManager.createStatusBarItems(this.supportedZooms);
@@ -189,9 +196,9 @@ export class SplitDiffLayouter implements DiffLayouter {
     this._wasInitiatedByMergetool = true;
   }
 
-  public focusMergeConflict(type: SearchType.first): boolean | undefined {
+  public focusMergeConflict(type: SearchType.first): boolean | UIError {
     if (this.mergeEditor === undefined) {
-      return undefined;
+      return createUIError("No merge editor active.");
     }
     return cursorToMergeConflict(this.mergeEditor, type);
   }
@@ -300,6 +307,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.editors,
       this.vSCodeConfigurator,
       synchronizationSourceOnStartIndex,
+      10,
       undefined
     );
   }
@@ -508,13 +516,13 @@ export function cursorToMergeConflict(
     const line = document.lineAt(lineIndex).text;
     if (mergeConflictIndicatorRE.test(line)) {
       const linePosition = new vscode.Position(lineIndex, 0);
+      editor.selection = new vscode.Selection(linePosition, linePosition);
       editor.revealRange(
         new vscode.Range(linePosition, linePosition),
         type === SearchType.first
           ? vscode.TextEditorRevealType.AtTop
           : vscode.TextEditorRevealType.InCenterIfOutsideViewport
       );
-      editor.selection = new vscode.Selection(linePosition, linePosition);
       return true;
     }
     lineIndex = (lineIndex + direction + lineCount) % lineCount;

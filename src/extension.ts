@@ -26,6 +26,7 @@ import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { ZoomManager } from "./zoom";
 import { setGracefulCleanup } from "tmp";
 import { CommonMergeCommandsManager } from "./commonMergeCommandsManager";
+import { ManualMergeProcess } from "./manualMergeProcess";
 
 let extensionAPI: ExtensionAPI | undefined;
 
@@ -103,14 +104,18 @@ export class ExtensionAPI implements RegisterableService {
     const commonMergeCommandsManager = new CommonMergeCommandsManager();
     registrationOrder.push(commonMergeCommandsManager);
 
+    const manualMergeProcess = new ManualMergeProcess(diffLayouterManager);
+
     const gitMergetoolReplacement =
       services.gitMergetoolReplacement ||
       new GitMergetoolReplacement(
         registeredDocumentProvider,
         readonlyDocumentProvider,
-        diffLayouterManager,
-        commonMergeCommandsManager
+        commonMergeCommandsManager,
+        manualMergeProcess,
+        diffLayouterManager
       );
+    registrationOrder.push(gitMergetoolReplacement);
 
     const temporaryFileOpenManager =
       services.temporaryFileOpenManager ||
@@ -131,11 +136,16 @@ export class ExtensionAPI implements RegisterableService {
 
     const editorOpenManager =
       services.editorOpenManager ||
-      new EditorOpenManager(
-        temporaryFileOpenManager,
-        gitMergetoolReplacement,
-        diffLayouterManager
-      );
+      new EditorOpenManager([
+        {
+          handler: gitMergetoolReplacement,
+          name: "gitMergetoolReplacement",
+        },
+        {
+          handler: temporaryFileOpenManager,
+          name: "temporaryFileOpenManager",
+        },
+      ]);
     registrationOrder.push(editorOpenManager);
 
     const arbitraryFilesMerger =
@@ -162,6 +172,7 @@ export class ExtensionAPI implements RegisterableService {
       temporaryFileOpenManager,
       editorOpenManager,
       commonMergeCommandsManager,
+      manualMergeProcess,
     };
     this.registrationOrder = registrationOrder;
   }
@@ -188,4 +199,5 @@ export interface ExtensionServices {
   temporaryFileOpenManager: TemporaryFileOpenManager;
   editorOpenManager: EditorOpenManager;
   commonMergeCommandsManager: CommonMergeCommandsManager;
+  manualMergeProcess: ManualMergeProcess;
 }

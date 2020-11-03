@@ -2,12 +2,18 @@
 // See LICENSE file in repository root directory.
 
 import { Event, EventEmitter, Uri, window } from "vscode";
-import { asURIList, DiffedURIs, parseBaseFileNameRE } from "./diffedURIs";
+import {
+  toURIList,
+  DiffedURIs,
+  parseBaseFileNameRE,
+  toPathList,
+} from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
+import { EditorOpenHandler } from "./editorOpenHandler";
 import { getStats } from "./fsHandy";
 import { ReadonlyDocumentProvider } from "./readonlyDocumentProvider";
 
-export class TemporaryFileOpenManager {
+export class TemporaryFileOpenManager implements EditorOpenHandler {
   public get onDidLayoutReact(): Event<void> {
     return this.didMergetoolReact.event;
   }
@@ -61,7 +67,7 @@ export class TemporaryFileOpenManager {
   public async filesExist(diffedURIs: DiffedURIs): Promise<boolean> {
     return (
       await Promise.all(
-        asURIList(diffedURIs).map(async (uRI) => {
+        toURIList(diffedURIs).map(async (uRI) => {
           if (uRI.fsPath.endsWith(".git")) {
             void window.showErrorMessage("path ends with .git");
           }
@@ -73,6 +79,12 @@ export class TemporaryFileOpenManager {
         })
       )
     ).every((exists) => exists);
+  }
+
+  public get pathsToIgnore(): string[] {
+    return this.diffLayouterManager.diffedURIs === undefined
+      ? []
+      : toPathList(this.diffLayouterManager.diffedURIs);
   }
 
   public constructor(

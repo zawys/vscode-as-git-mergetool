@@ -11,15 +11,40 @@ export function occursIn(
   containedURI: vscode.Uri
 ): boolean {
   const containedURIPath = containedURI.path;
-  return asURIList(diffedURIs).some((diffedURI) => {
+  return toURIList(diffedURIs).some((diffedURI) => {
     const diffedURIPath = diffedURI.path;
     return pathsRoughlyEqual(containedURIPath, diffedURIPath);
   });
 }
-export function asURIList(uRIs: DiffedURIs): vscode.Uri[] {
-  const result = [uRIs.base, uRIs.local, uRIs.merged, uRIs.remote];
-  if (uRIs.backup !== undefined) {
-    result.push(uRIs.backup);
+export function occursInPathList(
+  containingPaths: string[],
+  containedPath: string
+): boolean {
+  return containingPaths.some((path) =>
+    pathsRoughlyEqual(path, containedPath)
+  );
+}
+export function toURIList(diffedURIs: DiffedURIs): vscode.Uri[] {
+  const result = [
+    diffedURIs.base,
+    diffedURIs.local,
+    diffedURIs.merged,
+    diffedURIs.remote,
+  ];
+  if (diffedURIs.backup !== undefined) {
+    result.push(diffedURIs.backup);
+  }
+  return result;
+}
+export function toPathList(diffedURIs: DiffedURIs): string[] {
+  const result = [
+    diffedURIs.base.fsPath,
+    diffedURIs.local.fsPath,
+    diffedURIs.merged.fsPath,
+    diffedURIs.remote.fsPath,
+  ];
+  if (diffedURIs.backup !== undefined) {
+    result.push(diffedURIs.backup.fsPath);
   }
   return result;
 }

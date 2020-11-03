@@ -10,6 +10,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Open the diff layout when opening a file containing conflicts
+  being an alternative to the management through a `git mergetool` process
+
 ### Changed
 
 - Tweaked the scrolling synchronizer so that one parameter less is required.

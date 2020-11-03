@@ -2,10 +2,8 @@
 // See LICENSE file in repository root directory.
 
 import { Disposable, TextEditor, window } from "vscode";
-import { occursIn } from "./diffedURIs";
-import { DiffLayouterManager } from "./diffLayouterManager";
-import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
-import { TemporaryFileOpenManager } from "./temporaryFileOpenManager";
+import { occursInPathList } from "./diffedURIs";
+import { EditorOpenHandler } from "./editorOpenHandler";
 import { isUIError, UIError } from "./uIError";
 
 export class EditorOpenManager implements Disposable {
@@ -29,9 +27,10 @@ export class EditorOpenManager implements Disposable {
   }
 
   public constructor(
-    private readonly temporaryFileOpenManager: TemporaryFileOpenManager,
-    private readonly gitMergetoolReplacement: GitMergetoolReplacement,
-    private readonly diffLayouterManager: DiffLayouterManager
+    private readonly editorOpenHandlers: ReadonlyArray<{
+      handler: EditorOpenHandler;
+      name: string;
+    }>
   ) {}
 
   private disposables: Disposable[] = [];
@@ -43,27 +42,20 @@ export class EditorOpenManager implements Disposable {
   }
   private async handleDidOpenEditor(editor: TextEditor): Promise<boolean> {
     const uRI = editor.document.uri;
-    const diffedURIs = this.diffLayouterManager.diffedURIs;
-    if (diffedURIs !== undefined && occursIn(diffedURIs, uRI)) {
-      return false;
+    const path = uRI.fsPath;
+    for (const { handler } of this.editorOpenHandlers) {
+      if (occursInPathList(handler.pathsToIgnore, path)) {
+        return false;
+      }
     }
-    // const gitMergetoolReplacementResult = await this.gitMergetoolReplacement.handleDidOpenURI(
-    //   uRI
-    // );
-    // if (isUIError(gitMergetoolReplacementResult)) {
-    //   this.showError(gitMergetoolReplacementResult);
-    // } else if (gitMergetoolReplacementResult === true) {
-    //   console.log(`Opened ${uRI.fsPath} with gitMergetoolReplacement`);
-    //   return true;
-    // }
-    const temporaryFileOpenManagerResult = await this.temporaryFileOpenManager.handleDidOpenURI(
-      uRI
-    );
-    if (isUIError(temporaryFileOpenManagerResult)) {
-      this.showError(temporaryFileOpenManagerResult);
-    } else if (temporaryFileOpenManagerResult === true) {
-      console.log(`Opened ${uRI.fsPath} with temporaryFileOpenManager`);
-      return true;
+    for (const { handler, name } of this.editorOpenHandlers) {
+      const handleResult = await handler.handleDidOpenURI(uRI);
+      if (isUIError(handleResult)) {
+        this.showError(handleResult);
+      } else if (handleResult === true) {
+        console.log(`Opened ${uRI.fsPath} with ${name}`);
+        return true;
+      }
     }
     return false;
   }

@@ -22,7 +22,7 @@ import { containsMergeConflictIndicators } from "./mergeConflictDetector";
 import { Monitor } from "./monitor";
 import { RegisterableService } from "./registerableService";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
-import { isUIError } from "./uIError";
+import { createUIError, isUIError, UIError } from "./uIError";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { Zoom, ZoomManager } from "./zoom";
 
@@ -74,19 +74,20 @@ export class DiffLayouterManager implements RegisterableService {
     await this.layouter?.save();
   }
 
-  public focusMergeConflict(type: SearchType): undefined | boolean {
+  public focusMergeConflict(type: SearchType): UIError | boolean {
     return this.layouter?.isActive === true
       ? this.layouter.focusMergeConflict(type)
-      : undefined;
+      : createUIError("No diff layout active.");
   }
 
   public focusMergeConflictInteractively(
     type: SearchType
   ): undefined | boolean {
     const result = this.focusMergeConflict(type);
-    if (result === undefined) {
-      void vscode.window.showErrorMessage("No diff layout active.");
-    } else if (result === false) {
+    if (isUIError(result)) {
+      void vscode.window.showErrorMessage(result.message);
+      return undefined;
+    } else if (!result) {
       void vscode.window.showInformationMessage("No merge conflict found.");
     }
     return result;
@@ -174,9 +175,7 @@ export class DiffLayouterManager implements RegisterableService {
       // point of no return
 
       if (closeActiveEditor) {
-        await vscode.commands.executeCommand(
-          "workbench.action.closeActiveEditor"
-        );
+        await this.closeActiveEditor();
       }
       await this.activateLayouter(diffedURIs, newLayouterFactory);
       if (deactivationHandler !== undefined) {
@@ -242,6 +241,10 @@ export class DiffLayouterManager implements RegisterableService {
     if (this.layouter !== undefined) {
       this.didLayoutActivate.fire(this.layouter);
     }
+  }
+
+  public async closeActiveEditor(): Promise<void> {
+    await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
   }
 
   public constructor(

@@ -2,10 +2,11 @@
 // See LICENSE file in repository root directory.
 
 import * as vscode from "vscode";
-import { asURIList, DiffedURIs } from "../diffedURIs";
+import { toURIList, DiffedURIs } from "../diffedURIs";
 import { extensionID } from "../iDs";
 import { Monitor } from "../monitor";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
+import { UIError } from "../uIError";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";
 import { Zoom, ZoomManager } from "../zoom";
 
@@ -37,7 +38,7 @@ export interface DiffLayouter extends vscode.Disposable {
    *
    * @returns Promise, if merge conflict indicators exist, undefined on error.
    */
-  focusMergeConflict(type: SearchType): boolean | undefined;
+  focusMergeConflict(type: SearchType): boolean | UIError;
 
   /**
    * If layout is currently applied.
@@ -84,7 +85,7 @@ export function watchDiffedURIs(
   handler: () => void
 ): vscode.Disposable[] {
   const disposables: vscode.Disposable[] = [];
-  for (const uRI of asURIList(uRIs)) {
+  for (const uRI of toURIList(uRIs)) {
     if (uRI.fsPath.endsWith(".git")) {
       void vscode.window.showErrorMessage("path ends with .git");
     }
