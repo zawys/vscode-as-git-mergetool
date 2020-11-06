@@ -52,7 +52,8 @@ export class SplitDiffLayouter implements DiffLayouter {
             editorDescription.title,
             {
               viewColumn: editorIndex + 1,
-              preview: true,
+              preview: false,
+              // TODO [2020-12-01]: Use property selection for speedup
               preserveFocus: false,
             }
           );
@@ -105,7 +106,7 @@ export class SplitDiffLayouter implements DiffLayouter {
           this.handleDidChangeVisibleTextEditors.bind(this)
         )
       );
-      // debug [2020-12-01]
+      // // !debug
       // console.log(
       //   `this.mergeEditorIndex: ${
       //     this.mergeEditorIndex === undefined ? "undef" : this.mergeEditorIndex
@@ -307,7 +308,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.editors,
       this.vSCodeConfigurator,
       synchronizationSourceOnStartIndex,
-      10,
+      1,
       undefined
     );
   }

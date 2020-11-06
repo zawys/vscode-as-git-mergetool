@@ -90,10 +90,7 @@ export class ScrollSynchronizer implements Disposable {
     initialDate: number,
     private readonly startPosCorrection = surroundingLines - 1.3,
     private readonly centerPosCorrection = +0.5,
-    // private readonly eventDecayPerSec = 0.25
-
-    // debug [2020-12-01]
-    private readonly eventDecayPerSec = 1
+    private readonly eventDecayPerSec = 0.25
   ) {
     this.editorLinesCache = new Array<undefined>(editors.length).fill(
       undefined
@@ -127,10 +124,10 @@ export class ScrollSynchronizer implements Disposable {
     sourceEditor: vscode.TextEditor,
     sourceEditorIndex: number
   ): Promise<void> {
-    // debug [2020-12-01]
-    console.log(`syncVisibleRanges(
-      sourceEditorIndex: ${sourceEditorIndex}
-    )`);
+    // // !debug
+    // console.log(`syncVisibleRanges(
+    //   sourceEditorIndex: ${sourceEditorIndex}
+    // )`);
 
     if (this.editors[sourceEditorIndex] !== sourceEditor) {
       showInternalError("this.editors[sourceEditorIndex] !== sourceEditor");
@@ -313,24 +310,24 @@ export class ScrollSynchronizer implements Disposable {
     ignoreDates: number[],
     editorIndex: number
   ): boolean {
-    // if (this.updatedIgnore(ignoreCounts, ignoreDates, editorIndex) > 0.5) {
-    //   ignoreCounts[editorIndex]--;
-    //   return true;
-    // }
-    // return false;
-
-    // debug [2020-12-01]
-    const result =
-      this.updatedIgnore(ignoreCounts, ignoreDates, editorIndex) > 0.5;
-    if (result) {
+    if (this.updatedIgnore(ignoreCounts, ignoreDates, editorIndex) > 0.5) {
       ignoreCounts[editorIndex]--;
+      return true;
     }
-    console.log(
-      `decreaseIgnore(${
-        this.scrollIgnoreCounts === ignoreCounts ? "scroll" : "selection"
-      }, ${editorIndex}) === ${result ? "true" : "false"}`
-    );
-    return result;
+    return false;
+
+    // // !debug
+    // const result =
+    //   this.updatedIgnore(ignoreCounts, ignoreDates, editorIndex) > 0.5;
+    // if (result) {
+    //   ignoreCounts[editorIndex]--;
+    // }
+    // console.log(
+    //   `decreaseIgnore(${
+    //     this.scrollIgnoreCounts === ignoreCounts ? "scroll" : "selection"
+    //   }, ${editorIndex}) === ${result ? "true" : "false"}`
+    // );
+    // return result;
   }
 
   private increaseIgnore(
@@ -338,12 +335,12 @@ export class ScrollSynchronizer implements Disposable {
     ignoreDates: number[],
     editorIndex: number
   ): void {
-    // debug [2020-12-01]
-    console.log(
-      `increaseIgnore(${
-        this.scrollIgnoreCounts === ignoreCounts ? "scroll" : "selection"
-      }, ${editorIndex})`
-    );
+    // // !debug
+    // console.log(
+    //   `increaseIgnore(${
+    //     this.scrollIgnoreCounts === ignoreCounts ? "scroll" : "selection"
+    //   }, ${editorIndex})`
+    // );
 
     this.updatedIgnore(ignoreCounts, ignoreDates, editorIndex);
     ignoreCounts[editorIndex]++;
@@ -412,10 +409,10 @@ export class ScrollSynchronizer implements Disposable {
     sourceEditor: vscode.TextEditor,
     sourceEditorIndex: number
   ): Promise<void> {
-    // debug [2020-12-01]
-    console.log(`syncTextEditorSelection(
-      sourceEditorIndex: ${sourceEditorIndex}
-    )`);
+    // // !debug
+    // console.log(`syncTextEditorSelection(
+    //   sourceEditorIndex: ${sourceEditorIndex}
+    // )`);
 
     if (this.editors[sourceEditorIndex] !== sourceEditor) {
       showInternalError("this.editors[sourceEditorIndex] !== sourceEditor");
@@ -425,8 +422,8 @@ export class ScrollSynchronizer implements Disposable {
     const sourcePosition = sourceEditor.selection.end.line + 0.5;
     const sourceCharacter = sourceEditor.selection.end.character;
 
-    // debug [2020-12-01]
-    console.log(`sourcePosition: ${sourcePosition}`);
+    // // !debug
+    // console.log(`sourcePosition: ${sourcePosition}`);
 
     for (
       let targetEditorIndex = 0;
