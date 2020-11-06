@@ -11,6 +11,7 @@ import {
 } from "path";
 import { dir } from "tmp-promise";
 import {
+  commands,
   Disposable,
   QuickPickItem,
   StatusBarAlignment,
@@ -154,10 +155,17 @@ export class GitMergetoolReplacement
           if (isUIError(moveResult)) return moveResult;
         }
         const baseURI = this.getBaseURI(situation, generatedFilePaths);
-        if (
-          situation[InvolvedPath.local].type === VCSEntryType.regularFile &&
-          situation[InvolvedPath.remote].type === VCSEntryType.regularFile
-        ) {
+        const localAndRemote: (InvolvedPath.local | InvolvedPath.remote)[] = [
+          InvolvedPath.local,
+          InvolvedPath.remote,
+        ];
+        const regularPathSituations = localAndRemote
+          .map((path): [InvolvedPath, VCSEntry] => [path, situation[path]])
+          .filter(
+            (pathSituation) =>
+              pathSituation[1].type === VCSEntryType.regularFile
+          );
+        if (regularPathSituations.length === 2) {
           const mergeResult = await this.mergeFiles({
             gitPath,
             cwd,
@@ -168,8 +176,23 @@ export class GitMergetoolReplacement
           });
           if (isUIError(mergeResult)) return mergeResult;
         } else {
-          // TODO [2020-12-01]:
-          // If remote or local is a file, diff it with baseURI
+          if (regularPathSituations.length > 0) {
+            const [path, pathSituation] = regularPathSituations[0];
+            if (pathSituation.absPath !== undefined) {
+              await commands.executeCommand(
+                "vscode.diff",
+                baseURI,
+                Uri.file(pathSituation.absPath),
+                `${
+                  path === InvolvedPath.local ? "Current" : "Incoming"
+                } changes on base`,
+                {
+                  preview: false,
+                  preserveFocus: false,
+                }
+              );
+            }
+          }
           const selectStageResult = await this.selectStageInteractively(
             gitPath,
             cwd,
