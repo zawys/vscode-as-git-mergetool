@@ -21,9 +21,6 @@ for common-base merges (aka. “3-way merges”) directly in VS Code.
 
 [Demo screencast](media/demo.mp4)
 
-> Do you have a minute? You could help by upvoting needed API features.
-> See [Contribute](#Contribute).
-
 ## Features
 
 - Assists in setting up suitable Git and VS Code configuration options,
@@ -118,9 +115,9 @@ There are also several other layouts available.
 Feel free to file feature requests and bug reports
 [on GitHub](https://github.com/zawys/vscode-as-git-mergetool/issues).
 
-👉 **You can help making new features for this extension possible
+You can help making new features for this extension possible
 by adding your 👍 to following issues
-([info](https://github.com/microsoft/vscode/wiki/Issues-Triaging#up-voting-a-feature-request)).**
+([info](https://github.com/microsoft/vscode/wiki/Issues-Triaging#up-voting-a-feature-request)).
 But DO NOT post comments there
 which provide no additional information or ideas.
 
