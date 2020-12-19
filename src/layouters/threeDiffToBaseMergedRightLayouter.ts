@@ -5,8 +5,8 @@ import {
   DiffLayouterFactoryParameters,
 } from "./diffLayouter";
 import {
-  diffEditorSymbol,
   GroupOrientation,
+  LayoutElementType,
   SplitDiffLayouter,
 } from "./splitDiffLayouter";
 
@@ -48,7 +48,7 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
               groups: [
                 {
                   size: topSize,
-                  type: diffEditorSymbol,
+                  type: LayoutElementType.diffEditor,
                   oldUri: diffedURIs.base,
                   newUri: diffedURIs.local,
                   title: "(1) Current changes",
@@ -57,7 +57,7 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
                 },
                 {
                   size: bottomSize,
-                  type: diffEditorSymbol,
+                  type: LayoutElementType.diffEditor,
                   oldUri: diffedURIs.base,
                   newUri: diffedURIs.remote,
                   title: "(2) Incoming changes",
@@ -68,7 +68,7 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
             },
             {
               size: rightSize,
-              type: diffEditorSymbol,
+              type: LayoutElementType.diffEditor,
               oldUri: diffedURIs.base,
               newUri: diffedURIs.merged,
               title: "(3) Merged changes",

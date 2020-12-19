@@ -38,43 +38,68 @@ export class SplitDiffLayouter implements DiffLayouter {
       let editorIndex = 0;
       let focussed = -1;
       let alternativeFocussed = -1;
+      const installEditor = (
+        editorDescription: EditorDescription,
+        editor?: vscode.TextEditor
+      ) => {
+        if (focussed === -1 && !editorDescription.notFocussable) {
+          if (editorDescription.isMergeEditor) {
+            focussed = editorIndex;
+          } else if (alternativeFocussed === -1) {
+            alternativeFocussed = editorIndex;
+          }
+        }
+        if (editor === undefined) {
+          editor = vscode.window.activeTextEditor;
+        }
+        if (editor !== undefined) {
+          this.editors.push(editor);
+          if (
+            editorDescription.isMergeEditor &&
+            this.mergeEditor === undefined
+          ) {
+            this.mergeEditor = editor;
+            this.mergeEditorIndex = editorIndex;
+          }
+          if (editorDescription.save) {
+            this.editorsToSave.push(editor);
+          }
+        }
+        editorIndex++;
+      };
+      const diffEditorAction = async (
+        editorDescription: DiffEditorDescription
+      ) => {
+        await vscode.commands.executeCommand(
+          "vscode.diff",
+          editorDescription.oldUri,
+          editorDescription.newUri,
+          editorDescription.title,
+          {
+            viewColumn: editorIndex + 1,
+            preview: true,
+            preserveFocus: false,
+          }
+        );
+        installEditor(editorDescription);
+      };
+      const normalEditorAction = async (
+        editorDescription: NormalEditorDescription
+      ) => {
+        const editor = await vscode.window.showTextDocument(
+          editorDescription.uri,
+          {
+            viewColumn: editorIndex + 1,
+            preview: true,
+            preserveFocus: false,
+          }
+        );
+        installEditor(editorDescription, editor);
+      };
       await this.iterateOverLayout(
         layoutDescription,
-        async (editorDescription) => {
-          await vscode.commands.executeCommand(
-            "vscode.diff",
-            editorDescription.oldUri,
-            editorDescription.newUri,
-            editorDescription.title,
-            {
-              viewColumn: editorIndex + 1,
-              preview: true,
-              preserveFocus: false,
-            }
-          );
-          if (focussed === -1 && !editorDescription.notFocussable) {
-            if (editorDescription.isMergeEditor) {
-              focussed = editorIndex;
-            } else if (alternativeFocussed === -1) {
-              alternativeFocussed = editorIndex;
-            }
-          }
-          const editor = vscode.window.activeTextEditor;
-          if (editor !== undefined) {
-            this.editors.push(editor);
-            if (
-              editorDescription.isMergeEditor &&
-              this.mergeEditor === undefined
-            ) {
-              this.mergeEditor = editor;
-              this.mergeEditorIndex = editorIndex;
-            }
-            if (editorDescription.save) {
-              this.editorsToSave.push(editor);
-            }
-          }
-          editorIndex++;
-        }
+        diffEditorAction,
+        normalEditorAction
       );
       if (focussed === -1) {
         focussed = alternativeFocussed;
@@ -216,7 +241,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       const focussable: boolean[] = [];
       let focussed = -1;
       let alternativeFocussed = -1;
-      await this.iterateOverLayout(layoutDescription, (editorDescription) => {
+      const editorAction = (editorDescription: EditorDescription) => {
         focussable.push(!editorDescription.notFocussable);
         if (focussed === -1 && !editorDescription.notFocussable) {
           if (editorDescription.isMergeEditor) {
@@ -226,7 +251,12 @@ export class SplitDiffLayouter implements DiffLayouter {
           }
         }
         editorIndex++;
-      });
+      };
+      await this.iterateOverLayout(
+        layoutDescription,
+        editorAction,
+        editorAction
+      );
       if (focussed === -1) {
         focussed = alternativeFocussed;
       }
@@ -306,8 +336,11 @@ export class SplitDiffLayouter implements DiffLayouter {
 
   private async iterateOverLayout(
     layoutDescription: LayoutDescription,
-    action: (
+    diffEditorAction: (
       diffEditorDescription: DiffEditorDescription
+    ) => void | Promise<void>,
+    normalEditorAction: (
+      diffEditorDescription: NormalEditorDescription
     ) => void | Promise<void>
   ): Promise<void> {
     // iterate through editors in depth-first manner
@@ -316,8 +349,10 @@ export class SplitDiffLayouter implements DiffLayouter {
     let indexInGroup = 0;
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      if (element.type === diffEditorSymbol) {
-        await action(element);
+      if (element.type === LayoutElementType.diffEditor) {
+        await diffEditorAction(element);
+      } else if (element.type === LayoutElementType.normalEditor) {
+        await normalEditorAction(element);
       } else if (indexInGroup < element.groups.length) {
         stack.push([element, indexInGroup + 1]);
         element = element.groups[indexInGroup];
@@ -531,10 +566,6 @@ export async function focusColumn(columnIndex: number): Promise<void> {
   }
 }
 
-export interface LayoutDescription extends EditorGroupDescription {
-  orientation: GroupOrientation;
-}
-
 /**
  * Copied from
  * vscode/src/vs/workbench/services/editor/common/editorGroupsService.ts
@@ -550,22 +581,47 @@ export const enum GroupOrientation {
   vertical,
 }
 
+export enum LayoutElementType {
+  editorGroup,
+  diffEditor,
+  normalEditor,
+}
+
+export interface LayoutElementDescription {
+  type?: LayoutElementType;
+  size?: number;
+}
+
+export type GroupOrEditorDescription =
+  | EditorGroupDescription
+  | DiffEditorDescription
+  | NormalEditorDescription;
+
 export interface EditorGroupDescription extends LayoutElementDescription {
-  type?: never;
+  type?: LayoutElementType.editorGroup;
   groups: GroupOrEditorDescription[];
 }
 
-export type DiffEditorType = "diffEditor";
-export const diffEditorSymbol: DiffEditorType = "diffEditor";
-
-export interface DiffEditorDescription extends LayoutElementDescription {
-  type: DiffEditorType;
-  oldUri: vscode.Uri;
-  newUri: vscode.Uri;
-  title: string;
+export interface EditorDescription extends LayoutElementDescription {
   save: boolean;
   notFocussable?: boolean;
   isMergeEditor?: boolean;
+}
+
+export interface DiffEditorDescription extends EditorDescription {
+  type: LayoutElementType.diffEditor;
+  oldUri: vscode.Uri;
+  newUri: vscode.Uri;
+  title: string;
+}
+
+export interface NormalEditorDescription extends EditorDescription {
+  type: LayoutElementType.normalEditor;
+  uri: vscode.Uri;
+}
+
+export interface LayoutDescription extends EditorGroupDescription {
+  orientation: GroupOrientation;
 }
 
 export type LayoutEditorEventHandler = (
@@ -573,14 +629,6 @@ export type LayoutEditorEventHandler = (
   column: number,
   description: DiffEditorDescription
 ) => void | Promise<void>;
-
-export interface LayoutElementDescription {
-  size?: number;
-}
-
-export type GroupOrEditorDescription =
-  | EditorGroupDescription
-  | DiffEditorDescription;
 
 const focusFirstEditorGroupCommandID =
   "workbench.action.focusFirstEditorGroup";
