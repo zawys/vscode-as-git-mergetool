@@ -49,31 +49,9 @@ export class GitMergetoolReplacement
   public register(): void {
     this.disposables.push(
       this.commonMergeCommandsManager.addHandler({
-        continueMergeProcess: () => {
-          if (this.manualMergeInProgress) {
-            void this.manualMergeProcess.doNextStepInMergeProcess();
-            return true;
-          }
-          void window.showErrorMessage("No merge in process");
-          return false;
-        },
-        stopMergeProcess: () => {
-          if (this.manualMergeInProgress) {
-            void this.manualMergeProcess.stopMergeProcess();
-            return true;
-          }
-          void window.showErrorMessage("No merge in process");
-          return false;
-        },
-        doNextStepInMergeProcess: () => {
-          if (this.manualMergeInProgress) {
-            void this.manualMergeProcess.doNextStepInMergeProcess();
-            return true;
-          }
-          this.manualMergeProcess;
-          // TODO [2020-12-31]
-          throw new Error("Not implemented");
-        },
+        continueMergeProcess: this.continueMergeProcess.bind(this),
+        stopMergeProcess: this.stopMergeProcess.bind(this),
+        doNextStepInMergeProcess: this.doNextStepInMergeProcess.bind(this),
       })
     );
   }
@@ -205,6 +183,31 @@ export class GitMergetoolReplacement
     } finally {
       this.clearURIsToIgnore(pathsToIgnoreSetToken);
     }
+  }
+  public stopMergeProcess(): boolean {
+    if (this.manualMergeInProgress) {
+      void this.manualMergeProcess.stopMergeProcess();
+      return true;
+    }
+    void window.showErrorMessage("No merge in process");
+    return false;
+  }
+  public continueMergeProcess(): boolean {
+    if (this.manualMergeInProgress) {
+      void this.manualMergeProcess.doNextStepInMergeProcess();
+      return true;
+    }
+    void window.showErrorMessage("No merge in process");
+    return false;
+  }
+  public doNextStepInMergeProcess(): boolean {
+    if (this.manualMergeInProgress) {
+      void this.manualMergeProcess.doNextStepInMergeProcess();
+      return true;
+    }
+    this.manualMergeProcess;
+    // TODO [2020-12-31]
+    throw new Error("Not implemented");
   }
   // public async getConflictingFiles(
   //   gitPath: string,
