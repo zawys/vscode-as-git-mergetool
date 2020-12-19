@@ -226,10 +226,10 @@ export class DiffLayouterManager implements vscode.Disposable {
     public readonly temporarySettingsManager: TemporarySettingsManager,
     public readonly gitMergetoolReplacement: GitMergetoolReplacement,
     public readonly factories: DiffLayouterFactory[] = [
+      new ThreeDiffToMergedLayouterFactory(),
       new ThreeDiffToBaseLayouterFactory(),
       new ThreeDiffToBaseRowsLayouterFactory(),
       new ThreeDiffToBaseMergedRightLayouterFactory(),
-      new ThreeDiffToMergedLayouterFactory(),
       new FourTransferRightLayouterFactory(),
       new FourTransferDownLayouterFactory(),
     ]
