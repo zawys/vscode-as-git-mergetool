@@ -2,7 +2,7 @@
 // See LICENSE file in repository root directory.
 
 import { exit } from "process";
-import * as which from "which";
+import which from "which";
 import * as cp from "child_process";
 
 export async function runCommand(
@@ -38,7 +38,13 @@ export function spawnAndCapture(
 
 export function asyncWhich(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    which(command, (error, path) => (error ? reject(error) : resolve(path)));
+    which(command, (error, path) =>
+      error
+        ? reject(error)
+        : path === undefined
+        ? reject(new Error(`${command} was not found in PATH`))
+        : resolve(path)
+    );
   });
 }
 

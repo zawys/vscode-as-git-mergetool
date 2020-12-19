@@ -2,12 +2,12 @@
 // See LICENSE file in repository root directory.
 
 import { R_OK, W_OK } from "constants";
-import * as path from "path";
+import path from "path";
 import * as vscode from "vscode";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { FileType, getFileType, getRealPath, testFile } from "./fsHandy";
 import { getWorkingDirectoryUri } from "./getPathsWithinVSCode";
-import { extensionID, firstLetterUppercase } from "./iDs";
+import { extensionID, firstLetterUppercase } from "./ids";
 
 export class DiffFileSelector {
   public async doSelection(): Promise<DiffFileSelectionResult | undefined> {
@@ -33,11 +33,11 @@ export class DiffFileSelector {
   }
 
   public constructor(
-    public readonly iD: string = `${extensionID}.mergeFileSelector`
+    public readonly id: string = `${extensionID}.mergeFileSelector`
   ) {
     this.selector = new MultiFileSelector(
       this.selectableFiles,
-      new FileSelectionStateStore(iD)
+      new FileSelectionStateStore(id)
     );
   }
 
@@ -78,12 +78,16 @@ export class MultiFileSelector<TKey extends string> {
       });
       if (pickResult === this.acceptItem) {
         const result: FileSelectionResult<TKey>[] = [];
-        for (let i = 0; i < this.selectableFiles.length; i++) {
-          const vr = validationResults[i];
+        for (
+          let fileIndex = 0;
+          fileIndex < this.selectableFiles.length;
+          fileIndex++
+        ) {
+          const vr = validationResults[fileIndex];
           if (vr?.valid === false) {
             return undefined;
           }
-          const file = this.selectableFiles[i];
+          const file = this.selectableFiles[fileIndex];
           const key = file.key;
           const path = await this.stateStore.getSelection(key);
           if (path === undefined) {
@@ -141,8 +145,12 @@ export class MultiFileSelector<TKey extends string> {
     const validationResults: (FileValidationResult | undefined)[] = [];
     const pickItems: FileOrActionPickItem[] = [];
     let allValid = true;
-    for (let i = 0; i < this.selectableFiles.length; i++) {
-      const file = this.selectableFiles[i];
+    for (
+      let fileIndex = 0;
+      fileIndex < this.selectableFiles.length;
+      fileIndex++
+    ) {
+      const file = this.selectableFiles[fileIndex];
       const fsPath = await this.stateStore.getSelection(file.key);
       const validationResult =
         fsPath !== undefined && file.validate
@@ -163,7 +171,7 @@ export class MultiFileSelector<TKey extends string> {
           : "Error.";
       const value = fsPath !== undefined ? `\`${fsPath}\`` : "unset";
       pickItems.push({
-        fileIndex: i,
+        fileIndex,
         label: `${firstLetterUppercase(file.label)}: ${value}`,
         detail: comment,
       });
@@ -390,12 +398,12 @@ export class FileSelectionStateStore {
   }
 
   public constructor(
-    public readonly iD: string,
+    public readonly id: string,
     public readonly workspaceState = defaultExtensionContextManager.value
       .workspaceState
   ) {}
 
   private getKeyID(key: string): string {
-    return `${this.iD}.${key}`;
+    return `${this.id}.${key}`;
   }
 }

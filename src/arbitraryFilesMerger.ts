@@ -7,7 +7,7 @@ import { DiffFileSelector } from "./diffFileSelector";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { getVSCGitPathInteractively } from "./getPathsWithinVSCode";
 import { gitMergeFile } from "./gitMergeFile";
-import { extensionID } from "./iDs";
+import { extensionID } from "./ids";
 import { Lazy } from "./lazy";
 import { ReadonlyDocumentProvider } from "./readonlyDocumentProvider";
 import { RegisterableService } from "./registerableService";

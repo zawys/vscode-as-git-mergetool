@@ -13,16 +13,16 @@ import {
   SplitDiffLayouter,
 } from "./splitDiffLayouter";
 
-export class ThreeDiffToBaseLayouterFactory implements DiffLayouterFactory {
-  public readonly settingValue = "3DiffToBase";
+export class ThreeDiffToMergedLayouterFactory implements DiffLayouterFactory {
+  public readonly settingValue = "3DiffToMerged";
 
   public create(parameters: DiffLayouterFactoryParameters): DiffLayouter {
     return new SplitDiffLayouter({
       ...parameters,
       supportedZooms: [Zoom.left, Zoom.center, Zoom.right],
       createLayoutDescription: (diffedURIs, zoom) => {
-        let leftSize = 0.3;
-        let centerSize = 0.4;
+        let leftSize = 1 / 3;
+        let centerSize = 1 / 3;
         switch (zoom) {
           case Zoom.left:
             leftSize = 0.55;
@@ -44,9 +44,9 @@ export class ThreeDiffToBaseLayouterFactory implements DiffLayouterFactory {
             {
               size: leftSize,
               type: LayoutElementType.diffEditor,
-              oldUri: diffedURIs.base,
-              newUri: diffedURIs.local,
-              title: "(1) Current changes on base",
+              oldUri: diffedURIs.remote,
+              newUri: diffedURIs.merged,
+              title: "(1) Current changes on incoming",
               save: false,
               notFocussable: zoom === Zoom.right,
             },
@@ -58,13 +58,14 @@ export class ThreeDiffToBaseLayouterFactory implements DiffLayouterFactory {
               title: "(2) Merged changes on base",
               save: true,
               isMergeEditor: true,
+              notFocussable: false,
             },
             {
               size: rightSize,
               type: LayoutElementType.diffEditor,
-              oldUri: diffedURIs.base,
-              newUri: diffedURIs.remote,
-              title: "(3) Incoming changes on base",
+              oldUri: diffedURIs.local,
+              newUri: diffedURIs.merged,
+              title: "(3) Incoming changes on current",
               save: false,
               notFocussable: zoom === Zoom.left,
             },

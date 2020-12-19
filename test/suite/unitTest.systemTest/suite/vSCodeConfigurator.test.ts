@@ -1,14 +1,14 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import * as assert from "assert";
+import assert from "assert";
 
 import {
   separateSmallestKey,
   VSCodeConfigurator,
 } from "../../../../src/vSCodeConfigurator";
 import { hrtime } from "process";
-import { extensionID } from "../../../../src/iDs";
+import { extensionID } from "../../../../src/ids";
 
 suite("separateSmallestKey", () => {
   const sut = separateSmallestKey;

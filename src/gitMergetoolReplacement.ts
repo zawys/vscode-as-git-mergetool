@@ -1,14 +1,7 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import {
-  dirname,
-  join,
-  parse as parsePath,
-  relative,
-  resolve as resolvePath,
-  sep,
-} from "path";
+import nodePath from "path";
 import { dir } from "tmp-promise";
 import {
   commands,
@@ -41,7 +34,7 @@ import {
 } from "./fsHandy";
 import { getVSCGitPath } from "./getPathsWithinVSCode";
 import { gitMergeFile } from "./gitMergeFile";
-import { firstLetterUppercase } from "./iDs";
+import { firstLetterUppercase } from "./ids";
 import { ManualMergeProcess, ManualMergeResult } from "./manualMergeProcess";
 import { ReadonlyDocumentProvider } from "./readonlyDocumentProvider";
 import { RegisterableService } from "./registerableService";
@@ -78,7 +71,7 @@ export class GitMergetoolReplacement
             return true;
           }
           this.manualMergeProcess;
-          // TODO [2020-12-01]
+          // TODO [2020-12-31]
           throw new Error("Not implemented");
         },
       })
@@ -92,8 +85,8 @@ export class GitMergetoolReplacement
   public async handleDidOpenURI(uRI: Uri): Promise<boolean | UIError> {
     let pathsToIgnoreSetToken: unknown;
     try {
-      const absoluteConflictPath = resolvePath(uRI.fsPath);
-      const cwd = dirname(absoluteConflictPath);
+      const absoluteConflictPath = nodePath.resolve(uRI.fsPath);
+      const cwd = nodePath.dirname(absoluteConflictPath);
       const situation = await this.analyzeConflictSituation(
         absoluteConflictPath
       );
@@ -145,9 +138,11 @@ export class GitMergetoolReplacement
         if (isUIError(removeResult)) return removeResult;
       } else {
         if (absoluteConflictPath !== absoluteMergedPath) {
-          const renameResult = await mkdir(dirname(absoluteMergedPath));
+          const renameResult = await mkdir(
+            nodePath.dirname(absoluteMergedPath)
+          );
           if (isUIError(renameResult)) return renameResult;
-          // TODO [2020-12-01]: Does that work with submodules?
+          // TODO [2020-12-31]: Does that work with submodules?
           const moveResult = await rename(
             absoluteConflictPath,
             absoluteMergedPath
@@ -236,7 +231,7 @@ export class GitMergetoolReplacement
   public async analyzeConflictSituation(
     absoluteConflictPath: string
   ): Promise<MergeConflictSituation | MergeNotApplicableResult | UIError> {
-    const cwd = dirname(absoluteConflictPath);
+    const cwd = nodePath.dirname(absoluteConflictPath);
     const gitPath = await getVSCGitPath();
     if (typeof gitPath !== "string") {
       return gitPath;
@@ -314,7 +309,7 @@ export class GitMergetoolReplacement
         )}`
       );
     }
-    return resolvePath(cwd, execFileStdoutResult);
+    return nodePath.resolve(cwd, execFileStdoutResult);
   }
   private async selectStageInteractively(
     gitPath: string,
@@ -473,7 +468,8 @@ export class GitMergetoolReplacement
     absoluteMergedPath: string
   ): Promise<UIError | undefined> {
     if (
-      resolvePath(absoluteConflictPath) !== resolvePath(absoluteMergedPath)
+      nodePath.resolve(absoluteConflictPath) !==
+      nodePath.resolve(absoluteMergedPath)
     ) {
       const gitRMResult = await execFileStdout({
         filePath: gitPath,
@@ -627,16 +623,22 @@ export class GitMergetoolReplacement
     const relativeBasePath =
       absoluteBasePath === undefined
         ? undefined
-        : relative(absoluteRepoRoot, absoluteBasePath);
-    const relativeLocalPath = relative(absoluteRepoRoot, absoluteLocalPath);
-    const relativeRemotePath = relative(absoluteRepoRoot, absoluteRemotePath);
+        : nodePath.relative(absoluteRepoRoot, absoluteBasePath);
+    const relativeLocalPath = nodePath.relative(
+      absoluteRepoRoot,
+      absoluteLocalPath
+    );
+    const relativeRemotePath = nodePath.relative(
+      absoluteRepoRoot,
+      absoluteRemotePath
+    );
 
     const temporaryDirectory = await dir();
     const addTemporaryFile = async (
       name: string,
       content?: string
     ): Promise<string | UIError> => {
-      const temporaryFilePath = join(temporaryDirectory.path, name);
+      const temporaryFilePath = nodePath.join(temporaryDirectory.path, name);
       if (content !== undefined) {
         const setResult = await setContents(temporaryFilePath, content);
         if (setResult !== undefined) {
@@ -650,7 +652,7 @@ export class GitMergetoolReplacement
       path?: string
     ): Promise<string | UIError> => {
       const content =
-        path === undefined ? undefined : path.split(sep).join("\n");
+        path === undefined ? undefined : path.split(nodePath.sep).join("\n");
       return addTemporaryFile(name, content);
     };
 
@@ -727,10 +729,10 @@ export class GitMergetoolReplacement
     }
     return mergedPathResult.length === 0
       ? undefined
-      : resolvePath(absoluteRepoRoot, mergedPathResult);
+      : nodePath.resolve(absoluteRepoRoot, mergedPathResult);
   }
   private splitPath(path: string): string {
-    return [...path.split(sep), ""].join("\n");
+    return [...path.split(nodePath.sep), ""].join("\n");
   }
   private getBaseURI(
     situation: MergeConflictSituation,
@@ -744,12 +746,12 @@ export class GitMergetoolReplacement
   private generateFilePaths(
     conflictingFilePath: string
   ): Promise<GeneratedPathDict | UIError> {
-    const parsedPath = parsePath(conflictingFilePath);
+    const parsedPath = nodePath.parse(conflictingFilePath);
     return generateFileNameStampUntil<GeneratedPathDict>(async (stamp) => {
       const result: Partial<GeneratedPathDict> = {};
       for (const checkedOutFile of generatedPaths) {
         const stageFilePath =
-          `${parsedPath.dir}${sep}${parsedPath.name}` +
+          `${parsedPath.dir}${nodePath.sep}${parsedPath.name}` +
           `.${stamp}_${involvedPathNames[checkedOutFile]}${parsedPath.ext}`;
         const fileType = await getFileType(stageFilePath);
         switch (fileType) {
@@ -800,7 +802,7 @@ export class GitMergetoolReplacement
       return createUIError("Could not parse `git checkout-index` output");
     }
     const renameResult = await rename(
-      resolvePath(absoluteRepoRoot, temporaryFile),
+      nodePath.resolve(absoluteRepoRoot, temporaryFile),
       destinationPath
     );
     if (isUIError(renameResult)) {
@@ -828,7 +830,9 @@ export class GitMergetoolReplacement
     }
 
     if (lsFilesResult === "") {
-      const fileType = await getFileType(resolvePath(absoluteConflictPath));
+      const fileType = await getFileType(
+        nodePath.resolve(absoluteConflictPath)
+      );
       return fileType === FileType.notExisting
         ? fileNotFoundResult
         : noMergeRequiredResult;
@@ -861,7 +865,7 @@ export class GitMergetoolReplacement
         return createUIError("Unexpected output of ls-files");
       }
       const type = this.getVCSEntryType(mode);
-      const absPath = resolvePath(cwd, path);
+      const absPath = nodePath.resolve(cwd, path);
       versions[versionName] = { type, absPath, object };
     }
     return versions;
@@ -869,7 +873,7 @@ export class GitMergetoolReplacement
   private disposables: Disposable[] = [];
   private manualMergeInProgress = false;
   private handleDidRequestContinueMerge(): void {
-    // TODO [2020-12-01]
+    // TODO [2020-12-31]
   }
   private async analyzeNotExistingVCSEntry(
     gitPath: string,

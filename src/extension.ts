@@ -57,8 +57,8 @@ export class ExtensionAPI implements RegisterableService {
 
   public dispose(): void {
     // inverse order as above
-    for (let i = this.registrationOrder.length - 1; i >= 0; i--) {
-      const service = this.registrationOrder[i];
+    for (let index = this.registrationOrder.length - 1; index >= 0; index--) {
+      const service = this.registrationOrder[index];
       service.dispose();
     }
   }
@@ -183,12 +183,8 @@ export class ExtensionAPI implements RegisterableService {
 
 export interface ExtensionServices {
   vSCodeConfigurator: VSCodeConfigurator;
-  readonlyDocumentProviderManager: DocumentProviderManager<
-    ReadonlyDocumentProvider
-  >;
-  registeredDocumentProviderManager: DocumentProviderManager<
-    RegisteredDocumentContentProvider
-  >;
+  readonlyDocumentProviderManager: DocumentProviderManager<ReadonlyDocumentProvider>;
+  registeredDocumentProviderManager: DocumentProviderManager<RegisteredDocumentContentProvider>;
   zoomManager: ZoomManager;
   temporarySettingsManager: TemporarySettingsManager;
   gitMergetoolReplacement: GitMergetoolReplacement;

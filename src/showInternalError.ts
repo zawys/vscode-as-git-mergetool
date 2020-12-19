@@ -3,6 +3,6 @@
 
 import { window } from "vscode";
 
-export function showInternalError(iD: string): void {
-  void window.showErrorMessage(`Internal assumption violated. (${iD})`);
+export function showInternalError(id: string): void {
+  void window.showErrorMessage(`Internal assumption violated. (${id})`);
 }

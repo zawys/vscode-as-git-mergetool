@@ -15,9 +15,7 @@ export class ReadonlyDocumentProvider implements TextDocumentContentProvider {
   constructor(public readonly scheme: string) {}
 }
 
-export function createReadonlyDocumentProviderManager(): DocumentProviderManager<
-  ReadonlyDocumentProvider
-> {
+export function createReadonlyDocumentProviderManager(): DocumentProviderManager<ReadonlyDocumentProvider> {
   const readonlyScheme = "readonly-file";
   return new DocumentProviderManager(
     readonlyScheme,

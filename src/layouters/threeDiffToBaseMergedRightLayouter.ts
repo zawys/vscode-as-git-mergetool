@@ -8,8 +8,8 @@ import {
   DiffLayouterFactoryParameters,
 } from "./diffLayouter";
 import {
-  diffEditorSymbol,
   GroupOrientation,
+  LayoutElementType,
   SplitDiffLayouter,
 } from "./splitDiffLayouter";
 
@@ -50,19 +50,19 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
               groups: [
                 {
                   size: topSize,
-                  type: diffEditorSymbol,
+                  type: LayoutElementType.diffEditor,
                   oldUri: diffedURIs.base,
                   newUri: diffedURIs.local,
-                  title: "(1) Current changes",
+                  title: "(1) Current changes on base",
                   notFocussable: zoom === Zoom.right || zoom === Zoom.bottom,
                   save: false,
                 },
                 {
                   size: bottomSize,
-                  type: diffEditorSymbol,
+                  type: LayoutElementType.diffEditor,
                   oldUri: diffedURIs.base,
                   newUri: diffedURIs.remote,
-                  title: "(2) Incoming changes",
+                  title: "(2) Incoming changes on base",
                   notFocussable: zoom === Zoom.right || zoom === Zoom.top,
                   save: false,
                 },
@@ -70,10 +70,10 @@ export class ThreeDiffToBaseMergedRightLayouterFactory
             },
             {
               size: rightSize,
-              type: diffEditorSymbol,
+              type: LayoutElementType.diffEditor,
               oldUri: diffedURIs.base,
               newUri: diffedURIs.merged,
-              title: "(3) Merged changes",
+              title: "(3) Merged changes on base",
               save: true,
               notFocussable: zoom === Zoom.left,
               isMergeEditor: true,

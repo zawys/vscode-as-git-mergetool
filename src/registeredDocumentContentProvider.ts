@@ -40,9 +40,7 @@ export class RegisteredDocumentContentProvider
   private emptyDocumentURI: Uri | undefined;
 }
 
-export function createRegisteredDocumentProviderManager(): DocumentProviderManager<
-  RegisteredDocumentContentProvider
-> {
+export function createRegisteredDocumentProviderManager(): DocumentProviderManager<RegisteredDocumentContentProvider> {
   const registeredScheme = "registered";
   return new DocumentProviderManager(
     registeredScheme,

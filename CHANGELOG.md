@@ -22,6 +22,21 @@ and this project adheres to
   but that should hopefully be not noticeable.
   It should be slightly more stable now.
 
+## [0.11.0] - 2020-12-19
+
+### Added
+
+- Layout `3DiffToMerged` diffing current, base, and remote to the merged version.
+  This seems to be the best solution for merges
+  where the changes in both versions are similar,
+  e.g. for merging already partially cherry-picked branches
+  or half-applied stashes.
+
+### Changed
+
+- Minor: Diff editor titles have been unified to always contain
+  the name of the previous version of the comparison.
+
 ## [0.10.0] - 2020-09-09
 
 ### Changed
@@ -261,7 +276,8 @@ This will be the first version published on the
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.11.0
 [0.10.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.10.0
 [0.9.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.9.0
 [0.8.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.8.0

@@ -3,7 +3,7 @@
 
 import * as vscode from "vscode";
 import { toURIList, DiffedURIs } from "../diffedURIs";
-import { extensionID } from "../iDs";
+import { extensionID } from "../ids";
 import { Monitor } from "../monitor";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
 import { UIError } from "../uIError";

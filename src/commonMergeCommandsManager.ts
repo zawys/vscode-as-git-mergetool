@@ -2,7 +2,7 @@
 // See LICENSE file in repository root directory.
 
 import { commands, Disposable, window } from "vscode";
-import { extensionID } from "./iDs";
+import { extensionID } from "./ids";
 import { RegisterableService } from "./registerableService";
 
 export class CommonMergeCommandsManager implements RegisterableService {

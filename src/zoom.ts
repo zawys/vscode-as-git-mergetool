@@ -9,7 +9,7 @@ import {
   StatusBarAlignment,
   window,
 } from "vscode";
-import { extensionID, firstLetterUppercase } from "./iDs";
+import { extensionID, firstLetterUppercase } from "./ids";
 import { RegisterableService } from "./registerableService";
 
 export const enum Zoom {

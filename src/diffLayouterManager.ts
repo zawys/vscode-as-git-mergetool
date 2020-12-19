@@ -5,7 +5,7 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import { DiffedURIs } from "./diffedURIs";
 import { copy } from "./fsHandy";
-import { extensionID } from "./iDs";
+import { extensionID } from "./ids";
 import {
   DiffLayouter,
   DiffLayouterFactory,
@@ -18,6 +18,7 @@ import { FourTransferRightLayouterFactory } from "./layouters/fourTransferRightL
 import { ThreeDiffToBaseLayouterFactory } from "./layouters/threeDiffToBaseLayouter";
 import { ThreeDiffToBaseMergedRightLayouterFactory } from "./layouters/threeDiffToBaseMergedRightLayouter";
 import { ThreeDiffToBaseRowsLayouterFactory } from "./layouters/threeDiffToBaseRowsLayouter";
+import { ThreeDiffToMergedLayouterFactory } from "./layouters/threeDiffToMergedLayouter";
 import { containsMergeConflictIndicators } from "./mergeConflictDetector";
 import { Monitor } from "./monitor";
 import { RegisterableService } from "./registerableService";
@@ -252,6 +253,7 @@ export class DiffLayouterManager implements RegisterableService {
     public readonly zoomManager: ZoomManager,
     public readonly temporarySettingsManager: TemporarySettingsManager,
     public readonly factories: DiffLayouterFactory[] = [
+      new ThreeDiffToMergedLayouterFactory(),
       new ThreeDiffToBaseLayouterFactory(),
       new ThreeDiffToBaseRowsLayouterFactory(),
       new ThreeDiffToBaseMergedRightLayouterFactory(),
@@ -263,7 +265,9 @@ export class DiffLayouterManager implements RegisterableService {
       throw new Error("internal error: no factory registered");
     }
     const defaultFactory = factories.find(
-      (factory) => factory.settingValue === "4TransferRight"
+      (factory) =>
+        factory.settingValue ===
+        new FourTransferRightLayouterFactory().settingValue
     );
     if (defaultFactory === undefined) {
       throw new Error("could not find default factory");
@@ -277,9 +281,7 @@ export class DiffLayouterManager implements RegisterableService {
   private readonly layouterManagerMonitor = new Monitor();
   private disposables: vscode.Disposable[] = [];
   private readonly defaultFactory: DiffLayouterFactory;
-  private readonly didLayoutDeactivate = new vscode.EventEmitter<
-    DiffLayouter
-  >();
+  private readonly didLayoutDeactivate = new vscode.EventEmitter<DiffLayouter>();
   private readonly didLayoutActivate = new vscode.EventEmitter<DiffLayouter>();
   private switchLayoutStatusBarItem: vscode.StatusBarItem | undefined;
 
@@ -342,12 +344,13 @@ export class DiffLayouterManager implements RegisterableService {
           reopen,
           keepClosed
         );
-        if (result === reopen) {
-          if (!(await this.openDiffedURIs(layouter.diffedURIs, false))) {
-            void vscode.window.showErrorMessage(
-              "Opening failed, probably because one of the files was removed."
-            );
-          }
+        if (
+          result === reopen &&
+          !(await this.openDiffedURIs(layouter.diffedURIs, false))
+        ) {
+          void vscode.window.showErrorMessage(
+            "Opening failed, probably because one of the files was removed."
+          );
         }
       }
     }

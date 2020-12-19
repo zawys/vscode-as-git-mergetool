@@ -2,7 +2,7 @@
 // See LICENSE file in repository root directory.
 
 import { createUIError, UIError } from "./uIError";
-import { dirname } from "path";
+import nodePath from "path";
 import { execFilePromise } from "./childProcessHandy";
 import { setContents } from "./fsHandy";
 
@@ -14,7 +14,7 @@ export async function gitMergeFile(
     filePath: gitPath,
     arguments_: ["merge-file", "--stdout", local, base, remote],
     options: {
-      cwd: dirname(merged),
+      cwd: nodePath.dirname(merged),
       timeout: 10000,
       windowsHide: true,
     },

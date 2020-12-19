@@ -5,7 +5,7 @@ import * as diff from "diff";
 import * as vscode from "vscode";
 import { Disposable } from "vscode";
 import { getStats } from "./fsHandy";
-import { extensionID } from "./iDs";
+import { extensionID } from "./ids";
 import { showInternalError } from "./showInternalError";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
@@ -50,7 +50,7 @@ export class ScrollSynchronizer implements Disposable {
       typeof surroundingLines === "number" && surroundingLines > 0
         ? surroundingLines
         : 0,
-      new Date().getTime()
+      Date.now()
     );
     if (synchronizationSourceOnStartIndex !== undefined) {
       await scrollSynchronizer.syncVisibleRanges(
@@ -294,7 +294,7 @@ export class ScrollSynchronizer implements Disposable {
     ignoreDates: number[],
     editorIndex: number
   ): number {
-    const time = new Date().getTime();
+    const time = Date.now();
     const result =
       Math.pow(
         this.eventDecayPerSec,
@@ -576,17 +576,17 @@ export class DiffLineMapper implements LineMapper {
     let currentNewIndex = 0;
     let noDeltaEnds = true;
     let commonStarts = false;
-    let i = 0;
+    let partIndex = 0;
     let part: diff.ArrayChange<string> | undefined;
     // eslint-disable-next-line no-constant-condition
     while (true) {
       let push: boolean;
-      if (i >= linesDiff.length) {
+      if (partIndex >= linesDiff.length) {
         push = true;
-        i++;
+        partIndex++;
       } else {
-        part = linesDiff[i];
-        i++;
+        part = linesDiff[partIndex];
+        partIndex++;
         commonStarts = !part.added && !part.removed;
         push = noDeltaEnds || commonStarts;
       }
@@ -596,7 +596,7 @@ export class DiffLineMapper implements LineMapper {
           newLine: currentNewIndex,
         });
       }
-      if (i > linesDiff.length) {
+      if (partIndex > linesDiff.length) {
         break;
       }
       // start switching perspective

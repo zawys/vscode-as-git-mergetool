@@ -8,7 +8,7 @@ import {
   getVSCGitPathInteractively,
   getWorkingDirectoryUri,
 } from "./getPathsWithinVSCode";
-import { extensionID } from "./iDs";
+import { extensionID } from "./ids";
 import { RegisterableService } from "./registerableService";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
@@ -227,12 +227,9 @@ export class GitConfigurator {
       if (key.startsWith("-")) {
         reject("invalid argument");
       }
-      let arguments_: string[];
-      if (global) {
-        arguments_ = ["config", "--global", key, value];
-      } else {
-        arguments_ = ["config", key, value];
-      }
+      const arguments_ = global
+        ? ["config", "--global", key, value]
+        : ["config", key, value];
       cp.execFile(
         this.gitPath,
         arguments_,
