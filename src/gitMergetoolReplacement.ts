@@ -107,79 +107,14 @@ export class GitMergetoolReplacement
         absoluteMergedPath
       );
 
-      if (absoluteMergedPath === undefined) {
-        const removeResult = await this.gitRemovePath(
-          gitPath,
-          cwd,
-          absoluteConflictPath
-        );
-        if (isUIError(removeResult)) return removeResult;
-      } else {
-        if (absoluteConflictPath !== absoluteMergedPath) {
-          const renameResult = await mkdir(
-            nodePath.dirname(absoluteMergedPath)
-          );
-          if (isUIError(renameResult)) return renameResult;
-          // TODO [2020-12-31]: Does that work with submodules?
-          const moveResult = await rename(
-            absoluteConflictPath,
-            absoluteMergedPath
-          );
-          if (isUIError(moveResult)) return moveResult;
-        }
-        const baseURI = this.getBaseURI(situation, generatedFilePaths);
-        const localAndRemote: (InvolvedPath.local | InvolvedPath.remote)[] = [
-          InvolvedPath.local,
-          InvolvedPath.remote,
-        ];
-        const regularPathSituations = localAndRemote
-          .map((path): [InvolvedPath, VCSEntry] => [path, situation[path]])
-          .filter(
-            (pathSituation) =>
-              pathSituation[1].type === VCSEntryType.regularFile
-          );
-        if (regularPathSituations.length === 2) {
-          const mergeResult = await this.mergeFiles({
-            gitPath,
-            cwd,
-            absoluteConflictPath,
-            absoluteMergedPath,
-            baseURI,
-            generatedFilePaths,
-          });
-          if (isUIError(mergeResult)) return mergeResult;
-        } else {
-          if (regularPathSituations.length > 0) {
-            const [path, pathSituation] = regularPathSituations[0];
-            if (pathSituation.absPath !== undefined) {
-              await commands.executeCommand(
-                "vscode.diff",
-                baseURI,
-                Uri.file(pathSituation.absPath),
-                `${
-                  path === InvolvedPath.local ? "Current" : "Incoming"
-                } changes on base`,
-                {
-                  preview: false,
-                  preserveFocus: false,
-                }
-              );
-            }
-          }
-          const selectStageResult = await this.selectStageInteractively(
-            gitPath,
-            cwd,
-            absoluteConflictPath,
-            absoluteMergedPath,
-            situation,
-            false
-          );
-          if (isUIError(selectStageResult)) return selectStageResult;
-        }
-      }
-      const deleteStagesResult = await this.deleteStages(generatedFilePaths);
-      if (isUIError(deleteStagesResult)) return deleteStagesResult;
-      return true;
+      return await this.resolveMergeSituation(
+        gitPath,
+        cwd,
+        absoluteMergedPath,
+        absoluteConflictPath,
+        situation,
+        generatedFilePaths
+      );
     } finally {
       this.clearURIsToIgnore(pathsToIgnoreSetToken);
     }
@@ -277,6 +212,116 @@ export class GitMergetoolReplacement
   ) {}
   public static lsFilesURE = /^(?<mode>\S+) (?<object>\S+) (?<stage>\S+)\t(?<path>.*)$/;
   private _pathsToIgnore: string[] = [];
+  private async resolveMergeSituation(
+    gitPath: string,
+    cwd: string,
+    absoluteMergedPath: string | undefined,
+    absoluteConflictPath: string,
+    situation: MergeConflictSituation,
+    generatedFilePaths: GeneratedPathDict
+  ): Promise<boolean | UIError> {
+    if (absoluteMergedPath === undefined) {
+      const resolveDeleteResult = await this.resolveDeleteSituation(
+        gitPath,
+        cwd,
+        absoluteConflictPath
+      );
+      if (isUIError(resolveDeleteResult)) return resolveDeleteResult;
+    } else {
+      const resolveContentMergeResult = await this.resolveContentMergeSituation(
+        gitPath,
+        cwd,
+        absoluteMergedPath,
+        absoluteConflictPath,
+        situation,
+        generatedFilePaths
+      );
+      if (isUIError(resolveContentMergeResult))
+        return resolveContentMergeResult;
+    }
+    const deleteStagesResult = await this.deleteStages(generatedFilePaths);
+    if (isUIError(deleteStagesResult)) return deleteStagesResult;
+    return true;
+  }
+  private async resolveDeleteSituation(
+    gitPath: string,
+    cwd: string,
+    absoluteConflictPath: string
+  ): Promise<void | UIError> {
+    const removeResult = await this.gitRemovePath(
+      gitPath,
+      cwd,
+      absoluteConflictPath
+    );
+    if (isUIError(removeResult)) return removeResult;
+  }
+  private async resolveContentMergeSituation(
+    gitPath: string,
+    cwd: string,
+    absoluteMergedPath: string,
+    absoluteConflictPath: string,
+    situation: MergeConflictSituation,
+    generatedFilePaths: GeneratedPathDict
+  ): Promise<void | UIError> {
+    if (absoluteConflictPath !== absoluteMergedPath) {
+      const renameResult = await mkdir(nodePath.dirname(absoluteMergedPath));
+      if (isUIError(renameResult)) return renameResult;
+      // TODO [2020-12-31]: Does that work with submodules?
+      const moveResult = await rename(
+        absoluteConflictPath,
+        absoluteMergedPath
+      );
+      if (isUIError(moveResult)) return moveResult;
+    }
+    const baseURI = this.getBaseURI(situation, generatedFilePaths);
+    const localAndRemote: (InvolvedPath.local | InvolvedPath.remote)[] = [
+      InvolvedPath.local,
+      InvolvedPath.remote,
+    ];
+    const regularPathSituations = localAndRemote
+      .map((path): [InvolvedPath, VCSEntry] => [path, situation[path]])
+      .filter(
+        (pathSituation) => pathSituation[1].type === VCSEntryType.regularFile
+      );
+    if (regularPathSituations.length === 2) {
+      const mergeResult = await this.mergeFiles({
+        gitPath,
+        cwd,
+        absoluteConflictPath,
+        absoluteMergedPath,
+        baseURI,
+        generatedFilePaths,
+      });
+      if (isUIError(mergeResult)) return mergeResult;
+    } else {
+      if (regularPathSituations.length > 0) {
+        const [path, pathSituation] = regularPathSituations[0];
+        if (pathSituation.absPath !== undefined) {
+          await commands.executeCommand(
+            "vscode.diff",
+            baseURI,
+            Uri.file(pathSituation.absPath),
+            `${
+              path === InvolvedPath.local ? "Current" : "Incoming"
+            } changes on base`,
+            {
+              preview: false,
+              preserveFocus: false,
+            }
+          );
+        }
+      }
+      const selectStageResult = await this.selectStageInteractively(
+        gitPath,
+        cwd,
+        absoluteConflictPath,
+        absoluteMergedPath,
+        situation,
+        false
+      );
+      if (isUIError(selectStageResult)) return selectStageResult;
+    }
+  }
   private setURIsToIgnore(
     generatedFilePaths: GeneratedPathDict,
     absoluteMergedPath?: string
