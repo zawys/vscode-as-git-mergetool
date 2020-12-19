@@ -238,7 +238,9 @@ export class DiffLayouterManager implements vscode.Disposable {
       throw new Error("internal error: no factory registered");
     }
     const defaultFactory = factories.find(
-      (factory) => factory.settingValue === "4TransferRight"
+      (factory) =>
+        factory.settingValue ===
+        new FourTransferRightLayouterFactory().settingValue
     );
     if (defaultFactory === undefined) {
       throw new Error("could not find default factory");
