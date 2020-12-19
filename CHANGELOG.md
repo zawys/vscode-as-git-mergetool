@@ -10,6 +10,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Layout `3DiffToMerged` diffing current, base, and remote
+  to the merged version, which could be more suitable for merges
+  where the changes in both versions are similar.
+
 ### Changed
 
 - Minor: Diff editor titles have been unified to always contain

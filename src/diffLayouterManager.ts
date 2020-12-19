@@ -16,6 +16,7 @@ import { FourTransferRightLayouterFactory } from "./layouters/fourTransferRightL
 import { ThreeDiffToBaseLayouterFactory } from "./layouters/threeDiffToBaseLayouter";
 import { ThreeDiffToBaseMergedRightLayouterFactory } from "./layouters/threeDiffToBaseMergedRightLayouter";
 import { ThreeDiffToBaseRowsLayouterFactory } from "./layouters/threeDiffToBaseRowsLayouter";
+import { ThreeDiffToMergedLayouterFactory } from "./layouters/threeDiffToMergedLayouter";
 import { containsMergeConflictIndicators } from "./mergeConflictDetector";
 import { Monitor } from "./monitor";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
@@ -228,6 +229,7 @@ export class DiffLayouterManager implements vscode.Disposable {
       new ThreeDiffToBaseLayouterFactory(),
       new ThreeDiffToBaseRowsLayouterFactory(),
       new ThreeDiffToBaseMergedRightLayouterFactory(),
+      new ThreeDiffToMergedLayouterFactory(),
       new FourTransferRightLayouterFactory(),
       new FourTransferDownLayouterFactory(),
     ]
