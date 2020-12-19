@@ -6,7 +6,7 @@ import {
   StatusBarAlignment,
   window,
 } from "vscode";
-import { extensionID, firstLetterUppercase } from "./iDs";
+import { extensionID, firstLetterUppercase } from "./ids";
 
 export const enum Zoom {
   default,

@@ -1,4 +1,4 @@
-import * as assert from "assert";
+import assert from "assert";
 import { GitMergetoolReplacement } from "../../../../src/gitMergetoolReplacement";
 
 suite("lsFilesURE", () => {

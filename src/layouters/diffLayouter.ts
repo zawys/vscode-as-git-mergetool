@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { asURIList, DiffedURIs } from "../diffedURIs";
-import { extensionID } from "../iDs";
+import { extensionID } from "../ids";
 import { Monitor } from "../monitor";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";

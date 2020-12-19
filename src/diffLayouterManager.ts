@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { DiffedURIs, filesExist, getDiffedURIs } from "./diffedURIs";
 import { copy } from "./fsHandy";
 import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
-import { extensionID } from "./iDs";
+import { extensionID } from "./ids";
 import {
   DiffLayouter,
   DiffLayouterFactory,
@@ -254,9 +254,7 @@ export class DiffLayouterManager implements vscode.Disposable {
   private readonly layouterManagerMonitor = new Monitor();
   private disposables: vscode.Disposable[] = [];
   private readonly defaultFactory: DiffLayouterFactory;
-  private readonly didLayoutDeactivate = new vscode.EventEmitter<
-    DiffLayouter
-  >();
+  private readonly didLayoutDeactivate = new vscode.EventEmitter<DiffLayouter>();
   private readonly didLayoutActivate = new vscode.EventEmitter<DiffLayouter>();
   private readonly didMergetoolReact = new vscode.EventEmitter<void>();
   private switchLayoutStatusBarItem: vscode.StatusBarItem | undefined;
@@ -343,12 +341,13 @@ export class DiffLayouterManager implements vscode.Disposable {
           reopen,
           keepClosed
         );
-        if (result === reopen) {
-          if (!(await this.openDiffedURIs(layouter.diffedURIs))) {
-            void vscode.window.showErrorMessage(
-              "Opening failed, probably because one of the files was removed."
-            );
-          }
+        if (
+          result === reopen &&
+          !(await this.openDiffedURIs(layouter.diffedURIs))
+        ) {
+          void vscode.window.showErrorMessage(
+            "Opening failed, probably because one of the files was removed."
+          );
         }
       }
     }

@@ -1,4 +1,4 @@
-import { dirname, relative, resolve, resolve as resolvePath } from "path";
+import nodePath from "path";
 import {
   execFileStdoutInteractivelyTrimEOL,
   execFileStdoutTrimEOL,
@@ -16,9 +16,9 @@ export class GitMergetoolReplacement {
   ): Promise<
     MergeConflictSituation | MergeNotApplicableResult | AnalysisError
   > {
-    const cwd = dirname(conflictPath);
-    const filePath = relative(cwd, conflictPath);
-    const absoluteVersionPath = resolvePath(filePath);
+    const cwd = nodePath.dirname(conflictPath);
+    const filePath = nodePath.relative(cwd, conflictPath);
+    const absoluteVersionPath = nodePath.resolve(filePath);
     const gitPath = await getVSCGitPath();
     if (gitPath === undefined) {
       return { error: "Could not determine path of Git binary." };
@@ -34,7 +34,7 @@ export class GitMergetoolReplacement {
       };
     }
     if (lsFilesResult === "") {
-      const fileType = await getFileType(resolvePath(conflictPath));
+      const fileType = await getFileType(nodePath.resolve(conflictPath));
       return fileType === FileType.notExisting
         ? fileNotFoundResult
         : noMergeRequiredResult;
@@ -66,7 +66,7 @@ export class GitMergetoolReplacement {
       const analysisResult = this.analyzeVCSEntry({
         mode,
         object,
-        absPath: resolve(cwd, path),
+        absPath: nodePath.resolve(cwd, path),
       });
       if ("error" in analysisResult) {
         return analysisResult;
@@ -140,7 +140,7 @@ export class GitMergetoolReplacement {
     if (result === undefined) {
       return undefined;
     }
-    return resolvePath(cwd, result);
+    return nodePath.resolve(cwd, result);
   }
   public async getGitRoot(
     gitPath: string,

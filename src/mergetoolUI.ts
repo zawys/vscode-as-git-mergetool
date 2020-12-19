@@ -4,7 +4,7 @@ import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { copy, fileContentsEqual, FileType, getFileType } from "./fsHandy";
 import { getWorkingDirectoryUriInteractively } from "./getPathsWithinVSCode";
-import { extensionID, labelsInStatusBarSettingID } from "./iDs";
+import { extensionID, labelsInStatusBarSettingID } from "./ids";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
 import { MergetoolProcessManager } from "./mergetoolProcessManager";
 import { Monitor } from "./monitor";
@@ -189,10 +189,11 @@ export class MergetoolUI {
     }
     await this.monitor.enter();
     try {
-      if (this._processManager?.isAvailable) {
-        if (!(await this.stopMergetoolWithoutDataLossInner())) {
-          return;
-        }
+      if (
+        this._processManager?.isAvailable &&
+        !(await this.stopMergetoolWithoutDataLossInner())
+      ) {
+        return;
       }
       await createBackgroundGitTerminal({
         shellArgs: ["merge", pickedItem === abortMerge ? "--abort" : "--quit"],

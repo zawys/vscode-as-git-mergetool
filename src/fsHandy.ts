@@ -65,7 +65,7 @@ export function testFile(path: string, mode: number): Promise<boolean> {
 }
 
 export function getContents(path: string): Promise<string | undefined> {
-  return new Promise<string>((resolve) => {
+  return new Promise<string | undefined>((resolve) => {
     fs.readFile(path, { encoding: "utf-8" }, (error, data) => {
       resolve(error ? undefined : data);
     });

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { ExtensionAPI } from "../src/extension";
-import { fullExtensionID } from "../src/iDs";
+import { fullExtensionID } from "../src/ids";
 
 export async function getExtensionAPI(): Promise<ExtensionAPI> {
   const extension = vscode.extensions.getExtension(fullExtensionID);

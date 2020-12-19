@@ -37,11 +37,7 @@ export function separateSmallestKey(
   section: string
 ): [string | undefined, string] {
   const match = smallestKeyRE.exec(section);
-  if (match === null) {
-    return [undefined, section];
-  } else {
-    return [match[1], match[2]];
-  }
+  return match === null ? [undefined, section] : [match[1], match[2]];
 }
 
 export interface InspectResult<T> {

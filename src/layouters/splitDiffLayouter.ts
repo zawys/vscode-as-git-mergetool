@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { DiffedURIs } from "../diffedURIs";
-import { extensionID } from "../iDs";
+import { extensionID } from "../ids";
 import { mergeConflictIndicatorRE } from "../mergeConflictDetector";
 import { Monitor } from "../monitor";
 import { ScrollSynchronizer } from "../scrollSynchronizer";
@@ -185,8 +185,8 @@ export class SplitDiffLayouter implements DiffLayouter {
   }
 
   public async save(): Promise<void> {
-    for (let i = 0; i < this.editorsToSave.length; i++) {
-      await this.editorsToSave[i].document.save();
+    for (const editorToSave of this.editorsToSave) {
+      await editorToSave.document.save();
     }
   }
 

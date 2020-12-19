@@ -9,8 +9,8 @@ function uriStartsWith(parent: vscode.Uri, child: vscode.Uri): boolean {
   }
   const childParts = child.path.split(pathSeparator);
   const parentParts = parent.path.split(pathSeparator);
-  for (const [i, parentPart] of parentParts.entries()) {
-    if (parentPart !== childParts[i]) {
+  for (const [index, parentPart] of parentParts.entries()) {
+    if (parentPart !== childParts[index]) {
       return false;
     }
   }
@@ -55,11 +55,9 @@ async function getVSCGitPathInner(): Promise<string | undefined> {
   const gitExtension = await vscode.extensions
     .getExtension<GitExtension>("vscode.git")
     ?.activate();
-  if (gitExtension !== undefined) {
-    if (gitExtension.enabled) {
-      const api = gitExtension.getAPI(1);
-      return api.git.path;
-    }
+  if (gitExtension !== undefined && gitExtension.enabled) {
+    const api = gitExtension.getAPI(1);
+    return api.git.path;
   }
   return await getGitPath();
 }

@@ -1,4 +1,4 @@
-import * as assert from "assert";
+import assert from "assert";
 import * as vscode from "vscode";
 import { nextMergeStepCommandID } from "../../../../src/mergetoolUI";
 import { getExtensionAPI } from "../../../getExtensionAPI";

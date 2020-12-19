@@ -1,6 +1,6 @@
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { Monitor } from "./monitor";
-import { extensionID } from "./iDs";
+import { extensionID } from "./ids";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { commands, Disposable } from "vscode";
 
@@ -17,23 +17,28 @@ export class TemporarySettingsManager implements Disposable {
         Object.keys(oldOrigActual)
       );
 
-      for (const iD of this.targetIDs) {
-        obsoleteSettingKeys.delete(iD);
-        const newTarget = this.targetSettings[iD];
-        const newActual = this.vSCodeConfigurator.get(iD);
+      for (const targetID of this.targetIDs) {
+        obsoleteSettingKeys.delete(targetID);
+        const newTarget = this.targetSettings[targetID];
+        const newActual = this.vSCodeConfigurator.get(targetID);
         if (newActual !== newTarget) {
-          await this.vSCodeConfigurator.set(iD, newTarget);
+          await this.vSCodeConfigurator.set(targetID, newTarget);
         }
 
         // in the latter case, user did change config setting afterwards,
         // so we will restore it later to the new value
-        newOrigActual[iD] =
-          newActual === oldOrigTarget[iD] ? oldOrigActual[iD] : newActual;
+        newOrigActual[targetID] =
+          newActual === oldOrigTarget[targetID]
+            ? oldOrigActual[targetID]
+            : newActual;
 
-        newOrigTarget[iD] = newTarget;
+        newOrigTarget[targetID] = newTarget;
       }
-      for (const iD of obsoleteSettingKeys) {
-        await this.vSCodeConfigurator.set(iD, oldOrigActual[iD]);
+      for (const obsoleteID of obsoleteSettingKeys) {
+        await this.vSCodeConfigurator.set(
+          obsoleteID,
+          oldOrigActual[obsoleteID]
+        );
       }
       await this.setStorageState(origActualKey, newOrigActual);
       await this.setStorageState(origTargetKey, newOrigTarget);
@@ -48,10 +53,10 @@ export class TemporarySettingsManager implements Disposable {
       const origActual = this.getStorageState(origActualKey);
       const origTarget = this.getStorageState(origTargetKey);
       const origChangedIDs = Object.keys(origActual);
-      for (const iD of origChangedIDs) {
-        const newActual = this.vSCodeConfigurator.get(iD);
-        if (newActual === origTarget[iD]) {
-          await this.vSCodeConfigurator.set(iD, origActual[iD]);
+      for (const changedID of origChangedIDs) {
+        const newActual = this.vSCodeConfigurator.get(changedID);
+        if (newActual === origTarget[changedID]) {
+          await this.vSCodeConfigurator.set(changedID, origActual[changedID]);
         }
       }
       await this.setStorageState(origActualKey, undefined);

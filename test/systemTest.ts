@@ -1,4 +1,4 @@
-import * as path from "path";
+import path from "path";
 import { runTests } from "vscode-test";
 import * as cp from "child_process";
 import * as fs from "fs";

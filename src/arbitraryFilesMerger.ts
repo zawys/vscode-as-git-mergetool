@@ -1,12 +1,12 @@
 import * as fs from "fs";
-import * as path from "path";
+import path from "path";
 import * as vscode from "vscode";
 import { execFilePromise } from "./childProcessHandy";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffFileSelector } from "./diffFileSelector";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { getVSCGitPathInteractively } from "./getPathsWithinVSCode";
-import { extensionID } from "./iDs";
+import { extensionID } from "./ids";
 import { Lazy } from "./lazy";
 import { readonlyFileURI } from "./readonlyDocumentProvider";
 
