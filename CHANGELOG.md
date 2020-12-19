@@ -12,9 +12,11 @@ and this project adheres to
 
 ### Added
 
-- Layout `3DiffToMerged` diffing current, base, and remote
-  to the merged version, which could be more suitable for merges
-  where the changes in both versions are similar.
+- Layout `3DiffToMerged` diffing current, base, and remote to the merged version.
+  This seems to be the best solution for merges
+  where the changes in both versions are similar,
+  e.g. for merging already partially cherry-picked branches
+  or half-applied stashes.
 
 ### Changed
 
