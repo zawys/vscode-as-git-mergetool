@@ -10,6 +10,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- Minor: Diff editor titles have been unified to always contain
+  the name of the previous version of the comparison.
+
 ## [0.10.0] - 2020-09-09
 
 ### Changed
