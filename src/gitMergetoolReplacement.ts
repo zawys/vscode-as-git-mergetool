@@ -36,6 +36,7 @@ import { getVSCGitPath } from "./getPathsWithinVSCode";
 import { gitMergeFile } from "./gitMergeFile";
 import { firstLetterUppercase } from "./ids";
 import { ManualMergeProcess, ManualMergeResult } from "./manualMergeProcess";
+import { Monitor } from "./monitor";
 import { ReadonlyDocumentProvider } from "./readonlyDocumentProvider";
 import { RegisterableService } from "./registerableService";
 import { RegisteredDocumentContentProvider } from "./registeredDocumentContentProvider";
@@ -62,6 +63,7 @@ export class GitMergetoolReplacement
   }
   public async handleDidOpenURI(uRI: Uri): Promise<boolean | UIError> {
     let pathsToIgnoreSetToken: unknown;
+    await this.monitor.enter();
     try {
       const absoluteConflictPath = nodePath.resolve(uRI.fsPath);
       const cwd = nodePath.dirname(absoluteConflictPath);
@@ -116,33 +118,49 @@ export class GitMergetoolReplacement
         generatedFilePaths
       );
     } finally {
+      await this.monitor.leave();
       this.clearURIsToIgnore(pathsToIgnoreSetToken);
     }
   }
-  public stopMergeProcess(): boolean {
-    if (this.manualMergeInProgress) {
-      void this.manualMergeProcess.stopMergeProcess();
-      return true;
+  public async stopMergeProcess(): Promise<boolean> {
+    await this.monitor.enter();
+    try {
+      if (this.manualMergeInProgress) {
+        void this.manualMergeProcess.stopMergeProcess();
+        return true;
+      }
+      void window.showErrorMessage("No merge in process");
+      return false;
+    } finally {
+      await this.monitor.leave();
     }
-    void window.showErrorMessage("No merge in process");
-    return false;
   }
-  public continueMergeProcess(): boolean {
-    if (this.manualMergeInProgress) {
-      void this.manualMergeProcess.doNextStepInMergeProcess();
-      return true;
+  public async continueMergeProcess(): Promise<boolean> {
+    await this.monitor.enter();
+    try {
+      if (this.manualMergeInProgress) {
+        void this.manualMergeProcess.doNextStepInMergeProcess();
+        return true;
+      }
+      void window.showErrorMessage("No merge in process");
+      return false;
+    } finally {
+      await this.monitor.leave();
     }
-    void window.showErrorMessage("No merge in process");
-    return false;
   }
-  public doNextStepInMergeProcess(): boolean {
-    if (this.manualMergeInProgress) {
-      void this.manualMergeProcess.doNextStepInMergeProcess();
-      return true;
+  public async doNextStepInMergeProcess(): Promise<boolean> {
+    await this.monitor.enter();
+    try {
+      if (this.manualMergeInProgress) {
+        void this.manualMergeProcess.doNextStepInMergeProcess();
+        return true;
+      }
+      this.manualMergeProcess;
+      // TODO [2020-12-31]
+      throw new Error("Not implemented");
+    } finally {
+      await this.monitor.leave();
     }
-    this.manualMergeProcess;
-    // TODO [2020-12-31]
-    throw new Error("Not implemented");
   }
   // public async getConflictingFiles(
   //   gitPath: string,
@@ -211,7 +229,11 @@ export class GitMergetoolReplacement
     private readonly diffLayouterManager: DiffLayouterManager
   ) {}
   public static lsFilesURE = /^(?<mode>\S+) (?<object>\S+) (?<stage>\S+)\t(?<path>.*)$/;
+
   private _pathsToIgnore: string[] = [];
+  private readonly monitor = new Monitor();
+  private disposables: Disposable[] = [];
+  private manualMergeInProgress = false;
   private async resolveMergeSituation(
     gitPath: string,
     cwd: string,
@@ -917,11 +939,6 @@ export class GitMergetoolReplacement
       versions[versionName] = { type, absPath, object };
     }
     return versions;
-  }
-  private disposables: Disposable[] = [];
-  private manualMergeInProgress = false;
-  private handleDidRequestContinueMerge(): void {
-    // TODO [2020-12-31]
   }
   private async analyzeNotExistingVCSEntry(
     gitPath: string,
