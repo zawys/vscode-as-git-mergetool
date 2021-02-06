@@ -22,6 +22,12 @@ and this project adheres to
   but that should hopefully be not noticeable.
   It should be slightly more stable now.
 
+## [0.13.0] - 2021-02-06
+
+### Added
+
+- Save initially changed configuration values into backup entries
+
 ## [0.12.0] - 2021-02-06
 
 ### Fixed
@@ -282,7 +288,8 @@ This will be the first version published on the
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.0
 [0.12.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.12.0
 [0.11.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.11.0
 [0.10.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.10.0
