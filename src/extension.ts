@@ -34,7 +34,9 @@ export async function activate(
   context: vscode.ExtensionContext
 ): Promise<ExtensionAPI> {
   defaultExtensionContextManager.value = context;
-  extensionAPI = new ExtensionAPI();
+  extensionAPI = new ExtensionAPI(
+    ...new ExtensionServicesCreator().createServices()
+  );
   await extensionAPI.register();
   return extensionAPI;
 }
@@ -63,8 +65,16 @@ export class ExtensionAPI implements RegisterableService {
     }
   }
 
-  public constructor(services?: Partial<ExtensionServices>) {
-    services = services || {};
+  public constructor(
+    public readonly services: Readonly<ExtensionServices>,
+    public readonly registrationOrder: Readonly<RegisterableService[]>
+  ) {}
+}
+
+class ExtensionServicesCreator {
+  public createServices(
+    services: Readonly<Partial<ExtensionServices>> = {}
+  ): [ExtensionServices, RegisterableService[]] {
     const registrationOrder: RegisterableService[] = [];
 
     const vSCodeConfigurator =
@@ -158,27 +168,26 @@ export class ExtensionAPI implements RegisterableService {
       new SettingsAssistantCreator(vSCodeConfigurator);
     registrationOrder.push(settingsAssistantCreator);
 
-    this.services = {
-      arbitraryFilesMerger,
-      diffLayouterManager,
-      gitMergetoolReplacement,
-      mergetoolUI,
-      readonlyDocumentProviderManager,
-      registeredDocumentProviderManager,
-      settingsAssistantCreator,
-      temporarySettingsManager,
-      vSCodeConfigurator,
-      zoomManager,
-      temporaryFileOpenManager,
-      editorOpenManager,
-      commonMergeCommandsManager,
-      manualMergeProcess,
-    };
-    this.registrationOrder = registrationOrder;
+    return [
+      {
+        arbitraryFilesMerger,
+        diffLayouterManager,
+        gitMergetoolReplacement,
+        mergetoolUI,
+        readonlyDocumentProviderManager,
+        registeredDocumentProviderManager,
+        settingsAssistantCreator,
+        temporarySettingsManager,
+        vSCodeConfigurator,
+        zoomManager,
+        temporaryFileOpenManager,
+        editorOpenManager,
+        commonMergeCommandsManager,
+        manualMergeProcess,
+      },
+      registrationOrder,
+    ];
   }
-
-  public readonly services: Readonly<ExtensionServices>;
-  public readonly registrationOrder: Readonly<RegisterableService[]>;
 }
 
 export interface ExtensionServices {
