@@ -11,7 +11,7 @@ export function runMochaTests(
 ): Promise<void> {
   // Create the mocha test
   const debug = /--debug|--inspect/.test(
-    [process.argv.concat(process.execArgv)].join(" ")
+    [...process.argv, ...process.execArgv].join(" ")
   );
   const mocha = new Mocha({
     ui: "tdd",
@@ -28,7 +28,9 @@ export function runMochaTests(
       }
 
       // Add files to the test suite
-      files.forEach((f) => mocha.addFile(path.resolve(testsRoot, f)));
+      for (const f of files) {
+        mocha.addFile(path.resolve(testsRoot, f));
+      }
 
       try {
         // Run the mocha test

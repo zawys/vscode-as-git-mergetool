@@ -13,7 +13,7 @@ import { whichPromise } from "../src/getPaths";
  */
 export async function runSystemTest(
   testDirectory: string,
-  noWorkspace = false
+  dirtyEnvironment = false
 ): Promise<boolean> {
   // The folder containing the Extension Manifest package.json
   // Passed to `--extensionDevelopmentPath`.
@@ -24,10 +24,18 @@ export async function runSystemTest(
   const extensionTestsPath = path.resolve(testDirectory, "./suite/index");
 
   const launchArguments = ["--new-window", "--disable-extensions"];
-  if (!noWorkspace) {
+  if (!dirtyEnvironment) {
     const zipPath = path.resolve(testDirectory, "environment.zip");
     const filesPath = await unpackToTemporaryDirectory(zipPath);
-    launchArguments.push(path.resolve(filesPath, "workspace"));
+    const environmentPath = path.resolve(filesPath, "environment");
+    const workspaceDirectory = path.resolve(environmentPath, "workspace");
+    const userDataDirectory = path.resolve(environmentPath, "user_data_dir");
+    if (fs.existsSync(userDataDirectory)) {
+      launchArguments.push(`--user-data-dir=${userDataDirectory}`);
+    }
+    if (fs.existsSync(workspaceDirectory)) {
+      launchArguments.push(workspaceDirectory);
+    }
   }
   const debugTestFilePath = process.env["DEBUG_CURRENT_FILE_PATH"];
   let debugging = false;
