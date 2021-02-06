@@ -318,7 +318,7 @@ export class MergetoolUI {
     }
     this.disposing = true;
     this.disposeStatusBarItems();
-    this.registeredDisposables.forEach((item) => void item?.dispose());
+    for (const item of this.registeredDisposables) void item?.dispose();
     this.registeredDisposables = new Set();
     void this.disposeProcessManager();
   }
@@ -586,8 +586,13 @@ export class MergetoolUI {
     return true;
   }
 
-  private disposeStatusBarItems() {
-    this.statusBarItems?.forEach((item) => item.dispose());
+  private disposeStatusBarItems(): void {
+    if (this.statusBarItems === undefined) {
+      return;
+    }
+    for (const item of this.statusBarItems) {
+      item.dispose();
+    }
     this.statusBarItems = undefined;
   }
 
@@ -610,9 +615,7 @@ export class MergetoolUI {
             14,
             nextMergeStepCommandID,
             "Go to next conflict, next file, or commit message"
-          )
-        );
-        this.statusBarItems.push(
+          ),
           this.createStatusBarItem(
             "$(live-share)" + (showLabel ? " Skip file" : ""),
             13,

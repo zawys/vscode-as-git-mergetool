@@ -32,7 +32,7 @@ suite("DiffLineMapper", () => {
         testCase.old.split(""),
         testCase.new.split("")
       );
-      // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
+      // eslint-disable-next-line unicorn/no-array-callback-reference
       const actual = sut.map(testCase.from);
       assert.strictEqual(
         actual,

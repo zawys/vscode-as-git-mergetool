@@ -19,9 +19,9 @@ export class ScrollSynchronizer implements Disposable {
     syncMethod?: ScrollSyncMethod,
     mappedIntervalRelativeSize?: number
   ): Promise<ScrollSynchronizer> {
-    const scrollIgnoreCounts = new Array<number>(editors.length).fill(
-      synchronizationSourceOnStartIndex === undefined ? 0 : 1
-    );
+    const scrollIgnoreCounts = Array.from<number>({
+      length: editors.length,
+    }).fill(synchronizationSourceOnStartIndex === undefined ? 0 : 1);
     if (synchronizationSourceOnStartIndex !== undefined) {
       scrollIgnoreCounts[synchronizationSourceOnStartIndex] = 0;
     }
@@ -85,12 +85,18 @@ export class ScrollSynchronizer implements Disposable {
     private readonly centerPosCorrection = +0.5,
     private readonly eventDecayPerSec = 0.25
   ) {
-    this.editorLinesCache = new Array<undefined>(editors.length).fill(
-      undefined
-    );
-    this.scrollIgnoreDates = new Array<number>(editors.length).fill(0);
-    this.selectionIgnoreCounts = new Array<number>(editors.length).fill(0);
-    this.selectionIgnoreDates = new Array<number>(editors.length).fill(0);
+    this.editorLinesCache = Array.from<undefined>({
+      length: editors.length,
+    }).fill(undefined);
+    this.scrollIgnoreDates = Array.from<number>({
+      length: editors.length,
+    }).fill(0);
+    this.selectionIgnoreCounts = Array.from<number>({
+      length: editors.length,
+    }).fill(0);
+    this.selectionIgnoreDates = Array.from<number>({
+      length: editors.length,
+    }).fill(0);
     this.documents = this.editors.map((editor) => editor.document);
     this.mappedWeight1 = (1 - mappedIntervalRelativeSize) / 2;
     this.mappedWeight0 = 1 - this.mappedWeight1;
@@ -477,7 +483,7 @@ export class ScrollSynchronizer implements Disposable {
     if (mapper === undefined) {
       return undefined;
     }
-    // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
+    // eslint-disable-next-line unicorn/no-array-callback-reference
     return mapper.map(position);
   }
 }
