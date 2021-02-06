@@ -172,10 +172,10 @@ class GitOptionAssistant implements OptionAssistant {
     return {
       question:
         `Change Git option \`${this.key}\`. \n` +
-        `Reason: ${this.description} \n` +
+        `Reason: ${this.description}. \n` +
         "Current value" +
-        (currentValue === undefined ? " unset" : `: \`${currentValue}\`. \n`) +
-        `New value: ${this.targetValue}.`,
+        (currentValue === undefined ? " unset" : `: \`${currentValue}\``) +
+        `. \nNew value: ${this.targetValue}.`,
       options: [
         new Option(`Globally`, GitOptionAssistant.globalValue),
         new Option(`In repository`, GitOptionAssistant.repositoryValue),
@@ -268,7 +268,7 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
     return Promise.resolve({
       question:
         `Change VS Code option \`${this.section}\`. \n` +
-        `Reason: ${this.description} \n` +
+        `Reason: ${this.description}. \n` +
         `Current value: \`${JSON.stringify(currentValue)}\`. \n` +
         `New value: ${JSON.stringify(this.targetValue)}.`,
       options: [

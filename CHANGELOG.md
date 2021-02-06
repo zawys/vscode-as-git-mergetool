@@ -10,6 +10,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- Texts of notifications from initial settings assistant
+
 ## [0.11.0] - 2020-12-19
 
 ### Added
