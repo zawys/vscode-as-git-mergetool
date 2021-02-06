@@ -28,7 +28,7 @@ export class SettingsAssistant {
       const newerItem = { title: "Never" };
       const postponeItem = { title: "Postpone to next startup" };
       const result = await vscode.window.showInformationMessage(
-        "Some current settings will not work well with VS Code as 3-way merge tool. When do want to change them using dialogs?",
+        "Some current settings will not work well with VS Code as merge tool. When do want to change them using dialogs?",
         nowItem,
         newerItem,
         postponeItem
@@ -156,26 +156,34 @@ interface OptionAssistant {
   handlePickedOption(item: Option): Promise<void>;
 }
 
+function getBackupConfigKey(key: string): string {
+  return `${key}__vscode_as_git_mergetool_backup`;
+}
+
+const unsetValue = `(${getBackupConfigKey("unset")})`;
+
 class GitOptionAssistant implements OptionAssistant {
   constructor(
-    private readonly gitConfigurator: GitConfigurator,
+    private readonly configurator: GitConfigurator,
     private readonly key: string,
     private readonly targetValue: string,
     private readonly description: string
   ) {}
   async needsChange(): Promise<boolean> {
-    return (await this.gitConfigurator.get(this.key)) !== this.targetValue;
+    return (await this.configurator.get(this.key)) !== this.targetValue;
   }
 
   async provideQuestionData(): Promise<QuestionData> {
-    const currentValue = await this.gitConfigurator.get(this.key);
+    const currentValue = await this.configurator.get(this.key);
     return {
       question:
         `Change Git option \`${this.key}\`. \n` +
         `Reason: ${this.description}. \n` +
         "Current value" +
-        (currentValue === undefined ? " unset" : `: \`${currentValue}\``) +
-        `. \nNew value: ${this.targetValue}.`,
+        (currentValue === undefined
+          ? " unset. \n"
+          : `: \`${currentValue}\`. \n`) +
+        `New value: ${this.targetValue}.`,
       options: [
         new Option(`Globally`, GitOptionAssistant.globalValue),
         new Option(`In repository`, GitOptionAssistant.repositoryValue),
@@ -191,7 +199,14 @@ class GitOptionAssistant implements OptionAssistant {
     } else {
       return;
     }
-    await this.gitConfigurator.set(this.key, this.targetValue, global);
+    const backupConfigKey = getBackupConfigKey(this.key);
+    const previousValue = await this.configurator.get(this.key);
+    await this.configurator.set(
+      backupConfigKey,
+      previousValue ?? unsetValue,
+      global
+    );
+    await this.configurator.set(this.key, this.targetValue, global);
   }
 
   private static readonly repositoryValue = "in repository";
@@ -286,6 +301,13 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
     } else {
       return;
     }
+    const backupConfigKey = getBackupConfigKey(this.section);
+    const previousValue = await this.configurator.get(this.section);
+    await this.configurator.set(
+      backupConfigKey,
+      previousValue ?? unsetValue,
+      global
+    );
     await this.configurator.set(this.section, this.targetValue, global);
   }
 

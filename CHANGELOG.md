@@ -10,6 +10,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Save initially changed configuration values into backup entries
+
 ## [0.12.0] - 2021-02-06
 
 ### Fixed
