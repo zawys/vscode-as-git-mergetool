@@ -19,7 +19,7 @@ import { ThreeDiffToBaseLayouterFactory } from "./layouters/threeDiffToBaseLayou
 import { ThreeDiffToBaseMergedRightLayouterFactory } from "./layouters/threeDiffToBaseMergedRightLayouter";
 import { ThreeDiffToBaseRowsLayouterFactory } from "./layouters/threeDiffToBaseRowsLayouter";
 import { ThreeDiffToMergedLayouterFactory } from "./layouters/threeDiffToMergedLayouter";
-import { containsMergeConflictIndicators } from "./mergeConflictDetector";
+import { containsMergeConflictIndicators } from "./mergeConflictIndicatorDetector";
 import { Monitor } from "./monitor";
 import { RegisterableService } from "./registerableService";
 import { TemporarySettingsManager } from "./temporarySettingsManager";

@@ -4,7 +4,7 @@
 import * as vscode from "vscode";
 import { DiffedURIs } from "../diffedURIs";
 import { extensionID } from "../ids";
-import { mergeConflictIndicatorRE } from "../mergeConflictDetector";
+import { mergeConflictIndicatorRE } from "../mergeConflictIndicatorDetector";
 import { Monitor } from "../monitor";
 import { ScrollSynchronizer } from "../scrollSynchronizer";
 import { TemporarySettingsManager } from "../temporarySettingsManager";
