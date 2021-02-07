@@ -332,7 +332,7 @@
     "test": "yarn install && yarn run recompile && yarn run lint && yarn run copy_files && yarn run bundle && yarn run test:only",
     "test:only": "node ./out/test/runTests.js",
     "test:dev": "yarn run copy_files && yarn run test:only",
-    "bundle:dev": "parcel build --target main --no-minify ${npm_package_source}",
+    "bundle:dev": "parcel build --target main --no-optimize ${npm_package_source}",
     "bundle": "parcel build --target main --no-cache --detailed-report 10 ${npm_package_source}",
     "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
     "build:dev": "yarn run copy_files",
