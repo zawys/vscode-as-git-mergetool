@@ -75,10 +75,7 @@ export class TemporaryFileOpenManager implements EditorOpenHandler {
             );
           }
           const stats = await getStats(uRI.fsPath);
-          if (stats === undefined) {
-            return false;
-          }
-          return stats.isFile();
+          return stats?.isFile() === true;
         })
       )
     ).every((exists) => exists);
