@@ -524,7 +524,10 @@ export class GitMergetoolReplacement
     }
     this.manualMergeInProgress = true;
     try {
-      return this.manualMergeProcess.mergeManually(diffedURIs, labelText);
+      return await this.manualMergeProcess.mergeManually(
+        diffedURIs,
+        labelText
+      );
     } finally {
       this.manualMergeInProgress = false;
     }
