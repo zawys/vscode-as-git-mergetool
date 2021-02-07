@@ -6,23 +6,20 @@ import * as vscode from "vscode";
 // The number in the file name is the PID of git-mergetool
 export const parseBaseFileNameRE = /\/([^/]*)_(BASE|REMOTE|LOCAL)_(\d+(.*?))(\.git)?$/;
 
-export function occursIn(
+export function uRIOccursIn(
   diffedURIs: DiffedURIs,
   containedURI: vscode.Uri
 ): boolean {
-  const containedURIPath = containedURI.path;
-  return toURIList(diffedURIs).some((diffedURI) => {
-    const diffedURIPath = diffedURI.path;
-    return pathsRoughlyEqual(containedURIPath, diffedURIPath);
-  });
+  return fsPathOccursIn(diffedURIs, containedURI.fsPath);
 }
-export function occursInPathList(
-  containingPaths: string[],
-  containedPath: string
+export function fsPathOccursIn(
+  diffedURIs: DiffedURIs,
+  containedFsPath: string
 ): boolean {
-  return containingPaths.some((path) =>
-    pathsRoughlyEqual(path, containedPath)
-  );
+  return toURIList(diffedURIs).some((diffedURI) => {
+    const diffedPath = diffedURI.fsPath;
+    return pathsRoughlyEqual(containedFsPath, diffedPath);
+  });
 }
 export function toURIList(diffedURIs: DiffedURIs): vscode.Uri[] {
   const result = [
@@ -33,18 +30,6 @@ export function toURIList(diffedURIs: DiffedURIs): vscode.Uri[] {
   ];
   if (diffedURIs.backup !== undefined) {
     result.push(diffedURIs.backup);
-  }
-  return result;
-}
-export function toPathList(diffedURIs: DiffedURIs): string[] {
-  const result = [
-    diffedURIs.base.fsPath,
-    diffedURIs.local.fsPath,
-    diffedURIs.merged.fsPath,
-    diffedURIs.remote.fsPath,
-  ];
-  if (diffedURIs.backup !== undefined) {
-    result.push(diffedURIs.backup.fsPath);
   }
   return result;
 }
@@ -61,7 +46,7 @@ export function uRIsOrUndefEqual(
   return uRIsEqual(first, second);
 }
 export function uRIsEqual(first: vscode.Uri, second: vscode.Uri): boolean {
-  return pathsRoughlyEqual(first.path, second.path);
+  return pathsRoughlyEqual(first.fsPath, second.fsPath);
 }
 export function pathsRoughlyEqual(first: string, second: string): boolean {
   return (

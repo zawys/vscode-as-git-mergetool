@@ -2,7 +2,6 @@
 // See LICENSE file in repository root directory.
 
 import { Disposable, TextEditor, window } from "vscode";
-import { occursInPathList } from "./diffedURIs";
 import { EditorOpenHandler } from "./editorOpenHandler";
 import { isUIError, UIError } from "./uIError";
 
@@ -42,9 +41,9 @@ export class EditorOpenManager implements Disposable {
   }
   private async handleDidOpenEditor(editor: TextEditor): Promise<boolean> {
     const uRI = editor.document.uri;
-    const path = uRI.fsPath;
+    const fsPath = uRI.fsPath;
     for (const { handler } of this.editorOpenHandlers) {
-      if (occursInPathList(handler.pathsToIgnore, path)) {
+      if (handler.ignorePathOverride(fsPath)) {
         return false;
       }
     }

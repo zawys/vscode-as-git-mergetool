@@ -6,7 +6,7 @@ import {
   toURIList,
   DiffedURIs,
   parseBaseFileNameRE,
-  toPathList,
+  fsPathOccursIn,
 } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { EditorOpenHandler } from "./editorOpenHandler";
@@ -81,10 +81,11 @@ export class TemporaryFileOpenManager implements EditorOpenHandler {
     ).every((exists) => exists);
   }
 
-  public get pathsToIgnore(): string[] {
-    return this.diffLayouterManager.diffedURIs === undefined
-      ? []
-      : toPathList(this.diffLayouterManager.diffedURIs);
+  public ignorePathOverride(fsPath: string): boolean {
+    return (
+      this.diffLayouterManager.diffedURIs !== undefined &&
+      fsPathOccursIn(this.diffLayouterManager.diffedURIs, fsPath)
+    );
   }
 
   public constructor(

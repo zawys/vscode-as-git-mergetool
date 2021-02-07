@@ -5,6 +5,6 @@ import { Uri } from "vscode";
 import { UIError } from "./uIError";
 
 export interface EditorOpenHandler {
-  readonly pathsToIgnore: string[];
+  ignorePathOverride(fsPath: string): boolean;
   handleDidOpenURI(uRI: Uri): Promise<boolean | UIError>;
 }

@@ -18,7 +18,7 @@ import {
   formatExecFileError,
 } from "./childProcessHandy";
 import { CommonMergeCommandsManager } from "./commonMergeCommandsManager";
-import { DiffedURIs } from "./diffedURIs";
+import { DiffedURIs, pathsRoughlyEqual } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { EditorOpenHandler } from "./editorOpenHandler";
 import { generateFileNameStampUntil } from "./fileNameStamp";
@@ -218,8 +218,8 @@ export class GitMergetoolReplacement
       [InvolvedPath.conflict]: await getFileType(absoluteConflictPath),
     };
   }
-  public get pathsToIgnore(): string[] {
-    return this._pathsToIgnore;
+  public ignorePathOverride(fsPath: string): boolean {
+    return this._pathsToIgnore.some(pathsRoughlyEqual.bind(undefined, fsPath));
   }
   public constructor(
     private readonly registeredDocumentProvider: RegisteredDocumentContentProvider,
