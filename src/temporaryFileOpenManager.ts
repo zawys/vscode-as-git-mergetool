@@ -1,7 +1,7 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import { Event, EventEmitter, Uri, window } from "vscode";
+import { Event, EventEmitter, Uri } from "vscode";
 import {
   toURIList,
   DiffedURIs,
@@ -69,7 +69,10 @@ export class TemporaryFileOpenManager implements EditorOpenHandler {
       await Promise.all(
         toURIList(diffedURIs).map(async (uRI) => {
           if (uRI.fsPath.endsWith(".git")) {
-            void window.showErrorMessage("path ends with .git");
+            console.warn(
+              'Path ends with ".git" ' +
+                "which might be wrong and causing problems."
+            );
           }
           const stats = await getStats(uRI.fsPath);
           if (stats === undefined) {
