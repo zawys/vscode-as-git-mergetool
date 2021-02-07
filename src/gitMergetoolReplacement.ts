@@ -67,14 +67,16 @@ export class GitMergetoolReplacement
     try {
       const absoluteConflictPath = nodePath.resolve(uRI.fsPath);
       const cwd = nodePath.dirname(absoluteConflictPath);
+      const gitPath = await getVSCGitPath();
+      if (isUIError(gitPath)) return gitPath;
       const situation = await this.analyzeConflictSituation(
+        cwd,
+        gitPath,
         absoluteConflictPath
       );
       if (isUIError(situation) || isMergeNotApplicableResult(situation)) {
         return false;
       }
-      const gitPath = await getVSCGitPath();
-      if (isUIError(gitPath)) return gitPath;
       const absoluteRepoRoot = await this.getAbsoluteGitRoot(gitPath, cwd);
       if (isUIError(absoluteRepoRoot)) return absoluteRepoRoot;
       const generatedFilePaths = await this.generateFilePaths(
@@ -185,13 +187,10 @@ export class GitMergetoolReplacement
   //   return gitDiffResult.split("\n").slice(0, -1);
   // }
   public async analyzeConflictSituation(
+    cwd: string,
+    gitPath: string,
     absoluteConflictPath: string
   ): Promise<MergeConflictSituation | MergeNotApplicableResult | UIError> {
-    const cwd = nodePath.dirname(absoluteConflictPath);
-    const gitPath = await getVSCGitPath();
-    if (typeof gitPath !== "string") {
-      return gitPath;
-    }
     const versions = await this.getVCSConflictState(
       gitPath,
       absoluteConflictPath,
@@ -888,14 +887,16 @@ export class GitMergetoolReplacement
   ): Promise<
     { [k in Stage]?: VCSEntry } | MergeNotApplicableResult | UIError
   > {
+    const arguments_ = ["ls-files", "-u", "--", absoluteConflictPath];
     const lsFilesResult = await execFileStdoutTrimEOL({
       filePath: gitPath,
-      arguments_: ["ls-files", "-u", "--", absoluteConflictPath],
+      arguments_,
       options: { cwd },
     });
     if (typeof lsFilesResult !== "string") {
       return createUIError(
-        `git ls-files threw: ${formatExecFileError(lsFilesResult)}`
+        `"${["git", ...arguments_].join(" ")}" ` +
+          `threw: ${formatExecFileError(lsFilesResult)}`
       );
     }
 
