@@ -13,7 +13,6 @@ import {
 } from "./registeredDocumentContentProvider";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
-import * as mergetool from "./mergetoolUI";
 import {
   createReadonlyDocumentProviderManager,
   ReadonlyDocumentProvider,
@@ -134,16 +133,6 @@ class ExtensionServicesCreator {
         readonlyDocumentProvider
       );
 
-    const mergetoolUI =
-      services.mergetoolUI ||
-      new mergetool.MergetoolUI(
-        diffLayouterManager,
-        vSCodeConfigurator,
-        temporaryFileOpenManager,
-        commonMergeCommandsManager
-      );
-    registrationOrder.push(mergetoolUI);
-
     const editorOpenManager =
       services.editorOpenManager ||
       new EditorOpenManager([
@@ -173,7 +162,6 @@ class ExtensionServicesCreator {
         arbitraryFilesMerger,
         diffLayouterManager,
         gitMergetoolReplacement,
-        mergetoolUI,
         readonlyDocumentProviderManager,
         registeredDocumentProviderManager,
         settingsAssistantCreator,
@@ -198,7 +186,6 @@ export interface ExtensionServices {
   temporarySettingsManager: TemporarySettingsManager;
   gitMergetoolReplacement: GitMergetoolReplacement;
   diffLayouterManager: DiffLayouterManager;
-  mergetoolUI: mergetool.MergetoolUI;
   arbitraryFilesMerger: ArbitraryFilesMerger;
   settingsAssistantCreator: SettingsAssistantCreator;
   temporaryFileOpenManager: TemporaryFileOpenManager;
