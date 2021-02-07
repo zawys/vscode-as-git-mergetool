@@ -40,27 +40,19 @@ export class TemporaryFileOpenManager implements EditorOpenHandler {
     const baseFileName = parseResult[1];
     const restWOGit = parseResult[3];
     const extension = parseResult[4];
-    function joinBasePath(parts: string[], scheme: string) {
-      return Uri.joinPath(baseURI, parts.join("")).with({
-        scheme,
-      });
+    function joinBasePath(scheme: string, appendedParts: string[]) {
+      return Uri.joinPath(
+        baseURI,
+        ["../", baseFileName, ...appendedParts].join("")
+      ).with({ scheme });
     }
     const readonlyScheme = this.readonlyDocumentProvider.scheme;
     return new DiffedURIs(
-      joinBasePath(["../", baseFileName, "_BASE_", restWOGit], readonlyScheme),
-      joinBasePath(
-        ["../", baseFileName, "_LOCAL_", restWOGit],
-        readonlyScheme
-      ),
-      joinBasePath(
-        ["../", baseFileName, "_REMOTE_", restWOGit],
-        readonlyScheme
-      ),
-      joinBasePath(["../", baseFileName, extension], "file"),
-      joinBasePath(
-        ["../", baseFileName, "_BACKUP_", restWOGit],
-        readonlyScheme
-      )
+      joinBasePath(readonlyScheme, ["_BASE_", restWOGit]),
+      joinBasePath(readonlyScheme, ["_LOCAL_", restWOGit]),
+      joinBasePath(readonlyScheme, ["_REMOTE_", restWOGit]),
+      joinBasePath("file", [extension]),
+      joinBasePath(readonlyScheme, ["_BACKUP_", restWOGit])
     );
   }
 
