@@ -15,7 +15,7 @@ import { ReadonlyDocumentProvider } from "./readonlyDocumentProvider";
 
 export class TemporaryFileOpenManager implements EditorOpenHandler {
   public get onDidLayoutReact(): Event<void> {
-    return this.didMergetoolReact.event;
+    return this.didLayoutReact.event;
   }
   public async handleDidOpenURI(uRI: Uri): Promise<boolean> {
     if (this.diffLayouterManager.layoutSwitchInProgress) {
@@ -28,7 +28,7 @@ export class TemporaryFileOpenManager implements EditorOpenHandler {
     if (this.diffLayouterManager.layoutSwitchInProgress) {
       return false;
     }
-    this.didMergetoolReact.fire();
+    this.didLayoutReact.fire();
     return await this.diffLayouterManager.openDiffedURIs(diffedURIs, true);
   }
 
@@ -84,5 +84,5 @@ export class TemporaryFileOpenManager implements EditorOpenHandler {
     private readonly diffLayouterManager: DiffLayouterManager,
     private readonly readonlyDocumentProvider: ReadonlyDocumentProvider
   ) {}
-  private readonly didMergetoolReact = new EventEmitter<void>();
+  private readonly didLayoutReact = new EventEmitter<void>();
 }
