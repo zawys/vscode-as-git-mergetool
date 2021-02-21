@@ -21,6 +21,10 @@ and this project adheres to
   because running the extension from the repository worked without flaws.
   So if you were disappointed, please consider creating a bug report next time.
 
+### Internal
+
+- Upgrade Husky
+
 ## [0.13.0] - 2021-02-06
 
 ### Added
