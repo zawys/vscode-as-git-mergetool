@@ -14,7 +14,7 @@ and this project adheres to
 
 ## Fixed
 
-- Unfortunately, working around the bug mentioned section 0.13.1
+- Unfortunately, working around the bug mentioned in section 0.13.1
   unveiled that the parcel bundler seems to contain more bugs.
   Thus, for a quick&dirty fix, this release is the previous release
   with almost all dependencies as in version 0.11.0.
