@@ -460,7 +460,7 @@ export class MergetoolUI {
       );
       return;
     }
-    await commands.executeCommand("open", this._mergeSituation.base);
+    await commands.executeCommand("vscode.open", this._mergeSituation.base);
   }
 
   private async continueMergetoolInner(): Promise<void> {
@@ -544,7 +544,7 @@ export class MergetoolUI {
         if (
           (await getFileType(commitMessagePath.fsPath)) === FileType.regular
         ) {
-          await commands.executeCommand("open", commitMessagePath);
+          await commands.executeCommand("vscode.open", commitMessagePath);
         }
       }
     }

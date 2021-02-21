@@ -121,5 +121,4 @@ type StorageState = { [k: string]: unknown };
 
 const origActualKey = `${extensionID}.temporarySettings.origActual`;
 const origTargetKey = `${extensionID}.temporarySettings.origTarget`;
-const resetTemporarySettingsCommandID =
-  "vscode-as-git-mergetool.resetTemporarySettings";
+const resetTemporarySettingsCommandID = `${extensionID}.resetTemporarySettings`;

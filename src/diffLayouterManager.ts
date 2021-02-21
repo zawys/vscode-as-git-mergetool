@@ -417,4 +417,4 @@ export class DiffLayouterManager implements Disposable {
 export const layoutSettingID = `${extensionID}.layout`;
 export const deactivateLayoutCommandID = `${extensionID}.deactivateLayout`;
 export const resetMergedFileCommandID = `${extensionID}.resetMergedFile`;
-export const switchLayoutCommandID = "vscode-as-git-mergetool.switchLayout";
+export const switchLayoutCommandID = `${extensionID}.switchLayout`;

@@ -85,7 +85,7 @@ export class SplitDiffLayouter implements DiffLayouter {
         editorDescription: DiffEditorDescription
       ) => {
         await commands.executeCommand(
-          "diff",
+          "vscode.diff",
           editorDescription.oldUri,
           editorDescription.newUri,
           editorDescription.title,
@@ -163,7 +163,7 @@ export class SplitDiffLayouter implements DiffLayouter {
           this.vSCodeConfigurator.get(quickLayoutDeactivationSettingID) ===
           true
         ) {
-          await commands.executeCommand("setEditorLayout", {
+          await commands.executeCommand(setEditorLayoutCommandID, {
             groups: [{}],
           });
           await this.closeTopEditorOfEachGroupIfOurs(false);
@@ -381,7 +381,7 @@ export class SplitDiffLayouter implements DiffLayouter {
       this.diffedURIs,
       zoom
     );
-    await commands.executeCommand("setEditorLayout", layoutDescription);
+    await commands.executeCommand(setEditorLayoutCommandID, layoutDescription);
     return layoutDescription;
   }
 
@@ -654,3 +654,4 @@ export type SplitDiffLayouterConfig = DiffLayouterFactoryParameters &
 export const focusPauseLengthOnCloseSettingID = `${extensionID}.workaroundFocusPauseLengthOnClose`;
 export const quickLayoutDeactivationSettingID = `${extensionID}.workaroundQuickLayoutDeactivation`;
 export const closeActiveEditorCommandID = "workbench.action.closeActiveEditor";
+export const setEditorLayoutCommandID = "vscode.setEditorLayout";
