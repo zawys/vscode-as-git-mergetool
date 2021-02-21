@@ -342,7 +342,7 @@
     "format": "prettier --ignore-path .gitignore --write .",
     "pre-commit": "ts-node ./tools/pre-commit.ts",
     "post-commit": "ts-node ./tools/post-commit.ts",
-    "check_dependencies": "yarn upgrade && yarn audit && yarn outdated",
+    "check_dependencies": "yarn audit",
     "preversion": "yarn run check_dependencies && yarn run index_is_clean",
     "sign_package": "cd packages && sha256sum vscode-as-git-mergetool-$npm_package_version.vsix > SHA256SUMS && gpg --detach-sign --sign-with=$npm_package_publisher --sign SHA256SUMS",
     "publish:github": "cd packages && hub release create --attach=vscode-as-git-mergetool-$npm_package_version.vsix --attach=SHA256SUMS --attach=SHA256SUMS.sig --message=v$npm_package_version --edit v$npm_package_version",
