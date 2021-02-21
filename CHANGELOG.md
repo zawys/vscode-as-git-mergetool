@@ -12,8 +12,8 @@ and this project adheres to
 
 ## Fixed
 
-- Fixed ascertainment of the git path.
-  This broke in 0.13.1 by a too aggressive search-and-replace.
+- Fixed ascertaining of the git path.
+  The bug was introduced in 0.13.1 by a too aggressive search-and-replace.
 
 ## [0.13.2] - 2021-02-21
 
@@ -23,7 +23,8 @@ and this project adheres to
   unveiled that the parcel bundler seems to contain more bugs.
   Thus, for a quick&dirty fix, this release is the previous release
   with almost all dependencies as in version 0.11.0.
-- Changed command IDs to be compatible with the new Insiders build.
+- Fixed command IDs.
+  The bug was introduced in 0.13.1 by a too aggressive search-and-replace.
 
 ## [0.13.1] - 2021-02-21
 
