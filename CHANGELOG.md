@@ -10,6 +10,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.13.1] - 2021-02-21
+
 ### Fixed
 
 - The extension went into an exception at runtime due to a
@@ -285,7 +287,8 @@ This will be the first version published on the
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.1
 [0.13.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.0
 [0.12.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.12.0
 [0.11.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.11.0
