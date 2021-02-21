@@ -10,6 +10,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- Fixed ascertainment of the git path.
+  This broke in 0.13.1 by a too aggressive search-and-replace.
+
 ## [0.13.2] - 2021-02-21
 
 ## Fixed
