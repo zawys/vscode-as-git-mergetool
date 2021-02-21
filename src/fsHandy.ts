@@ -2,12 +2,23 @@
 // See LICENSE file in repository root directory.
 
 import { ENOENT } from "constants";
-import * as fs from "fs";
+import {
+  access,
+  copyFile,
+  readFile,
+  realpath,
+  rename as fsRename,
+  stat,
+  Stats,
+  unlink,
+  writeFile,
+  mkdir as fsMkdir,
+} from "fs";
 import { createUIError, UIError } from "./uIError";
 
-export function getStats(path: string): Promise<fs.Stats | undefined> {
-  return new Promise<fs.Stats | undefined>((resolve) => {
-    fs.stat(path, (error, stats) => {
+export function getStats(path: string): Promise<Stats | undefined> {
+  return new Promise<Stats | undefined>((resolve) => {
+    stat(path, (error, stats) => {
       resolve(error ? undefined : stats);
     });
   });
@@ -15,7 +26,7 @@ export function getStats(path: string): Promise<fs.Stats | undefined> {
 
 export function getRealPath(path: string): Promise<string | undefined> {
   return new Promise<string | undefined>((resolve) => {
-    fs.realpath(path, (error, resolvedPath) => {
+    realpath(path, (error, resolvedPath) => {
       resolve(error ? undefined : resolvedPath);
     });
   });
@@ -37,9 +48,9 @@ export async function getFileType(
 ): Promise<FileType | undefined> {
   const statResult = await new Promise<{
     error: null | NodeJS.ErrnoException;
-    stats?: fs.Stats;
+    stats?: Stats;
   }>((resolve) => {
-    fs.stat(path, (error, stats) => {
+    stat(path, (error, stats) => {
       resolve({ error, stats });
     });
   });
@@ -72,13 +83,13 @@ export async function getFileType(
 
 export function testFile(path: string, mode: number): Promise<boolean> {
   return new Promise((resolve) => {
-    fs.access(path, mode, (error) => resolve(!error));
+    access(path, mode, (error) => resolve(!error));
   });
 }
 
 export function getContents(path: string): Promise<string | undefined> {
   return new Promise<string | undefined>((resolve) => {
-    fs.readFile(path, { encoding: "utf-8" }, (error, data) => {
+    readFile(path, { encoding: "utf-8" }, (error, data) => {
       resolve(error ? undefined : data);
     });
   });
@@ -89,7 +100,7 @@ export function setContents(
   contents: string
 ): Promise<UIError | undefined> {
   return new Promise<UIError | undefined>((resolve) => {
-    fs.writeFile(path, contents, (error) => {
+    writeFile(path, contents, (error) => {
       resolve(
         error !== null ? createUIError(formatErrnoException(error)) : undefined
       );
@@ -129,7 +140,7 @@ export function copy(
   destinationPath: string
 ): Promise<UIError | undefined> {
   return new Promise<UIError | undefined>((resolve) => {
-    fs.copyFile(sourcePath, destinationPath, (error) => {
+    copyFile(sourcePath, destinationPath, (error) => {
       resolve(
         error === null ? undefined : createUIError(formatErrnoException(error))
       );
@@ -142,7 +153,7 @@ export function rename(
   destinationPath: string
 ): Promise<UIError | void> {
   return new Promise<UIError | void>((resolve) => {
-    fs.rename(sourcePath, destinationPath, (error) => {
+    fsRename(sourcePath, destinationPath, (error) => {
       resolve(
         error === null
           ? undefined
@@ -158,7 +169,7 @@ export function rename(
 
 export function remove(path: string): Promise<UIError | undefined> {
   return new Promise<UIError | undefined>((resolve) => {
-    fs.unlink(path, (error) => {
+    unlink(path, (error) => {
       resolve(
         error === null ? undefined : createUIError(formatErrnoException(error))
       );
@@ -172,7 +183,7 @@ export function mkdir(
   mode?: string | number
 ): Promise<UIError | void> {
   return new Promise<UIError | undefined>((resolve) => {
-    fs.mkdir(
+    fsMkdir(
       path,
       {
         recursive,

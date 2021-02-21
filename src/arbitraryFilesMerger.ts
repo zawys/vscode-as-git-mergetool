@@ -1,7 +1,7 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import * as vscode from "vscode";
+import { commands, Disposable, Uri, window } from "vscode";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffFileSelector } from "./diffFileSelector";
 import { DiffLayouterManager } from "./diffLayouterManager";
@@ -16,7 +16,7 @@ import { isUIError } from "./uIError";
 export class ArbitraryFilesMerger implements RegisterableService {
   public register(): void {
     this.disposables = [
-      vscode.commands.registerCommand(
+      commands.registerCommand(
         mergeArbitraryFilesCommandID,
         this.mergeArbitraryFiles.bind(this)
       ),
@@ -47,7 +47,7 @@ export class ArbitraryFilesMerger implements RegisterableService {
         merged: mergedPath,
       });
       if (isUIError(mergeFileResult)) {
-        void vscode.window.showErrorMessage(mergeFileResult.message);
+        void window.showErrorMessage(mergeFileResult.message);
         return false;
       }
     }
@@ -61,7 +61,7 @@ export class ArbitraryFilesMerger implements RegisterableService {
       this.readonlyDocumentProvider.readonlyFileURI(
         selectionResult.remote.fsPath
       ),
-      vscode.Uri.file(selectionResult.merged.fsPath)
+      Uri.file(selectionResult.merged.fsPath)
     );
     return await this.diffLayouterManager.openDiffedURIs(diffedURIs, false);
   }
@@ -72,7 +72,7 @@ export class ArbitraryFilesMerger implements RegisterableService {
     private diffFileSelectorLazy = new Lazy(() => new DiffFileSelector())
   ) {}
 
-  private disposables: vscode.Disposable[] = [];
+  private disposables: Disposable[] = [];
 }
 
 const mergeArbitraryFilesCommandID = `${extensionID}.mergeArbitraryFiles`;

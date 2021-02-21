@@ -22,6 +22,31 @@ and this project adheres to
   but that should hopefully be not noticeable.
   It should be slightly more stable now.
 
+## [0.13.2] - 2021-02-21
+
+## Fixed
+
+- Unfortunately, working around the bug mentioned in section 0.13.1
+  unveiled that the parcel bundler seems to contain more bugs.
+  Thus, for a quick&dirty fix, this release is the previous release
+  with almost all dependencies as in version 0.11.0.
+- Changed command IDs to be compatible with the new Insiders build.
+
+## [0.13.1] - 2021-02-21
+
+### Fixed
+
+- The extension went into an exception at runtime due to a
+  [bug in the Parcel bundler](https://github.com/parcel-bundler/parcel/issues/5862).
+  This prevented the extension from loading entirely.
+  I did not notice this until I tried to use my extension myself
+  because running the extension from the repository worked without flaws.
+  So if you were disappointed, please consider creating a bug report next time.
+
+### Internal
+
+- Upgrade Husky
+
 ## [0.13.0] - 2021-02-06
 
 ### Added
@@ -288,7 +313,9 @@ This will be the first version published on the
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.2...HEAD
+[0.13.2]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.2
+[0.13.1]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.1
 [0.13.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.0
 [0.12.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.12.0
 [0.11.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.11.0

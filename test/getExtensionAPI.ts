@@ -1,12 +1,12 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import * as vscode from "vscode";
+import { extensions } from "vscode";
 import { ExtensionAPI } from "../src/extension";
 import { fullExtensionID } from "../src/ids";
 
 export async function getExtensionAPI(): Promise<ExtensionAPI> {
-  const extension = vscode.extensions.getExtension(fullExtensionID);
+  const extension = extensions.getExtension(fullExtensionID);
   if (extension === undefined) {
     throw new Error("extension not found");
   }

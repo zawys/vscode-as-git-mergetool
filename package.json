@@ -2,7 +2,7 @@
   "name": "vscode-as-git-mergetool",
   "displayName": "VS Code as Git Mergetool",
   "description": "Diff editor layouts for common-base merging",
-  "version": "0.13.0",
+  "version": "0.13.2",
   "engines": {
     "vscode": "^1.48.0"
   },
@@ -342,21 +342,18 @@
     "format": "prettier --ignore-path .gitignore --write .",
     "pre-commit": "ts-node ./tools/pre-commit.ts",
     "post-commit": "ts-node ./tools/post-commit.ts",
-    "check_dependencies": "yarn upgrade && yarn audit && yarn outdated",
+    "check_dependencies": "yarn audit",
     "preversion": "yarn run check_dependencies && yarn run index_is_clean",
     "sign_package": "cd packages && sha256sum vscode-as-git-mergetool-$npm_package_version.vsix > SHA256SUMS && gpg --detach-sign --sign-with=$npm_package_publisher --sign SHA256SUMS",
     "publish:github": "cd packages && hub release create --attach=vscode-as-git-mergetool-$npm_package_version.vsix --attach=SHA256SUMS --attach=SHA256SUMS.sig --message=v$npm_package_version --edit v$npm_package_version",
     "publish:marketplace": "vsce publish --packagePath packages/vscode-as-git-mergetool-$npm_package_version.vsix",
-    "postversion": "yarn run build && yarn run sign_package && git push && git push --tags && yarn run publish:github && yarn run publish:marketplace"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn run pre-commit",
-      "post-commit": "yarn run post-commit"
-    }
+    "postversion": "yarn run build && yarn run sign_package && git push && git push --tags && yarn run publish:github && yarn run publish:marketplace",
+    "postinstall": "husky install",
+    "prepublishOnly": "pinst --disable",
+    "postpublish": "pinst --enable"
   },
   "devDependencies": {
-    "@parcel/transformer-typescript-tsc": "^2.0.0-nightly.576",
+    "@parcel/transformer-typescript-tsc": "^2.0.0-nightly.487",
     "@types/diff": "^5.0.0",
     "@types/glob": "^7.1.3",
     "@types/mocha": "^8.0.3",
@@ -369,16 +366,17 @@
     "cpy-cli": "^3.1.1",
     "dotenv": "^8.2.0",
     "eslint": "^7.8.0",
-    "eslint-config-prettier": "^7.1.0",
+    "eslint-config-prettier": "^8.0.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-header": "^3.1.0",
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-unicorn": "^27.0.0",
+    "eslint-plugin-unicorn": "^28.0.0",
     "glob": "^7.1.6",
-    "husky": "^4.2.5",
+    "husky": "^5.0.0",
     "mocha": "^8.1.3",
     "parcel": "^2.0.0-beta.1",
+    "pinst": "^2.1.4",
     "prettier": "^2.1.1",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.2",

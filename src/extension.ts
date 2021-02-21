@@ -2,7 +2,7 @@
 // See LICENSE file in repository root directory.
 
 import "regenerator-runtime";
-import * as vscode from "vscode";
+import { ExtensionContext } from "vscode";
 import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { DocumentProviderManager } from "./documentProviderManager";
@@ -30,7 +30,7 @@ import { ManualMergeProcess } from "./manualMergeProcess";
 let extensionAPI: ExtensionAPI | undefined;
 
 export async function activate(
-  context: vscode.ExtensionContext
+  context: ExtensionContext
 ): Promise<ExtensionAPI> {
   defaultExtensionContextManager.value = context;
   extensionAPI = new ExtensionAPI(

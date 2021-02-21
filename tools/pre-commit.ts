@@ -1,7 +1,7 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import * as fs from "fs";
+import { appendFileSync } from "fs";
 import { asyncWhich, runAsync, runCommand } from "./util";
 
 void runAsync(async () => {
@@ -19,7 +19,7 @@ void runAsync(async () => {
       return 1;
     }
 
-    fs.appendFileSync(".precommit_stash_exists", "");
+    appendFileSync(".precommit_stash_exists", "");
   }
 
   if ((await runCommand(yarn, ["run", "test"])) !== 0) {

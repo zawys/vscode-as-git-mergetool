@@ -1,10 +1,10 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
+import { execFileSync, spawnSync } from "child_process";
+import { existsSync, unlinkSync } from "fs";
 import path from "path";
 import { runTests } from "vscode-test";
-import * as cp from "child_process";
-import * as fs from "fs";
 import { whichPromise } from "../src/getPaths";
 
 /**
@@ -30,10 +30,10 @@ export async function runSystemTest(
     const environmentPath = path.resolve(filesPath, "environment");
     const workspaceDirectory = path.resolve(environmentPath, "workspace");
     const userDataDirectory = path.resolve(environmentPath, "user_data_dir");
-    if (fs.existsSync(userDataDirectory)) {
+    if (existsSync(userDataDirectory)) {
       launchArguments.push(`--user-data-dir=${userDataDirectory}`);
     }
-    if (fs.existsSync(workspaceDirectory)) {
+    if (existsSync(workspaceDirectory)) {
       launchArguments.push(workspaceDirectory);
     }
   }
@@ -109,18 +109,16 @@ const unzip = unwrappedWhich("unzip");
 export async function unpackToTemporaryDirectory(
   zipPath: string
 ): Promise<string> {
-  const temporaryDirectoryPath = cp
-    .spawnSync(await mktemp, ["-d"], {
-      encoding: "utf-8",
-    })
-    .stdout.trimEnd();
+  const temporaryDirectoryPath = spawnSync(await mktemp, ["-d"], {
+    encoding: "utf-8",
+  }).stdout.trimEnd();
   console.log(`unzipped at: ${temporaryDirectoryPath}`);
-  cp.execFileSync(await unzip, [zipPath, "-d", temporaryDirectoryPath]);
+  execFileSync(await unzip, [zipPath, "-d", temporaryDirectoryPath]);
   return temporaryDirectoryPath;
 }
 
 export function deleteTemporaryDirectory(path: string): void {
-  fs.unlinkSync(path);
+  unlinkSync(path);
 }
 
 export function isContainedIn(

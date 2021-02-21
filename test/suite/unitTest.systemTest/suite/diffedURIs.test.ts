@@ -3,11 +3,10 @@
 
 import assert from "assert";
 import { Uri } from "vscode";
-
-import * as diffedURIs from "../../../../src/diffedURIs";
+import { parseBaseFileNameRE } from "../../../../src/diffedURIs";
 
 suite("parseBaseFileNameRE", () => {
-  const sut: RegExp = diffedURIs.parseBaseFileNameRE;
+  const sut: RegExp = parseBaseFileNameRE;
 
   test("parses base file URI correctly", () => {
     const input = Uri.file("/example/changed_BASE_13546.xml");

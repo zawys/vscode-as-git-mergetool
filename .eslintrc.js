@@ -23,8 +23,7 @@ module.exports = {
     "plugin:promise/recommended",
     "plugin:unicorn/recommended",
     "plugin:prettier/recommended",
-    "prettier/@typescript-eslint",
-    "prettier/standard",
+    "prettier",
   ],
   rules: {
     "@typescript-eslint/naming-convention": "error",

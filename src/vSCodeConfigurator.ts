@@ -1,12 +1,12 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import * as vscode from "vscode";
+import { ConfigurationTarget, workspace } from "vscode";
 
 export class VSCodeConfigurator {
   public get(section: string): unknown | undefined {
     const [parent, key] = separateSmallestKey(section);
-    const result = vscode.workspace.getConfiguration(parent).get(key);
+    const result = workspace.getConfiguration(parent).get(key);
     return result;
   }
 
@@ -17,22 +17,20 @@ export class VSCodeConfigurator {
   ): Promise<void> {
     const [parent, key] = separateSmallestKey(section);
     global ||=
-      vscode.workspace.workspaceFolders === undefined ||
-      vscode.workspace.workspaceFolders.length === 0;
-    await vscode.workspace
+      workspace.workspaceFolders === undefined ||
+      workspace.workspaceFolders.length === 0;
+    await workspace
       .getConfiguration(parent)
       .update(
         key,
         value,
-        global
-          ? vscode.ConfigurationTarget.Global
-          : vscode.ConfigurationTarget.Workspace
+        global ? ConfigurationTarget.Global : ConfigurationTarget.Workspace
       );
   }
 
   public inspect(section: string): InspectResult<unknown> | undefined {
     const [parent, key] = separateSmallestKey(section);
-    return vscode.workspace.getConfiguration(parent).inspect(key);
+    return workspace.getConfiguration(parent).inspect(key);
   }
 }
 

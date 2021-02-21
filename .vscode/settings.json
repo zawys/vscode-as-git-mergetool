@@ -30,6 +30,8 @@
     "mergetool",
     "mktemp",
     "overridable",
+    "pinst",
+    "postpublish",
     "postversion",
     "precommit",
     "preversion",
