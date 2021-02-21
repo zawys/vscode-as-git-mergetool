@@ -10,6 +10,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.13.2] - 2021-02-21
+
 ## Fixed
 
 - Unfortunately, working around the bug mentioned section 0.13.1
@@ -299,7 +301,8 @@ This will be the first version published on the
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.2...HEAD
+[0.13.2]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.2
 [0.13.1]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.1
 [0.13.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.0
 [0.12.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.12.0
