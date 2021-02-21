@@ -10,6 +10,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- The extension went into an exception at runtime due to a
+  [bug in the Parcel bundler](https://github.com/parcel-bundler/parcel/issues/5862).
+  This prevented the extension from loading entirely.
+  I did not notice this until I tried to use my extension myself
+  because running the extension from the repository worked without flaws.
+  So if you were disappointed, please consider creating a bug report next time.
+
 ## [0.13.0] - 2021-02-06
 
 ### Added

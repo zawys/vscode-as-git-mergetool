@@ -1,6 +1,19 @@
-import * as diff from "diff";
-import * as vscode from "vscode";
-import { Disposable } from "vscode";
+import { ArrayChange, diffArrays } from "diff";
+import {
+  Disposable,
+  EndOfLine,
+  Position,
+  Range,
+  Selection,
+  TextDocument,
+  TextDocumentChangeEvent,
+  TextEditor,
+  TextEditorRevealType,
+  TextEditorSelectionChangeEvent,
+  TextEditorVisibleRangesChangeEvent,
+  window,
+  workspace,
+} from "vscode";
 import { getStats } from "./fsHandy";
 import { extensionID } from "./ids";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
@@ -13,7 +26,7 @@ export class ScrollSynchronizer implements Disposable {
   }
 
   public static async create(
-    editors: vscode.TextEditor[],
+    editors: TextEditor[],
     vSCodeConfigurator: VSCodeConfigurator,
     synchronizationSourceOnStartIndex?: number,
     syncMethod?: ScrollSyncMethod,
@@ -57,7 +70,7 @@ export class ScrollSynchronizer implements Disposable {
   }
 
   private readonly disposables: Disposable[] = [];
-  private readonly documents: vscode.TextDocument[];
+  private readonly documents: TextDocument[];
   /**
    * When was the respective `scrollIgnoreCounts[index]` updated last?
    */
@@ -76,7 +89,7 @@ export class ScrollSynchronizer implements Disposable {
   private readonly mappedWeight1: number;
 
   private constructor(
-    private readonly editors: vscode.TextEditor[],
+    private readonly editors: TextEditor[],
     private readonly scrollIgnoreCounts: number[],
     private readonly syncMethod: ScrollSyncMethod,
     private surroundingLines: number,
@@ -102,24 +115,24 @@ export class ScrollSynchronizer implements Disposable {
     this.mappedWeight0 = 1 - this.mappedWeight1;
 
     this.disposables.push(
-      vscode.window.onDidChangeTextEditorVisibleRanges(
+      window.onDidChangeTextEditorVisibleRanges(
         this.handleDidChangeTextEditorVisibleRanges.bind(this)
       ),
-      vscode.workspace.onDidChangeTextDocument(
+      workspace.onDidChangeTextDocument(
         this.handleDidChangeTextDocument.bind(this)
       ),
-      vscode.window.onDidChangeTextEditorSelection(
+      window.onDidChangeTextEditorSelection(
         this.handleDidChangeTextEditorSelection.bind(this)
       )
     );
   }
 
   private async syncVisibleRanges(
-    sourceEditor: vscode.TextEditor,
+    sourceEditor: TextEditor,
     sourceEditorIndex: number
   ): Promise<void> {
     if (this.editors[sourceEditorIndex] !== sourceEditor) {
-      void vscode.window.showErrorMessage("internal assumption violated");
+      void window.showErrorMessage("internal assumption violated");
       return;
     }
 
@@ -141,8 +154,8 @@ export class ScrollSynchronizer implements Disposable {
     }
     const revealType =
       this.syncMethod === ScrollSyncMethod.top
-        ? vscode.TextEditorRevealType.AtTop
-        : vscode.TextEditorRevealType.InCenter;
+        ? TextEditorRevealType.AtTop
+        : TextEditorRevealType.InCenter;
     for (
       let targetEditorIndex = 0;
       targetEditorIndex < this.editors.length;
@@ -153,7 +166,7 @@ export class ScrollSynchronizer implements Disposable {
       }
       const targetEditor = this.editors[targetEditorIndex];
       const targetMaxLine = targetEditor.document.lineCount - 1;
-      let targetRange: vscode.Range | undefined;
+      let targetRange: Range | undefined;
 
       if (this.syncMethod === ScrollSyncMethod.centeredInterval) {
         const mappedSourceStartPos =
@@ -186,15 +199,15 @@ export class ScrollSynchronizer implements Disposable {
 
           const adaptedStartPos = rescaledStartPos + this.centerPosCorrection;
           const adaptedEndPos = rescaledEndPos + this.centerPosCorrection;
-          targetRange = new vscode.Range(
-            new vscode.Position(
+          targetRange = new Range(
+            new Position(
               Math.min(
                 targetMaxLine,
                 Math.max(0, Math.round(adaptedStartPos))
               ),
               0
             ),
-            new vscode.Position(
+            new Position(
               Math.min(
                 targetMaxLine,
                 Math.max(0, Math.round(adaptedEndPos - 1))
@@ -243,8 +256,8 @@ export class ScrollSynchronizer implements Disposable {
             continue;
           }
         }
-        const targetVSCPosition = new vscode.Position(targetLine, 0);
-        targetRange = new vscode.Range(targetVSCPosition, targetVSCPosition);
+        const targetVSCPosition = new Position(targetLine, 0);
+        targetRange = new Range(targetVSCPosition, targetVSCPosition);
       }
       this.increaseIgnore(
         this.scrollIgnoreCounts,
@@ -255,7 +268,7 @@ export class ScrollSynchronizer implements Disposable {
     }
   }
 
-  private getScrollStartAndEndPos(ranges: vscode.Range[]): [number, number] {
+  private getScrollStartAndEndPos(ranges: Range[]): [number, number] {
     let sourceStartPos = Number.MAX_SAFE_INTEGER;
     let sourceEndPos = 0;
     for (const range of ranges) {
@@ -312,7 +325,7 @@ export class ScrollSynchronizer implements Disposable {
 
   private async handleDidChangeTextEditorVisibleRanges({
     textEditor /*, visibleRanges */,
-  }: vscode.TextEditorVisibleRangesChangeEvent): Promise<void> {
+  }: TextEditorVisibleRangesChangeEvent): Promise<void> {
     const editorIndex = this.editors.indexOf(textEditor);
     if (editorIndex === -1) {
       return;
@@ -329,7 +342,7 @@ export class ScrollSynchronizer implements Disposable {
     await this.syncVisibleRanges(textEditor, editorIndex);
   }
 
-  private handleDidChangeTextDocument(event: vscode.TextDocumentChangeEvent) {
+  private handleDidChangeTextDocument(event: TextDocumentChangeEvent) {
     const editorCount = this.editors.length;
     for (let fromIndex = 0; fromIndex < editorCount; fromIndex++) {
       if (this.documents[fromIndex] !== event.document) {
@@ -349,7 +362,7 @@ export class ScrollSynchronizer implements Disposable {
   }
 
   private async handleDidChangeTextEditorSelection(
-    event: vscode.TextEditorSelectionChangeEvent
+    event: TextEditorSelectionChangeEvent
   ): Promise<void> {
     const sourceEditor = event.textEditor;
     const sourceEditorIndex = this.editors.indexOf(sourceEditor);
@@ -385,7 +398,7 @@ export class ScrollSynchronizer implements Disposable {
         }
         const mappedLine = Math.floor(mappedPosition);
         const character = sourceEditor.selection.end.character;
-        targetEditor.selection = new vscode.Selection(
+        targetEditor.selection = new Selection(
           mappedLine,
           character,
           mappedLine,
@@ -402,7 +415,7 @@ export class ScrollSynchronizer implements Disposable {
 
   private async getLines(
     editorIndex: number,
-    document: vscode.TextDocument
+    document: TextDocument
   ): Promise<string[] | undefined> {
     let cacheValue = this.editorLinesCache[editorIndex];
     if (cacheValue === undefined) {
@@ -502,8 +515,8 @@ export const scrollSynchronizationMethodMap: {
   interval: ScrollSyncMethod.centeredInterval,
 };
 
-export function eolToString(eol: vscode.EndOfLine): string {
-  return eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
+export function eolToString(eol: EndOfLine): string {
+  return eol === EndOfLine.LF ? "\n" : "\r\n";
 }
 
 export class DiffLineMapper implements LineMapper {
@@ -511,14 +524,14 @@ export class DiffLineMapper implements LineMapper {
     oldLines: string[],
     newLines: string[]
   ): DiffLineMapper {
-    const linesDiff = diff.diffArrays(oldLines, newLines);
+    const linesDiff = diffArrays(oldLines, newLines);
     const mapping: MappingEntry[] = [];
     let currentOldIndex = 0;
     let currentNewIndex = 0;
     let noDeltaEnds = true;
     let commonStarts = false;
     let partIndex = 0;
-    let part: diff.ArrayChange<string> | undefined;
+    let part: ArrayChange<string> | undefined;
     // eslint-disable-next-line no-constant-condition
     while (true) {
       let push: boolean;

@@ -1,6 +1,6 @@
-import * as fs from "fs";
+import { writeFile } from "fs";
 import path from "path";
-import * as vscode from "vscode";
+import { commands, Disposable, Uri, window } from "vscode";
 import { execFilePromise } from "./childProcessHandy";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffFileSelector } from "./diffFileSelector";
@@ -10,10 +10,10 @@ import { extensionID } from "./ids";
 import { Lazy } from "./lazy";
 import { readonlyFileURI } from "./readonlyDocumentProvider";
 
-export class ArbitraryFilesMerger implements vscode.Disposable {
+export class ArbitraryFilesMerger implements Disposable {
   public register(): void {
     this.disposables = [
-      vscode.commands.registerCommand(
+      commands.registerCommand(
         mergeArbitraryFilesCommandID,
         this.mergeArbitraryFiles.bind(this)
       ),
@@ -57,14 +57,14 @@ export class ArbitraryFilesMerger implements vscode.Disposable {
         error !== null &&
         (error.code === undefined || error.code < 0 || error.code > 127)
       ) {
-        void vscode.window.showErrorMessage(
+        void window.showErrorMessage(
           `Error when merging files by Git: ${gitResult.stderr}.`
         );
         return false;
       }
       if (
         !(await new Promise((resolve) =>
-          fs.writeFile(mergedPath, gitResult.stdout, (error) =>
+          writeFile(mergedPath, gitResult.stdout, (error) =>
             resolve(error === null)
           )
         ))
@@ -76,7 +76,7 @@ export class ArbitraryFilesMerger implements vscode.Disposable {
       readonlyFileURI(selectionResult.base.fsPath),
       readonlyFileURI(selectionResult.local.fsPath),
       readonlyFileURI(selectionResult.remote.fsPath),
-      vscode.Uri.file(selectionResult.merged.fsPath)
+      Uri.file(selectionResult.merged.fsPath)
     );
     return await this.diffLayouterManager.openDiffedURIs(diffedURIs);
   }
@@ -86,7 +86,7 @@ export class ArbitraryFilesMerger implements vscode.Disposable {
     private diffFileSelectorLazy = new Lazy(() => new DiffFileSelector())
   ) {}
 
-  private disposables: vscode.Disposable[] = [];
+  private disposables: Disposable[] = [];
 }
 
 const mergeArbitraryFilesCommandID = `${extensionID}.mergeArbitraryFiles`;

@@ -1,6 +1,11 @@
+import {
+  spawn,
+  SpawnOptions,
+  spawnSync,
+  SpawnSyncReturns,
+} from "child_process";
 import { exit } from "process";
 import which from "which";
-import * as cp from "child_process";
 
 export async function runCommand(
   command: string,
@@ -8,7 +13,7 @@ export async function runCommand(
 ): Promise<number | null> {
   return await new Promise((resolve) => {
     console.log(`+${command} ${arguments_.join(" ")}`);
-    const process = cp.spawn(command, arguments_, {
+    const process = spawn(command, arguments_, {
       stdio: "inherit",
     });
     process.on("exit", (code) => {
@@ -20,10 +25,10 @@ export async function runCommand(
 export function spawnAndCapture(
   file: string,
   arguments_: string[],
-  options?: cp.SpawnOptions
-): cp.SpawnSyncReturns<string> {
+  options?: SpawnOptions
+): SpawnSyncReturns<string> {
   console.log(`+${file} ${arguments_.join(" ")}`);
-  const child = cp.spawnSync(file, arguments_, {
+  const child = spawnSync(file, arguments_, {
     ...options,
     stdio: "pipe",
     encoding: "utf-8",

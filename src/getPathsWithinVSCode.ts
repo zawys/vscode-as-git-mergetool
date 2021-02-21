@@ -1,9 +1,9 @@
-import * as vscode from "vscode";
+import { extensions, Uri, window, workspace } from "vscode";
 import { GitExtension } from "./@types/git";
 import { getGitPath } from "./getPaths";
 
 const pathSeparator = "/";
-function uriStartsWith(parent: vscode.Uri, child: vscode.Uri): boolean {
+function uriStartsWith(parent: Uri, child: Uri): boolean {
   if (parent.authority !== child.authority) {
     return false;
   }
@@ -17,28 +17,28 @@ function uriStartsWith(parent: vscode.Uri, child: vscode.Uri): boolean {
   return true;
 }
 
-export function getWorkingDirectoryUri(): vscode.Uri | undefined {
-  if (vscode.window.activeTextEditor !== undefined) {
-    const textEditorUri = vscode.window.activeTextEditor.document.uri;
-    for (const folder of vscode.workspace.workspaceFolders || []) {
+export function getWorkingDirectoryUri(): Uri | undefined {
+  if (window.activeTextEditor !== undefined) {
+    const textEditorUri = window.activeTextEditor.document.uri;
+    for (const folder of workspace.workspaceFolders || []) {
       if (uriStartsWith(folder.uri, textEditorUri)) {
         return folder.uri;
       }
     }
   }
   if (
-    vscode.workspace.workspaceFolders === undefined ||
-    vscode.workspace.workspaceFolders.length !== 1
+    workspace.workspaceFolders === undefined ||
+    workspace.workspaceFolders.length !== 1
   ) {
     return undefined;
   }
-  return vscode.workspace.workspaceFolders[0].uri;
+  return workspace.workspaceFolders[0].uri;
 }
 
-export function getWorkingDirectoryUriInteractively(): vscode.Uri | undefined {
+export function getWorkingDirectoryUriInteractively(): Uri | undefined {
   const result = getWorkingDirectoryUri();
   if (result === undefined) {
-    void vscode.window.showErrorMessage(
+    void window.showErrorMessage(
       "You need need to have exactly one workspace opened."
     );
   }
@@ -52,8 +52,8 @@ export function getVSCGitPath(): Promise<string | undefined> {
   return vSCGitPathPromise;
 }
 async function getVSCGitPathInner(): Promise<string | undefined> {
-  const gitExtension = await vscode.extensions
-    .getExtension<GitExtension>("vscode.git")
+  const gitExtension = await extensions
+    .getExtension<GitExtension>("git")
     ?.activate();
   if (gitExtension !== undefined && gitExtension.enabled) {
     const api = gitExtension.getAPI(1);
@@ -68,6 +68,6 @@ export async function getVSCGitPathInteractively(): Promise<
   if (gitPath) {
     return gitPath;
   }
-  void vscode.window.showErrorMessage("Could not find Git binary.");
+  void window.showErrorMessage("Could not find Git binary.");
   return undefined;
 }

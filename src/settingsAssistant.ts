@@ -1,12 +1,12 @@
-import * as cp from "child_process";
-import * as vscode from "vscode";
-import { extensionID } from "./ids";
+import { execFile } from "child_process";
+import { MessageItem, Uri, window } from "vscode";
+import { formatExecFileError } from "./childProcessHandy";
 import {
   getVSCGitPathInteractively,
   getWorkingDirectoryUri,
 } from "./getPathsWithinVSCode";
+import { extensionID } from "./ids";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
-import { formatExecFileError } from "./childProcessHandy";
 
 export const settingsAssistantOnStartupID = `${extensionID}.settingsAssistantOnStartup`;
 
@@ -27,7 +27,7 @@ export class SettingsAssistant {
       const nowItem = { title: "Now" };
       const newerItem = { title: "Never" };
       const postponeItem = { title: "Postpone to next startup" };
-      const result = await vscode.window.showInformationMessage(
+      const result = await window.showInformationMessage(
         "Some current settings will not work well with VS Code as merge tool. When do want to change them using dialogs?",
         nowItem,
         newerItem,
@@ -143,7 +143,7 @@ export class SettingsAssistant {
   private readonly restartItem = new Option("Restart");
 
   private ask(question: QuestionData): Thenable<Option | undefined> {
-    return vscode.window.showInformationMessage(
+    return window.showInformationMessage(
       question.question,
       ...question.options
     );
@@ -216,7 +216,7 @@ class GitOptionAssistant implements OptionAssistant {
 export class GitConfigurator {
   public get(key: string): Promise<string | undefined> {
     return new Promise((resolve) => {
-      cp.execFile(
+      execFile(
         this.gitPath,
         ["config", "--get", key],
         { windowsHide: true, timeout: 5000 },
@@ -241,7 +241,7 @@ export class GitConfigurator {
       const arguments_ = global
         ? ["config", "--global", key, value]
         : ["config", key, value];
-      cp.execFile(
+      execFile(
         this.gitPath,
         arguments_,
         { cwd: this.workingDirectory.fsPath },
@@ -261,7 +261,7 @@ export class GitConfigurator {
 
   constructor(
     private readonly gitPath: string,
-    private readonly workingDirectory: vscode.Uri
+    private readonly workingDirectory: Uri
   ) {}
 }
 
@@ -332,7 +332,7 @@ export class SettingsAssistantCreator {
     try {
       await process.launch();
     } catch (error) {
-      void vscode.window.showErrorMessage(
+      void window.showErrorMessage(
         `Error on running the settings assistant: ${JSON.stringify(error)}`
       );
     }
@@ -341,7 +341,7 @@ export class SettingsAssistantCreator {
   constructor(private readonly vSCodeConfigurator: VSCodeConfigurator) {}
 }
 
-class Option implements vscode.MessageItem {
+class Option implements MessageItem {
   constructor(
     public readonly title: string,
     public readonly value?: unknown

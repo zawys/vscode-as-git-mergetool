@@ -1,5 +1,16 @@
-import * as fs from "fs";
-import * as vscode from "vscode";
+import { readFile } from "fs";
+import {
+  Disposable,
+  window,
+  commands,
+  Event,
+  EventEmitter,
+  StatusBarItem,
+  StatusBarAlignment,
+  TextEditor,
+  Uri,
+  MessageItem,
+} from "vscode";
 import { DiffedURIs, filesExist, getDiffedURIs } from "./diffedURIs";
 import { copy } from "./fsHandy";
 import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
@@ -23,32 +34,32 @@ import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { Zoom, ZoomManager } from "./zoom";
 
-export class DiffLayouterManager implements vscode.Disposable {
+export class DiffLayouterManager implements Disposable {
   public async register(): Promise<void> {
     for (const disposabe of this.disposables) {
       disposabe.dispose();
     }
     this.disposables = [
-      vscode.window.onDidChangeVisibleTextEditors(
+      window.onDidChangeVisibleTextEditors(
         this.handleDidChangeVisibleTextEditors.bind(this)
       ),
-      vscode.commands.registerCommand(
+      commands.registerCommand(
         focusPreviousConflictCommandID,
         this.focusMergeConflictInteractively.bind(this, SearchType.previous)
       ),
-      vscode.commands.registerCommand(
+      commands.registerCommand(
         focusNextConflictCommandID,
         this.focusMergeConflictInteractively.bind(this, SearchType.next)
       ),
-      vscode.commands.registerCommand(
+      commands.registerCommand(
         deactivateLayoutCommandID,
         this.deactivateLayout.bind(this)
       ),
-      vscode.commands.registerCommand(
+      commands.registerCommand(
         resetMergedFileCommandID,
         this.resetMergedFile.bind(this)
       ),
-      vscode.commands.registerCommand(
+      commands.registerCommand(
         switchLayoutCommandID,
         this.switchLayout.bind(this)
       ),
@@ -56,7 +67,7 @@ export class DiffLayouterManager implements vscode.Disposable {
         this.handleWasZoomRequested.bind(this)
       ),
     ];
-    for (const editor of vscode.window.visibleTextEditors) {
+    for (const editor of window.visibleTextEditors) {
       if (await this.handleDidOpenURI(editor.document.uri)) {
         return;
       }
@@ -90,21 +101,21 @@ export class DiffLayouterManager implements vscode.Disposable {
   ): undefined | boolean {
     const result = this.focusMergeConflict(type);
     if (result === undefined) {
-      void vscode.window.showErrorMessage("No diff layout active.");
+      void window.showErrorMessage("No diff layout active.");
     } else if (result === false) {
-      void vscode.window.showInformationMessage("No merge conflict found.");
+      void window.showInformationMessage("No merge conflict found.");
     }
     return result;
   }
 
-  public get onDidLayoutDeactivate(): vscode.Event<DiffLayouter> {
+  public get onDidLayoutDeactivate(): Event<DiffLayouter> {
     return this.didLayoutDeactivate.event;
   }
 
-  public get onDidLayoutActivate(): vscode.Event<DiffLayouter> {
+  public get onDidLayoutActivate(): Event<DiffLayouter> {
     return this.didLayoutActivate.event;
   }
-  public get onDidLayoutReact(): vscode.Event<void> {
+  public get onDidLayoutReact(): Event<void> {
     return this.didMergetoolReact.event;
   }
 
@@ -125,17 +136,17 @@ export class DiffLayouterManager implements vscode.Disposable {
   public async resetMergedFile(): Promise<void> {
     const diffedURIs = this.diffedURIs;
     if (this.layouter?.isActive === undefined || diffedURIs === undefined) {
-      void vscode.window.showErrorMessage(
+      void window.showErrorMessage(
         "Reset not applicable; no merge situation opened."
       );
       return;
     }
     if (diffedURIs?.backup === undefined) {
-      void vscode.window.showErrorMessage("Backup file is unknown.");
+      void window.showErrorMessage("Backup file is unknown.");
       return;
     }
     if (!(await copy(diffedURIs.backup.fsPath, diffedURIs.merged.fsPath))) {
-      void vscode.window.showErrorMessage("Resetting the merged file failed");
+      void window.showErrorMessage("Resetting the merged file failed");
       return;
     }
   }
@@ -159,9 +170,7 @@ export class DiffLayouterManager implements vscode.Disposable {
 
       // point of no return
 
-      await vscode.commands.executeCommand(
-        "workbench.action.closeActiveEditor"
-      );
+      await commands.executeCommand("workbench.action.closeActiveEditor");
       await this.activateLayouter(diffedURIs, newLayouterFactory);
     } finally {
       await this.layouterManagerMonitor.leave();
@@ -174,7 +183,7 @@ export class DiffLayouterManager implements vscode.Disposable {
 
   public async switchLayout(layoutName?: unknown): Promise<void> {
     if (this.layouter?.diffedURIs === undefined) {
-      void vscode.window.showErrorMessage(
+      void window.showErrorMessage(
         "This requires the diff layout to be active"
       );
       return;
@@ -186,7 +195,7 @@ export class DiffLayouterManager implements vscode.Disposable {
       );
     }
     if (targetFactory === undefined) {
-      const pickResult = await vscode.window.showQuickPick(
+      const pickResult = await window.showQuickPick(
         this.factories
           .filter((factory) => factory !== this.layouterFactory)
           .map((factory) => factory.settingValue)
@@ -205,7 +214,7 @@ export class DiffLayouterManager implements vscode.Disposable {
       targetFactory === this.layouterFactory ||
       this.layouter?.diffedURIs === undefined
     ) {
-      void vscode.window.showErrorMessage(
+      void window.showErrorMessage(
         "The situation has changed meanwhile. Please try again."
       );
     }
@@ -252,19 +261,19 @@ export class DiffLayouterManager implements vscode.Disposable {
   private layouter: DiffLayouter | undefined;
   private readonly layouterMonitor = new Monitor();
   private readonly layouterManagerMonitor = new Monitor();
-  private disposables: vscode.Disposable[] = [];
+  private disposables: Disposable[] = [];
   private readonly defaultFactory: DiffLayouterFactory;
-  private readonly didLayoutDeactivate = new vscode.EventEmitter<DiffLayouter>();
-  private readonly didLayoutActivate = new vscode.EventEmitter<DiffLayouter>();
-  private readonly didMergetoolReact = new vscode.EventEmitter<void>();
-  private switchLayoutStatusBarItem: vscode.StatusBarItem | undefined;
+  private readonly didLayoutDeactivate = new EventEmitter<DiffLayouter>();
+  private readonly didLayoutActivate = new EventEmitter<DiffLayouter>();
+  private readonly didMergetoolReact = new EventEmitter<void>();
+  private switchLayoutStatusBarItem: StatusBarItem | undefined;
 
   private activateSwitchLayoutStatusBarItem(): void {
     if (this.switchLayoutStatusBarItem !== undefined) {
       return;
     }
-    this.switchLayoutStatusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Left,
+    this.switchLayoutStatusBarItem = window.createStatusBarItem(
+      StatusBarAlignment.Left,
       5
     );
     this.switchLayoutStatusBarItem.text = "$(editor-layout)";
@@ -300,15 +309,13 @@ export class DiffLayouterManager implements vscode.Disposable {
     this.activateSwitchLayoutStatusBarItem();
   }
 
-  private async handleDidChangeVisibleTextEditors(
-    editors: vscode.TextEditor[]
-  ) {
+  private async handleDidChangeVisibleTextEditors(editors: TextEditor[]) {
     for (const editor of editors) {
       await this.handleDidOpenURI(editor.document.uri);
     }
   }
 
-  private async handleDidOpenURI(uRI: vscode.Uri): Promise<boolean> {
+  private async handleDidOpenURI(uRI: Uri): Promise<boolean> {
     if (this.layouter !== undefined && !this.layouter.isActive) {
       return false;
     }
@@ -329,14 +336,14 @@ export class DiffLayouterManager implements vscode.Disposable {
     this.didLayoutDeactivate.fire(layouter);
     if (!layouter.wasInitiatedByMergetool) {
       const text = await new Promise<string | undefined>((resolve) =>
-        fs.readFile(layouter.diffedURIs.merged.fsPath, "utf8", (error, data) =>
+        readFile(layouter.diffedURIs.merged.fsPath, "utf8", (error, data) =>
           resolve(error ? undefined : data)
         )
       );
       if (text !== undefined && containsMergeConflictIndicators(text)) {
         const reopen = "Reopen";
         const keepClosed = "Keep closed";
-        const result = await vscode.window.showWarningMessage(
+        const result = await window.showWarningMessage(
           "Merge conflict markers are included in closed file.",
           reopen,
           keepClosed
@@ -345,7 +352,7 @@ export class DiffLayouterManager implements vscode.Disposable {
           result === reopen &&
           !(await this.openDiffedURIs(layouter.diffedURIs))
         ) {
-          void vscode.window.showErrorMessage(
+          void window.showErrorMessage(
             "Opening failed, probably because one of the files was removed."
           );
         }
@@ -362,14 +369,14 @@ export class DiffLayouterManager implements vscode.Disposable {
           return factory;
         }
       }
-      const restoreItem: vscode.MessageItem = {
+      const restoreItem: MessageItem = {
         title: "Restore default",
       };
-      const onceItem: vscode.MessageItem = {
+      const onceItem: MessageItem = {
         title: "Use default once",
       };
-      const cancelItem: vscode.MessageItem = { title: "Cancel" };
-      const selectedItem = await vscode.window.showErrorMessage(
+      const cancelItem: MessageItem = { title: "Cancel" };
+      const selectedItem = await window.showErrorMessage(
         "Diff layout setting has an unknown value.",
         restoreItem,
         onceItem,
@@ -395,7 +402,7 @@ export class DiffLayouterManager implements vscode.Disposable {
         return;
       }
       if (!this.layouter?.isActive) {
-        void vscode.window.showErrorMessage(
+        void window.showErrorMessage(
           "Diff layout must be active to use zoom commands."
         );
         return;

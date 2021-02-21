@@ -1,6 +1,13 @@
-import * as process from "process";
-import * as vscode from "vscode";
-import { Disposable, Event, EventEmitter } from "vscode";
+import {
+  Disposable,
+  Event,
+  EventEmitter,
+  StatusBarAlignment,
+  StatusBarItem,
+  Terminal,
+  ThemeColor,
+  window,
+} from "vscode";
 import {
   getVSCGitPathInteractively,
   getWorkingDirectoryUriInteractively,
@@ -48,12 +55,12 @@ export class MergetoolProcessManager implements Disposable {
     });
     this.processManager.onDidTerminate(this.handleTermination.bind(this));
     this.processManager.start();
-    this._terminal = vscode.window.createTerminal({
+    this._terminal = window.createTerminal({
       name: ["git", ...arguments_].join(" "),
       pty: this.processManager,
     });
     if (this._terminal === undefined) {
-      void vscode.window.showErrorMessage("Failed to create a terminal.");
+      void window.showErrorMessage("Failed to create a terminal.");
       await this.startStopping(false);
       return false;
     }
@@ -85,8 +92,8 @@ export class MergetoolProcessManager implements Disposable {
     if (showTerminal) {
       this._terminal?.show();
     }
-    this.stopStatusMessage = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Left,
+    this.stopStatusMessage = window.createStatusBarItem(
+      StatusBarAlignment.Left,
       15
     );
     this.stopStatusMessage.text = "Stopping `git mergetool`…";
@@ -139,13 +146,13 @@ export class MergetoolProcessManager implements Disposable {
   }
 
   private processManager: TerminalProcessManager | undefined;
-  private _terminal: vscode.Terminal | undefined;
+  private _terminal: Terminal | undefined;
   private _isStopping = false;
   private disposing = false;
   private didStop = new EventEmitter<boolean>();
-  private stopStatusMessage: vscode.StatusBarItem | undefined;
+  private stopStatusMessage: StatusBarItem | undefined;
   private success = false;
-  private static readonly statusBarItemColor = new vscode.ThemeColor(
+  private static readonly statusBarItemColor = new ThemeColor(
     "statusBar.foreground"
   );
   private readonly reactionTimeoutHandler = this.handleReactionTimeout.bind(

@@ -1,4 +1,4 @@
-import * as assert from "assert";
+import { strictEqual } from "assert";
 import { DiffLineMapper } from "../../../../src/scrollSynchronizer";
 
 suite("DiffLineMapper", () => {
@@ -34,7 +34,7 @@ suite("DiffLineMapper", () => {
       );
       // eslint-disable-next-line unicorn/no-array-callback-reference
       const actual = sut.map(testCase.from);
-      assert.strictEqual(
+      strictEqual(
         actual,
         testCase.expectedTo,
         `{ old: "${testCase.old}", new: "${testCase.new}", from: ${testCase.from}, expectedTo: ${testCase.expectedTo} }`

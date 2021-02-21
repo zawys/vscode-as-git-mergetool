@@ -1,4 +1,4 @@
-import * as cp from "child_process";
+import { ExecException, execFile, ExecFileOptions } from "child_process";
 import { window } from "vscode";
 export function execFilePromise({
   filePath,
@@ -6,7 +6,7 @@ export function execFilePromise({
   options,
 }: ExecFileArguments): Promise<ExecFileResult> {
   return new Promise<ExecFileResult>((resolve) =>
-    cp.execFile(filePath, arguments_, options || {}, (error, stdout, stderr) =>
+    execFile(filePath, arguments_, options || {}, (error, stdout, stderr) =>
       resolve({ error, stdout, stderr })
     )
   );
@@ -85,10 +85,10 @@ function trimLastEOL(value: string): string {
 export interface ExecFileArguments {
   filePath: string;
   arguments_?: string[];
-  options?: cp.ExecFileOptions;
+  options?: ExecFileOptions;
 }
 export interface ExecFileResult {
-  error: cp.ExecException | null;
+  error: ExecException | null;
   stdout: string;
   stderr: string;
 }

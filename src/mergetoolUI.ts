@@ -1,4 +1,13 @@
-import * as vscode from "vscode";
+import {
+  commands,
+  Disposable,
+  QuickPickItem,
+  StatusBarAlignment,
+  StatusBarItem,
+  ThemeColor,
+  Uri,
+  window,
+} from "vscode";
 import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
@@ -13,7 +22,7 @@ import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
 export class MergetoolUI {
   public register(): void {
-    const commands: [string, () => unknown][] = [
+    const extensionCommands: [string, () => unknown][] = [
       /* eslint-disable @typescript-eslint/unbound-method */
       [gitMergetoolStartCommandID, this.startMergetool],
       [gitMergetoolContinueCommandID, this.continueMergetool],
@@ -25,9 +34,9 @@ export class MergetoolUI {
       [nextMergeStepCommandID, this.doNextStepInMergeProcess],
       /* eslint-enable @typescript-eslint/unbound-method */
     ];
-    for (const [commandID, handler] of commands) {
+    for (const [commandID, handler] of extensionCommands) {
       this.registeredDisposables.add(
-        vscode.commands.registerCommand(commandID, handler.bind(this))
+        commands.registerCommand(commandID, handler.bind(this))
       );
     }
     this.registeredDisposables.add(
@@ -70,11 +79,7 @@ export class MergetoolUI {
         return;
       }
       this._processManager = newProcessManager;
-      await vscode.commands.executeCommand(
-        "setContext",
-        gitMergetoolRunningID,
-        true
-      );
+      await commands.executeCommand("setContext", gitMergetoolRunningID, true);
       this.updateStatusBarItems();
       // layout launches automatically by detecting an opened *_BASE_* file
     } finally {
@@ -99,9 +104,7 @@ export class MergetoolUI {
         SearchType.first
       );
       if (focusResult === undefined) {
-        void vscode.window.showErrorMessage(
-          "Cannot retrieve merged file contents."
-        );
+        void window.showErrorMessage("Cannot retrieve merged file contents.");
         return;
       }
       if (!focusResult) {
@@ -114,7 +117,7 @@ export class MergetoolUI {
     const situation = this._mergeSituation;
     const cancel = "Cancel";
     const acceptIncludedIndicators = "Accept included indicators";
-    const result = await vscode.window.showWarningMessage(
+    const result = await window.showWarningMessage(
       "Merged file contains Git merge conflict indicators.",
       cancel,
       acceptIncludedIndicators
@@ -128,7 +131,7 @@ export class MergetoolUI {
         situation === undefined ||
         this._mergeSituation?.equals(situation) !== true
       ) {
-        void vscode.window.showErrorMessage(
+        void window.showErrorMessage(
           "The situation has changed. Reopen the situation and try again."
         );
         return;
@@ -161,18 +164,18 @@ export class MergetoolUI {
   }
 
   public async abortMerge(): Promise<void> {
-    const quitMerge: vscode.QuickPickItem = {
+    const quitMerge: QuickPickItem = {
       label: "Keep working directory and index",
       detail: "runs `git merge --quit`",
     };
-    const abortMerge: vscode.QuickPickItem = {
+    const abortMerge: QuickPickItem = {
       label: "DISCARD changes in working directory and index",
       detail: "runs `git merge --abort`",
     };
-    const nothing: vscode.QuickPickItem = {
+    const nothing: QuickPickItem = {
       label: "Do nothing",
     };
-    const pickedItem = await vscode.window.showQuickPick(
+    const pickedItem = await window.showQuickPick(
       [quitMerge, abortMerge, nothing],
       {
         ignoreFocusOut: true,
@@ -209,41 +212,39 @@ export class MergetoolUI {
     }
     await this.monitor.enter();
     try {
-      const document = vscode.window.activeTextEditor?.document;
+      const document = window.activeTextEditor?.document;
       if (
         document?.languageId !== "git-commit" ||
         (!document?.uri.path.endsWith("/.git/COMMIT_EDITMSG") &&
           !document?.uri.path.endsWith("/.git/MERGE_MSG"))
       ) {
-        void vscode.window.showErrorMessage(
+        void window.showErrorMessage(
           "Opened file does not seem to be a Git commit message."
         );
         return;
       }
       await document.save();
-      await vscode.commands.executeCommand(
-        "workbench.action.closeActiveEditor"
-      );
+      await commands.executeCommand("workbench.action.closeActiveEditor");
       const term = await createBackgroundGitTerminal({
         shellArgs: ["commit", "--no-edit", `--file=${document.fileName}`],
-        cwd: vscode.Uri.joinPath(document.uri, "../.."),
+        cwd: Uri.joinPath(document.uri, "../.."),
       });
       if (term !== undefined) {
         term.show(true);
         let closed = false;
-        const handler:
-          | vscode.Disposable
-          | undefined = vscode.window.onDidCloseTerminal((closedTerm) => {
-          if (term === closedTerm) {
-            const exitCode = term.exitStatus?.code;
-            displayProcessExitInteractively("`git commit`", exitCode);
-            closed = true;
-            if (handler !== undefined) {
-              handler.dispose();
-              this.registeredDisposables.delete(handler);
+        const handler: Disposable | undefined = window.onDidCloseTerminal(
+          (closedTerm) => {
+            if (term === closedTerm) {
+              const exitCode = term.exitStatus?.code;
+              displayProcessExitInteractively("`git commit`", exitCode);
+              closed = true;
+              if (handler !== undefined) {
+                handler.dispose();
+                this.registeredDisposables.delete(handler);
+              }
             }
           }
-        });
+        );
         if (!closed) {
           this.registeredDisposables.add(handler);
         }
@@ -294,7 +295,7 @@ export class MergetoolUI {
     if (!this.checkMonitorNotInUse()) {
       return;
     }
-    const document = vscode.window.activeTextEditor?.document;
+    const document = window.activeTextEditor?.document;
     if (document?.languageId === "git-commit") {
       await this.commitActiveCommitMessage();
       return;
@@ -348,18 +349,18 @@ export class MergetoolUI {
   /**
    * implies `mergetoolRunning`
    */
-  private statusBarItems: vscode.StatusBarItem[] | undefined;
-  private static readonly statusBarItemColor = new vscode.ThemeColor(
+  private statusBarItems: StatusBarItem[] | undefined;
+  private static readonly statusBarItemColor = new ThemeColor(
     "statusBar.foreground"
   );
   private _mergeSituation: DiffedURIs | undefined;
   private _processManager: MergetoolProcessManager | undefined;
-  private registeredDisposables: Set<vscode.Disposable> = new Set();
+  private registeredDisposables: Set<Disposable> = new Set();
   private disposing = false;
 
   private checkMonitorNotInUse(): boolean {
     if (this.monitor.inUse) {
-      void vscode.window.showErrorMessage(
+      void window.showErrorMessage(
         "Another operation is pending. Please try again later."
       );
       return false;
@@ -398,7 +399,7 @@ export class MergetoolUI {
     ) {
       const resetOnceItem = { title: "Reset" };
       const resetAlwaysItem = { title: "Always reset" };
-      const warningResult = await vscode.window.showWarningMessage(
+      const warningResult = await window.showWarningMessage(
         "The merged file has possibly been changed. " +
           "Continuing will reset the merged file. " +
           "A backup will be stored under “<merged file>.<date>.vsc-orig”.",
@@ -438,7 +439,7 @@ export class MergetoolUI {
       .toISOString()
       .replace(/[.:]/g, "-")}.vsc-orig`;
     if (!(await copy(mergedPath, newPath))) {
-      void vscode.window.showErrorMessage("Backup could not be saved.");
+      void window.showErrorMessage("Backup could not be saved.");
       return false;
     }
     return true;
@@ -446,23 +447,20 @@ export class MergetoolUI {
 
   private async reopenMergeSituationInner(): Promise<void> {
     if (this._mergeSituation === undefined) {
-      void vscode.window.showErrorMessage(
+      void window.showErrorMessage(
         "No merge situation registered. " +
           "Try to open the *_BASE_* file manually."
       );
       return;
     }
     if (this.mergeSituationInLayout) {
-      vscode.window.setStatusBarMessage(
+      window.setStatusBarMessage(
         "Merge situation should already be displayed.",
         5000
       );
       return;
     }
-    await vscode.commands.executeCommand(
-      "vscode.open",
-      this._mergeSituation.base
-    );
+    await commands.executeCommand("open", this._mergeSituation.base);
   }
 
   private async continueMergetoolInner(): Promise<void> {
@@ -485,11 +483,7 @@ export class MergetoolUI {
   }
 
   private async stopMergetoolInner(): Promise<void> {
-    await vscode.commands.executeCommand(
-      "setContext",
-      gitMergetoolRunningID,
-      false
-    );
+    await commands.executeCommand("setContext", gitMergetoolRunningID, false);
     await this.diffLayouterManager.deactivateLayout();
     this.disposeStatusBarItems();
     this._mergeSituation = undefined;
@@ -537,23 +531,20 @@ export class MergetoolUI {
   }
 
   private async jumpToCommitMsg() {
-    await vscode.commands.executeCommand("workbench.scm.focus");
+    await commands.executeCommand("workbench.scm.focus");
     if (
       this.vSCodeConfigurator.get(editCommitMessageAfterMergetoolSettingID)
     ) {
       const workspaceRoot = getWorkingDirectoryUriInteractively();
       if (workspaceRoot !== undefined) {
-        const commitMessagePath = vscode.Uri.joinPath(
+        const commitMessagePath = Uri.joinPath(
           workspaceRoot,
           ".git/MERGE_MSG"
         );
         if (
           (await getFileType(commitMessagePath.fsPath)) === FileType.regular
         ) {
-          await vscode.commands.executeCommand(
-            "vscode.open",
-            commitMessagePath
-          );
+          await commands.executeCommand("open", commitMessagePath);
         }
       }
     }
@@ -561,14 +552,14 @@ export class MergetoolUI {
 
   private assertMergetoolActiveInteractively(): boolean {
     if (!this._processManager?.isRunning) {
-      void vscode.window.showErrorMessage(
+      void window.showErrorMessage(
         "There is no running `git mergetool` process which " +
           "is controlled by VS Code."
       );
       return false;
     }
     if (!this._processManager.isAvailable) {
-      void vscode.window.showErrorMessage(
+      void window.showErrorMessage(
         "The `git mergetool` process is currently stopping."
       );
       return false;
@@ -578,7 +569,7 @@ export class MergetoolUI {
 
   private assertMergeSituationOpenedInteractively(): boolean {
     if (!this.mergeSituationInLayout) {
-      void vscode.window.showErrorMessage(
+      void window.showErrorMessage(
         "You need to have the merge situation opened."
       );
       return false;
@@ -650,8 +641,8 @@ export class MergetoolUI {
     command?: string,
     tooltip?: string
   ) {
-    const result = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Left,
+    const result = window.createStatusBarItem(
+      StatusBarAlignment.Left,
       priority
     );
     result.text = text;

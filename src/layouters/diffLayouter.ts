@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import { Disposable, Event, window, workspace } from "vscode";
 import { asURIList, DiffedURIs } from "../diffedURIs";
 import { extensionID } from "../ids";
 import { Monitor } from "../monitor";
@@ -6,7 +6,7 @@ import { TemporarySettingsManager } from "../temporarySettingsManager";
 import { VSCodeConfigurator } from "../vSCodeConfigurator";
 import { Zoom, ZoomManager } from "../zoom";
 
-export interface DiffLayouter extends vscode.Disposable {
+export interface DiffLayouter extends Disposable {
   /**
    * Try start layout.
    *
@@ -55,7 +55,7 @@ export interface DiffLayouter extends vscode.Disposable {
   /**
    * Fired when the layout was deactivated.
    */
-  readonly onDidDeactivate: vscode.Event<DiffLayouter>;
+  readonly onDidDeactivate: Event<DiffLayouter>;
 
   readonly wasInitiatedByMergetool: boolean;
 
@@ -79,13 +79,13 @@ export interface DiffLayouterFactory {
 export function watchDiffedURIs(
   uRIs: DiffedURIs,
   handler: () => void
-): vscode.Disposable[] {
-  const disposables: vscode.Disposable[] = [];
+): Disposable[] {
+  const disposables: Disposable[] = [];
   for (const uRI of asURIList(uRIs)) {
     if (uRI.fsPath.endsWith(".git")) {
-      void vscode.window.showErrorMessage("path ends with .git");
+      void window.showErrorMessage("path ends with .git");
     }
-    const watcher = vscode.workspace.createFileSystemWatcher(
+    const watcher = workspace.createFileSystemWatcher(
       uRI.fsPath,
       true,
       true,

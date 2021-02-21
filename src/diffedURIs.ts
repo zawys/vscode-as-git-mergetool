@@ -1,8 +1,8 @@
-import * as vscode from "vscode";
+import { Uri, window } from "vscode";
 import { getStats } from "./fsHandy";
 import { readonlyScheme } from "./readonlyDocumentProvider";
 
-export function getDiffedURIs(baseURI: vscode.Uri): DiffedURIs | undefined {
+export function getDiffedURIs(baseURI: Uri): DiffedURIs | undefined {
   const parseResult = parseBaseFileNameRE.exec(baseURI.path);
   if (parseResult === null) {
     return undefined;
@@ -11,7 +11,7 @@ export function getDiffedURIs(baseURI: vscode.Uri): DiffedURIs | undefined {
   const restWOGit = parseResult[3];
   const extension = parseResult[4];
   function joinBasePath(parts: string[], scheme: string) {
-    return vscode.Uri.joinPath(baseURI, parts.join("")).with({
+    return Uri.joinPath(baseURI, parts.join("")).with({
       scheme,
     });
   }
@@ -27,7 +27,7 @@ export function getDiffedURIs(baseURI: vscode.Uri): DiffedURIs | undefined {
 // The number in the file name is the PID of git-mergetool
 export const parseBaseFileNameRE = /\/([^/]*)_(BASE|REMOTE|LOCAL)_(\d+(.*?))(\.git)?$/;
 
-export function asURIList(uRIs: DiffedURIs): vscode.Uri[] {
+export function asURIList(uRIs: DiffedURIs): Uri[] {
   const result = [uRIs.base, uRIs.local, uRIs.merged, uRIs.remote];
   if (uRIs.backup !== undefined) {
     result.push(uRIs.backup);
@@ -35,8 +35,8 @@ export function asURIList(uRIs: DiffedURIs): vscode.Uri[] {
   return result;
 }
 export function uRIsOrUndefEqual(
-  first: vscode.Uri | undefined,
-  second: vscode.Uri | undefined
+  first: Uri | undefined,
+  second: Uri | undefined
 ): boolean {
   if (first === undefined) {
     return second === undefined;
@@ -46,7 +46,7 @@ export function uRIsOrUndefEqual(
   }
   return uRIsEqual(first, second);
 }
-export function uRIsEqual(first: vscode.Uri, second: vscode.Uri): boolean {
+export function uRIsEqual(first: Uri, second: Uri): boolean {
   return pathsRoughlyEqual(first.path, second.path);
 }
 export function pathsRoughlyEqual(first: string, second: string): boolean {
@@ -59,7 +59,7 @@ export async function filesExist(diffedURIs: DiffedURIs): Promise<boolean> {
     await Promise.all(
       asURIList(diffedURIs).map(async (uRI) => {
         if (uRI.fsPath.endsWith(".git")) {
-          void vscode.window.showErrorMessage("path ends with .git");
+          void window.showErrorMessage("path ends with .git");
         }
         const stats = await getStats(uRI.fsPath);
         if (stats === undefined) {
@@ -92,10 +92,10 @@ export class DiffedURIs {
   }
 
   public constructor(
-    public readonly base: vscode.Uri,
-    public readonly local: vscode.Uri,
-    public readonly remote: vscode.Uri,
-    public readonly merged: vscode.Uri,
-    public readonly backup?: vscode.Uri
+    public readonly base: Uri,
+    public readonly local: Uri,
+    public readonly remote: Uri,
+    public readonly merged: Uri,
+    public readonly backup?: Uri
   ) {}
 }

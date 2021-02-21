@@ -1,12 +1,12 @@
-import * as vscode from "vscode";
+import { Terminal, TerminalOptions, window } from "vscode";
 import {
   getVSCGitPathInteractively,
   getWorkingDirectoryUriInteractively,
 } from "./getPathsWithinVSCode";
 
 export async function createBackgroundGitTerminal(
-  terminalOptions: vscode.TerminalOptions
-): Promise<vscode.Terminal | undefined> {
+  terminalOptions: TerminalOptions
+): Promise<Terminal | undefined> {
   const gitPath = await getVSCGitPathInteractively();
   if (gitPath === undefined) {
     return;
@@ -15,14 +15,14 @@ export async function createBackgroundGitTerminal(
   if (workingDirectory === undefined) {
     return;
   }
-  const term = vscode.window.createTerminal({
+  const term = window.createTerminal({
     name: ["git", ...(terminalOptions.shellArgs || [])].join(" "),
     cwd: workingDirectory,
     shellPath: gitPath,
     ...terminalOptions,
   });
   if (term === undefined) {
-    void vscode.window.showErrorMessage("Failed to create a terminal.");
+    void window.showErrorMessage("Failed to create a terminal.");
     return;
   }
   return term;

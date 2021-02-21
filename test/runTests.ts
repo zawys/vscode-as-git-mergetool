@@ -1,12 +1,11 @@
-import * as dotenv from "dotenv";
-import * as systemTests from "./suite";
-import * as process from "process";
+import { config as dotenvConfig } from "dotenv";
+import { runTests } from "./suite";
 
-dotenv.config();
+dotenvConfig();
 
 export async function main(): Promise<void> {
   try {
-    await systemTests.runTests();
+    await runTests();
   } catch (error) {
     console.error(error);
     // eslint-disable-next-line unicorn/no-process-exit

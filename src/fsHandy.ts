@@ -1,8 +1,8 @@
-import * as fs from "fs";
+import { access, copyFile, readFile, realpath, stat, Stats } from "fs";
 
-export function getStats(path: string): Promise<fs.Stats | undefined> {
-  return new Promise<fs.Stats | undefined>((resolve) => {
-    fs.stat(path, (error, stats) => {
+export function getStats(path: string): Promise<Stats | undefined> {
+  return new Promise<Stats | undefined>((resolve) => {
+    stat(path, (error, stats) => {
       resolve(error ? undefined : stats);
     });
   });
@@ -10,7 +10,7 @@ export function getStats(path: string): Promise<fs.Stats | undefined> {
 
 export function getRealPath(path: string): Promise<string | undefined> {
   return new Promise<string | undefined>((resolve) => {
-    fs.realpath(path, (error, resolvedPath) => {
+    realpath(path, (error, resolvedPath) => {
       resolve(error ? undefined : resolvedPath);
     });
   });
@@ -60,13 +60,13 @@ export async function getFileType(
 
 export function testFile(path: string, mode: number): Promise<boolean> {
   return new Promise((resolve) => {
-    fs.access(path, mode, (error) => resolve(!error));
+    access(path, mode, (error) => resolve(!error));
   });
 }
 
 export function getContents(path: string): Promise<string | undefined> {
   return new Promise<string | undefined>((resolve) => {
-    fs.readFile(path, { encoding: "utf-8" }, (error, data) => {
+    readFile(path, { encoding: "utf-8" }, (error, data) => {
       resolve(error ? undefined : data);
     });
   });
@@ -98,7 +98,7 @@ export function copy(
   destinationPath: string
 ): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
-    fs.copyFile(sourcePath, destinationPath, (error) => {
+    copyFile(sourcePath, destinationPath, (error) => {
       resolve(error === null);
     });
   });

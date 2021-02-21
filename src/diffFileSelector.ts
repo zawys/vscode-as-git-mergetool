@@ -1,6 +1,6 @@
 import { R_OK, W_OK } from "constants";
 import path from "path";
-import * as vscode from "vscode";
+import { QuickPickItem, Uri, window } from "vscode";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { FileType, getFileType, getRealPath, testFile } from "./fsHandy";
 import { getWorkingDirectoryUri } from "./getPathsWithinVSCode";
@@ -70,7 +70,7 @@ export class MultiFileSelector<TKey extends string> {
     while (true) {
       const [validationResults, pickItems] = await this.createPickItems();
 
-      const pickResult = await vscode.window.showQuickPick(pickItems, {
+      const pickResult = await window.showQuickPick(pickItems, {
         ignoreFocusOut: true,
       });
       if (pickResult === this.acceptItem) {
@@ -122,15 +122,15 @@ export class MultiFileSelector<TKey extends string> {
   public constructor(
     public readonly selectableFiles: SelectableFile<TKey>[],
     public readonly stateStore: FileSelectionStateStore,
-    private readonly acceptItem: vscode.QuickPickItem = {
+    private readonly acceptItem: QuickPickItem = {
       label: "$(check) Accept selection",
       alwaysShow: true,
     },
-    private readonly unsetAll: vscode.QuickPickItem = {
+    private readonly unsetAll: QuickPickItem = {
       label: "$(discard) Clear selection",
       alwaysShow: true,
     },
-    private readonly abortItem: vscode.QuickPickItem = {
+    private readonly abortItem: QuickPickItem = {
       label: "$(close) Abort",
       alwaysShow: true,
     }
@@ -192,13 +192,13 @@ export class MultiFileSelector<TKey extends string> {
   private async inputURI(
     file: SelectableFile<TKey>
   ): Promise<string | null | undefined> {
-    const pasteItem: vscode.QuickPickItem = {
+    const pasteItem: QuickPickItem = {
       label: "Type or paste",
     };
-    const dialogItem: vscode.QuickPickItem = { label: "Use dialog" };
-    const unsetItem: vscode.QuickPickItem = { label: "Unset" };
-    const abortItem: vscode.QuickPickItem = { label: "Abort" };
-    const result = await vscode.window.showQuickPick([pasteItem, dialogItem], {
+    const dialogItem: QuickPickItem = { label: "Use dialog" };
+    const unsetItem: QuickPickItem = { label: "Unset" };
+    const abortItem: QuickPickItem = { label: "Abort" };
+    const result = await window.showQuickPick([pasteItem, dialogItem], {
       ignoreFocusOut: true,
     });
     if (result === undefined || result === abortItem) {
@@ -208,7 +208,7 @@ export class MultiFileSelector<TKey extends string> {
       return null;
     }
     if (result === pasteItem) {
-      const result = await vscode.window.showInputBox({
+      const result = await window.showInputBox({
         ignoreFocusOut: true,
         prompt: `Input ${file.required ? "required" : ""} path for ${
           file.label
@@ -230,16 +230,14 @@ export class MultiFileSelector<TKey extends string> {
     } else {
       const fSPath = await this.stateStore.getSelection(file.key);
       let defaultURI =
-        fSPath === undefined
-          ? undefined
-          : vscode.Uri.file(path.dirname(fSPath));
+        fSPath === undefined ? undefined : Uri.file(path.dirname(fSPath));
       if (!defaultURI) {
         const defaultPath = await this.getDefaultPath();
         if (defaultPath !== undefined) {
-          defaultURI = vscode.Uri.file(defaultPath);
+          defaultURI = Uri.file(defaultPath);
         }
       }
-      const result = await vscode.window.showOpenDialog({
+      const result = await window.showOpenDialog({
         canSelectFiles: true,
         canSelectFolders: false,
         canSelectMany: false,
@@ -361,7 +359,7 @@ function fileValidationResultFromErrorMessage(
   return { valid: false, message };
 }
 
-export interface FileOrActionPickItem extends vscode.QuickPickItem {
+export interface FileOrActionPickItem extends QuickPickItem {
   fileIndex?: number;
 }
 export interface FilePickItem extends FileOrActionPickItem {
@@ -369,7 +367,7 @@ export interface FilePickItem extends FileOrActionPickItem {
 }
 
 export type FileSelectionState = {
-  [key: string]: vscode.Uri | undefined;
+  [key: string]: Uri | undefined;
 };
 
 export class FileSelectionStateStore {

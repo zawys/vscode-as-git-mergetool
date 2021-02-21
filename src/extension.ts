@@ -1,11 +1,11 @@
 import "regenerator-runtime";
-import * as vscode from "vscode";
+import { ExtensionContext } from "vscode";
 import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { defaultExtensionContextManager } from "./extensionContextManager";
 import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
 import { Lazy } from "./lazy";
-import * as mergetool from "./mergetoolUI";
+import { MergetoolUI } from "./mergetoolUI";
 import { ReadonlyDocumentProviderManager } from "./readonlyDocumentProvider";
 import { SettingsAssistantCreator } from "./settingsAssistant";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
@@ -15,7 +15,7 @@ import { ZoomManager } from "./zoom";
 let extensionAPI: ExtensionAPI | undefined;
 
 export async function activate(
-  context: vscode.ExtensionContext
+  context: ExtensionContext
 ): Promise<ExtensionAPI> {
   defaultExtensionContextManager.value = context;
   extensionAPI = new ExtensionAPI();
@@ -64,7 +64,7 @@ export class ExtensionAPI {
     temporarySettingsManager?: TemporarySettingsManager,
     gitMergetoolReplacement?: GitMergetoolReplacement,
     diffLayouterManager?: DiffLayouterManager,
-    mergetoolUI?: mergetool.MergetoolUI,
+    mergetoolUI?: MergetoolUI,
     arbitraryFilesMerger?: ArbitraryFilesMerger,
     settingsAssistantCreatorFactory?: () => SettingsAssistantCreator
   ) {
@@ -97,7 +97,7 @@ export class ExtensionAPI {
     this.mergetoolUI =
       mergetoolUI !== undefined
         ? mergetoolUI
-        : new mergetool.MergetoolUI(
+        : new MergetoolUI(
             this.diffLayouterManager,
             vSCodeConfiguratorProvider.value
           );
@@ -115,7 +115,7 @@ export class ExtensionAPI {
   public readonly zoomManager: ZoomManager;
   public readonly gitMergetoolReplacement: GitMergetoolReplacement;
   public readonly diffLayouterManager: DiffLayouterManager;
-  public readonly mergetoolUI: mergetool.MergetoolUI;
+  public readonly mergetoolUI: MergetoolUI;
   public readonly arbitraryFilesMerger: ArbitraryFilesMerger;
   public readonly settingsAssistantCreatorFactory: () => SettingsAssistantCreator;
   public readonly readonlyDocumentProviderManager: ReadonlyDocumentProviderManager;
