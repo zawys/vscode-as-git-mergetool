@@ -57,7 +57,7 @@ export function getVSCGitPath(): Promise<string | UIError> {
 }
 async function getVSCGitPathInner(): Promise<string | UIError> {
   const gitExtension = await extensions
-    .getExtension<GitExtension>("git")
+    .getExtension<GitExtension>("vscode.git")
     ?.activate();
   if (gitExtension !== undefined && gitExtension.enabled) {
     const api = gitExtension.getAPI(1);

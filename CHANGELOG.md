@@ -22,6 +22,13 @@ and this project adheres to
   but that should hopefully be not noticeable.
   It should be slightly more stable now.
 
+## [0.13.3] - 2021-02-21
+
+## Fixed
+
+- Fixed ascertaining of the git path.
+  The bug was introduced in 0.13.1 by a too aggressive search-and-replace.
+
 ## [0.13.2] - 2021-02-21
 
 ## Fixed
@@ -30,7 +37,8 @@ and this project adheres to
   unveiled that the parcel bundler seems to contain more bugs.
   Thus, for a quick&dirty fix, this release is the previous release
   with almost all dependencies as in version 0.11.0.
-- Changed command IDs to be compatible with the new Insiders build.
+- Fixed command IDs.
+  The bug was introduced in 0.13.1 by a too aggressive search-and-replace.
 
 ## [0.13.1] - 2021-02-21
 
@@ -313,7 +321,8 @@ This will be the first version published on the
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.2...HEAD
+[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.3...HEAD
+[0.13.3]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.3
 [0.13.2]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.2
 [0.13.1]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.1
 [0.13.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.0
