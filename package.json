@@ -333,8 +333,8 @@
     "test:dev:pre": "yarn run compile && yarn run bundle:dev && yarn run copy_files",
     "test:dev": "yarn run test:dev:pre && yarn run test:only",
     "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
-    "bundle:dev": "",
-    "bundle": "",
+    "bundle:dev": "webpack --mode development",
+    "bundle": "webpack --mode production",
     "build:dev": "yarn run bundle:dev",
     "build": "yarn install && yarn run clean && yarn run bundle && yarn run package",
     "working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep '.'",
@@ -375,10 +375,13 @@
     "node-pty": "^0.10.0",
     "pinst": "^2.1.4",
     "prettier": "^2.1.1",
+    "ts-loader": "^8.0.18",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.2",
     "vsce": "^1.79.5",
-    "vscode-test": "^1.4.0"
+    "vscode-test": "^1.4.0",
+    "webpack": "^5.27.1",
+    "webpack-cli": "^4.5.0"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
