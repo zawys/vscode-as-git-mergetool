@@ -6,5 +6,6 @@
 !CHANGELOG.md
 !package.json
 !.vscodeignore
-!dist/**/*.js
+!out/dist/**/*.js
+!out/dist/**/*.LICENSE.txt
 !media/packaged

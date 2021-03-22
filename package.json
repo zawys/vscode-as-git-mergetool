@@ -331,8 +331,8 @@
     "test": "yarn install && yarn run recompile && yarn run lint && yarn run copy_files && yarn run bundle && yarn run test:only",
     "test:only": "node ./out/test/runTests.js",
     "test:dev": "yarn run copy_files && yarn run test:only",
-    "bundle:dev": "",
-    "bundle": "",
+    "bundle:dev": "webpack --mode development",
+    "bundle": "webpack --mode production",
     "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
     "build:dev": "yarn run copy_files",
     "build": "yarn install && yarn run clean && yarn run bundle && yarn run package",
@@ -375,10 +375,13 @@
     "mocha": "^8.1.3",
     "pinst": "^2.1.4",
     "prettier": "^2.1.1",
+    "ts-loader": "^8.0.18",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.2",
     "vsce": "^1.79.5",
-    "vscode-test": "^1.4.0"
+    "vscode-test": "^1.4.0",
+    "webpack": "^5.27.1",
+    "webpack-cli": "^4.5.0"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
