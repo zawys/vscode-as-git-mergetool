@@ -17,6 +17,7 @@ and this project adheres to
   - Malfunctioning creation of backup setting entries
     was replaced by creating a log of changes made.
   - The messages were improved.
+- Switched to Webpack as bundler
 
 ## [0.13.3] - 2021-02-21
 
