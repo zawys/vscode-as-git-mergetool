@@ -26,6 +26,7 @@ import { ZoomManager } from "./zoom";
 import { setGracefulCleanup } from "tmp";
 import { CommonMergeCommandsManager } from "./commonMergeCommandsManager";
 import { ManualMergeProcess } from "./manualMergeProcess";
+import { MergeAborter } from "./mergeAborter";
 
 let extensionAPI: ExtensionAPI | undefined;
 
@@ -157,6 +158,9 @@ class ExtensionServicesCreator {
       new SettingsAssistantCreator(vSCodeConfigurator);
     registrationOrder.push(settingsAssistantCreator);
 
+    const mergeAborter = services.mergeAborter || new MergeAborter();
+    registrationOrder.push(mergeAborter);
+
     return [
       {
         arbitraryFilesMerger,
@@ -172,6 +176,7 @@ class ExtensionServicesCreator {
         editorOpenManager,
         commonMergeCommandsManager,
         manualMergeProcess,
+        mergeAborter,
       },
       registrationOrder,
     ];
@@ -192,4 +197,5 @@ export interface ExtensionServices {
   editorOpenManager: EditorOpenManager;
   commonMergeCommandsManager: CommonMergeCommandsManager;
   manualMergeProcess: ManualMergeProcess;
+  mergeAborter: MergeAborter;
 }
