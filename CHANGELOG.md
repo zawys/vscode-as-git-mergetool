@@ -21,6 +21,7 @@ and this project adheres to
   That makes the scrolling synchronization slightly non-deterministic,
   but that should hopefully be not noticeable.
   It should be slightly more stable now.
+- Switched to Webpack as bundler
 
 ## [0.13.3] - 2021-02-21
 
