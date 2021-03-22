@@ -19,6 +19,10 @@ and this project adheres to
 
 ### Changed
 
+- Removed the spawning and controlling of `git mergetool` processes.
+  The functionality of `git mergetool`
+  is now contained in the extension’s own code
+  which avoids the constant fragility of the integration.
 - Tweaked the scrolling synchronizer so that one parameter less is required.
   That makes the scrolling synchronization slightly non-deterministic,
   but that should hopefully be not noticeable.
