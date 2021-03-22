@@ -36,6 +36,11 @@ export class MergeAborter implements RegisterableService {
   }
 
   public async abortMerge(): Promise<void> {
+    if (!(await this.isMergeInProgress())) {
+      this.warnNoMergeInProgress();
+      return;
+    }
+
     const quitMerge: QuickPickItem = {
       label: "Keep working directory and index",
       detail: "runs `git merge --quit`",
@@ -59,12 +64,20 @@ export class MergeAborter implements RegisterableService {
       return;
     }
 
+    if (!(await this.isMergeInProgress())) {
+      this.warnNoMergeInProgress();
+      return;
+    }
     await createBackgroundGitTerminal({
       shellArgs: ["merge", pickedItem === abortMerge ? "--abort" : "--quit"],
     });
   }
 
   private abortMergeCommandRegistration: Disposable | undefined = undefined;
+
+  private warnNoMergeInProgress(): void {
+    void window.showWarningMessage("No git merge in progress");
+  }
 }
 
 const abortMergeCommandID = "vscode-as-git-mergetool.gitMergeAbort";
