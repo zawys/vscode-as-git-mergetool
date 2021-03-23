@@ -3,9 +3,10 @@
 
 import { Disposable, TextEditor, window } from "vscode";
 import { EditorOpenHandler } from "./editorOpenHandler";
+import { RegisterableService } from "./registerableService";
 import { isUIError, UIError } from "./uIError";
 
-export class EditorOpenManager implements Disposable {
+export class EditorOpenManager implements RegisterableService {
   public async register(): Promise<void> {
     this.disposables.push(
       window.onDidChangeVisibleTextEditors(
