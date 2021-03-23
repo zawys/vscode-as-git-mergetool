@@ -1024,12 +1024,12 @@ export type MergeConflictSituation = {
 export type VCSEntry =
   | {
       readonly type: VCSEntryType.notExisting;
-      readonly absPath?: undefined; // undefined for deleted entries
-      readonly object?: string; // SHA-1 hash, undefined for deleted entries
+      readonly absPath?: undefined;
+      readonly object?: undefined;
     }
   | {
       readonly type: Exclude<VCSEntryType, VCSEntryType.notExisting>;
-      readonly absPath: string; // undefined for deleted entries
+      readonly absPath: string;
       readonly object?: string; // SHA-1 hash, undefined for deleted entries
     };
 export const enum VCSEntryType {
