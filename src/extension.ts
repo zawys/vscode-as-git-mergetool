@@ -19,7 +19,7 @@ import {
 } from "./readonlyDocumentProvider";
 import { RegisterableService } from "./registerableService";
 import { SettingsAssistantCreator } from "./settingsAssistant";
-import { TemporaryFileOpenManager } from "./temporaryFileOpenManager";
+import { GitMergetoolTemporaryFileOpenHandler } from "./gitMergetoolTemporaryFileOpenHandler";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { ZoomManager } from "./zoom";
@@ -129,7 +129,7 @@ class ExtensionServicesCreator {
 
     const temporaryFileOpenManager =
       services.temporaryFileOpenManager ||
-      new TemporaryFileOpenManager(
+      new GitMergetoolTemporaryFileOpenHandler(
         diffLayouterManager,
         readonlyDocumentProvider
       );
@@ -193,7 +193,7 @@ export interface ExtensionServices {
   diffLayouterManager: DiffLayouterManager;
   arbitraryFilesMerger: ArbitraryFilesMerger;
   settingsAssistantCreator: SettingsAssistantCreator;
-  temporaryFileOpenManager: TemporaryFileOpenManager;
+  temporaryFileOpenManager: GitMergetoolTemporaryFileOpenHandler;
   editorOpenManager: EditorOpenManager;
   commonMergeCommandsManager: CommonMergeCommandsManager;
   manualMergeProcess: ManualMergeProcess;

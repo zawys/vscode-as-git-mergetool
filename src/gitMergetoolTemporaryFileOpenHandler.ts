@@ -13,7 +13,8 @@ import { EditorOpenHandler } from "./editorOpenHandler";
 import { getStats } from "./fsHandy";
 import { ReadonlyDocumentProvider } from "./readonlyDocumentProvider";
 
-export class TemporaryFileOpenManager implements EditorOpenHandler {
+export class GitMergetoolTemporaryFileOpenHandler
+  implements EditorOpenHandler {
   public get onDidLayoutReact(): Event<void> {
     return this.didLayoutReact.event;
   }

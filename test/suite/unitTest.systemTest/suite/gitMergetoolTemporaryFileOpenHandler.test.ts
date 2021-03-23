@@ -4,14 +4,14 @@
 import { Uri } from "vscode";
 import { createReadonlyDocumentProviderManager } from "../../../../src/readonlyDocumentProvider";
 import { DiffedURIs } from "../../../../src/diffedURIs";
-import { TemporaryFileOpenManager } from "../../../../src/temporaryFileOpenManager";
+import { GitMergetoolTemporaryFileOpenHandler } from "../../../../src/gitMergetoolTemporaryFileOpenHandler";
 import { DiffLayouterManager } from "../../../../src/diffLayouterManager";
 import assert = require("assert");
 
 suite("getDiffedURIs", () => {
   const readonlyScheme = createReadonlyDocumentProviderManager().scheme;
 
-  const temporaryFileOpenManager = new TemporaryFileOpenManager(
+  const temporaryFileOpenManager = new GitMergetoolTemporaryFileOpenHandler(
     {} as DiffLayouterManager,
     createReadonlyDocumentProviderManager().documentProvider
   );
