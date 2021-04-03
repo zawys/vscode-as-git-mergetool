@@ -108,7 +108,7 @@ export async function unpackToTemporaryDirectory(
 ): Promise<string> {
   const temporaryDirectoryPath = spawnSync(await mktemp, ["-d"], {
     encoding: "utf-8",
-  }).stdout;
+  }).stdout.trimEnd();
   console.log(`unzipped at: ${temporaryDirectoryPath}`);
   execFileSync(await unzip, [zipPath, "-d", temporaryDirectoryPath]);
   return temporaryDirectoryPath;
