@@ -19,7 +19,7 @@
       "preLaunchTask": "build:dev"
     },
     {
-      "name": "debug tests",
+      "name": "debug opened test",
       "port": 3714,
       "request": "attach",
       "skipFiles": ["<node_internals>/**"],
@@ -34,6 +34,16 @@
         "${workspaceFolder}/out/test/**/*.js",
         "${workspaceFolder}/dist/extension.js"
       ]
-    }
+    },
+    {
+      "name": "debug test runner",
+      "program": "${workspaceFolder}/out/test/runTests.js",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node",
+      "preLaunchTask": "test:dev:pre",
+    },
   ]
 }
