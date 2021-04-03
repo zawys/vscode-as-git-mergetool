@@ -7,6 +7,7 @@ import {
 } from "./getPathsWithinVSCode";
 import { extensionID } from "./ids";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
+import { homedir } from "os";
 
 export const settingsAssistantOnStartupID = `${extensionID}.settingsAssistantOnStartup`;
 
@@ -214,12 +215,16 @@ class GitOptionAssistant implements OptionAssistant {
 }
 
 export class GitConfigurator {
-  public get(key: string): Promise<string | undefined> {
+  public get(key: string, global = false): Promise<string | undefined> {
     return new Promise((resolve) => {
       execFile(
         this.gitPath,
         ["config", "--get", key],
-        { windowsHide: true, timeout: 5000 },
+        {
+          windowsHide: true,
+          timeout: 5000,
+          cwd: global ? homedir() : this.workingDirectory.fsPath,
+        },
         (error, stdout) => {
           if (error) {
             resolve(undefined);
@@ -244,7 +249,10 @@ export class GitConfigurator {
       execFile(
         this.gitPath,
         arguments_,
-        { cwd: this.workingDirectory.fsPath },
+        {
+          cwd: this.workingDirectory.fsPath,
+          timeout: 5000,
+        },
         (error, stdout, stderr) => {
           if (error) {
             reject(
