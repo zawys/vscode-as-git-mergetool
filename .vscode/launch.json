@@ -12,10 +12,26 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
+      ],
+      "outFiles": [
+        "${workspaceFolder}/out/dist/extension.js",
+        "${workspaceFolder}/out/src/**/*.js"
+      ],
+      "preLaunchTask": "build:dev"
+    },
+    {
+      "name": "run extension, start paused",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
         "--inspect-brk-extensions=3714"
       ],
-      "sourceMaps": false,
-      "outFiles": ["${workspaceFolder}/dist/extension.js"],
+      "outFiles": [
+        "${workspaceFolder}/out/dist/extension.js",
+        "${workspaceFolder}/out/src/**/*.js"
+      ],
       "preLaunchTask": "build:dev"
     },
     {
@@ -30,9 +46,9 @@
       "showAsyncStacks": true,
       "timeout": 10000,
       "outFiles": [
+        "${workspaceFolder}/out/dist/extension.js",
         "${workspaceFolder}/out/src/**/*.js",
-        "${workspaceFolder}/out/test/**/*.js",
-        "${workspaceFolder}/dist/extension.js"
+        "${workspaceFolder}/out/test/**/*.js"
       ]
     },
     {

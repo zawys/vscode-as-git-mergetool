@@ -19,7 +19,7 @@
     "*"
   ],
   "icon": "media/packaged/icon.png",
-  "main": "dist/extension.js",
+  "main": "out/dist/extension.js",
   "targets": {
     "main": {
       "context": "node",
@@ -324,18 +324,17 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "clean": "rm -rf out packages dist",
+    "clean": "rm -rf out packages",
     "recompile": "yarn run clean && yarn run compile",
-    "lint": "eslint src test --ext ts --max-warnings=0",
-    "copy_files": "cpy --parents --cwd=./test '**/*' '!**/*.ts' ../out/test",
+    "lint": "eslint src test tools --ext ts --max-warnings=0",
+    "copy_files": "cpy --parents --cwd=./test '**/*' '!**/*.ts' ../out/test && cpy out/tools/extension.js out/tools/extension.js.map out/dist",
     "test": "yarn install && yarn run recompile && yarn run copy_files && yarn run bundle && yarn run lint && yarn run test:only",
     "test:only": "node ./out/test/runTests.js",
-    "test:dev:pre": "yarn run compile && yarn run bundle:dev && yarn run copy_files",
-    "test:dev": "yarn run test:dev:pre && yarn run test:only",
-    "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
+    "test:dev": "yarn run copy_files && yarn run test:only",
     "bundle:dev": "webpack --mode development",
     "bundle": "webpack --mode production",
-    "build:dev": "yarn run bundle:dev",
+    "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
+    "build:dev": "yarn run copy_files",
     "build": "yarn install && yarn run clean && yarn run bundle && yarn run package",
     "working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep '.'",
     "index_is_clean": "git diff --staged --quiet && git diff --quiet && ! git ls-files -o --exclude-standard | grep '.'",
