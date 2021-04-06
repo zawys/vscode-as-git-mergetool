@@ -20,7 +20,6 @@
   ],
   "icon": "media/packaged/icon.png",
   "main": "dist/extension.js",
-  "source": "src/extension.ts",
   "targets": {
     "main": {
       "context": "node",
@@ -325,7 +324,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "clean": "rm -rf out packages dist .parcel-cache",
+    "clean": "rm -rf out packages dist",
     "recompile": "yarn run clean && yarn run compile",
     "lint": "eslint src test --ext ts --max-warnings=0",
     "copy_files": "cpy --parents --cwd=./test '**/*' '!**/*.ts' ../out/test",
@@ -334,8 +333,8 @@
     "test:dev:pre": "yarn run compile && yarn run bundle:dev && yarn run copy_files",
     "test:dev": "yarn run test:dev:pre && yarn run test:only",
     "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
-    "bundle:dev": "parcel build --target main --no-minify ${npm_package_source}",
-    "bundle": "parcel build --target main --no-cache --detailed-report 10 ${npm_package_source}",
+    "bundle:dev": "",
+    "bundle": "",
     "build:dev": "yarn run bundle:dev",
     "build": "yarn install && yarn run clean && yarn run bundle && yarn run package",
     "working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep '.'",
@@ -354,7 +353,6 @@
     "postpublish": "pinst --enable"
   },
   "devDependencies": {
-    "@parcel/transformer-typescript-tsc": "^2.0.0-nightly.487",
     "@types/diff": "^5.0.0",
     "@types/glob": "^7.1.3",
     "@types/mocha": "^8.0.3",
@@ -375,7 +373,6 @@
     "husky": "^5.0.0",
     "mocha": "^8.1.3",
     "node-pty": "^0.10.0",
-    "parcel": "^2.0.0-beta.1",
     "pinst": "^2.1.4",
     "prettier": "^2.1.1",
     "ts-node": "^9.0.0",
