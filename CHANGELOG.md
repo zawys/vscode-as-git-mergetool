@@ -10,6 +10,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Changed
+
+- Initial settings assistant
+  - Fixes. It now aggregates the decisions and allows to apply them at the end.
+  - Malfunctioning creation of backup setting entries
+    was replaced by creating a log of changes made.
+  - The messages were improved.
+
 ## [0.13.3] - 2021-02-21
 
 ## Fixed
