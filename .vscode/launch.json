@@ -15,10 +15,7 @@
         "${workspaceFolder}/out/dist/extension.js",
         "${workspaceFolder}/out/src/**/*.js"
       ],
-      "preLaunchTask": "debug:pre",
-      "env": {
-        "HOME": "${env:HOME}/temp/vscode_as_git_mergetool"
-      }
+      "preLaunchTask": "debug:pre"
     },
     {
       "name": "run extension, start paused",
@@ -47,7 +44,10 @@
       ],
       "sourceMaps": false,
       "outFiles": ["${workspaceFolder}/dist/extension.js"],
-      "preLaunchTask": "debug:pre"
+      "preLaunchTask": "debug:pre",
+      "env": {
+        "HOME": "${input:data-dir}"
+      }
     },
     {
       "name": "debug opened test",
