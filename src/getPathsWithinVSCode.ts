@@ -17,7 +17,7 @@ function uriStartsWith(parent: Uri, child: Uri): boolean {
   return true;
 }
 
-export function getWorkingDirectoryUri(): Uri | undefined {
+export function getWorkspaceDirectoryUri(): Uri | undefined {
   if (window.activeTextEditor !== undefined) {
     const textEditorUri = window.activeTextEditor.document.uri;
     for (const folder of workspace.workspaceFolders || []) {
@@ -35,8 +35,8 @@ export function getWorkingDirectoryUri(): Uri | undefined {
   return workspace.workspaceFolders[0].uri;
 }
 
-export function getWorkingDirectoryUriInteractively(): Uri | undefined {
-  const result = getWorkingDirectoryUri();
+export function getWorkspaceDirectoryUriInteractively(): Uri | undefined {
+  const result = getWorkspaceDirectoryUri();
   if (result === undefined) {
     void window.showErrorMessage(
       "You need need to have exactly one workspace opened."

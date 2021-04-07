@@ -10,7 +10,7 @@ import {
 } from "vscode";
 import {
   getVSCGitPathInteractively,
-  getWorkingDirectoryUriInteractively,
+  getWorkspaceDirectoryUriInteractively,
 } from "./getPathsWithinVSCode";
 import {
   displayProcessExitInteractively,
@@ -27,7 +27,7 @@ export class MergetoolProcessManager implements Disposable {
     if (gitPath === undefined || !this.isInitial) {
       return false;
     }
-    const workingDirectory = getWorkingDirectoryUriInteractively();
+    const workingDirectory = getWorkspaceDirectoryUriInteractively();
     if (workingDirectory === undefined) {
       return false;
     }

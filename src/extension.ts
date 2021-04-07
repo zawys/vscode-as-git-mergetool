@@ -2,12 +2,14 @@ import "regenerator-runtime";
 import { ExtensionContext } from "vscode";
 import { ArbitraryFilesMerger } from "./arbitraryFilesMerger";
 import { DiffLayouterManager } from "./diffLayouterManager";
-import { defaultExtensionContextManager } from "./extensionContextManager";
 import { GitMergetoolReplacement } from "./gitMergetoolReplacement";
 import { Lazy } from "./lazy";
 import { MergetoolUI } from "./mergetoolUI";
 import { ReadonlyDocumentProviderManager } from "./readonlyDocumentProvider";
-import { SettingsAssistantCreator } from "./settingsAssistant";
+import {
+  OptionChangeProtocolExporter,
+  SettingsAssistantProcess,
+} from "./settingsAssistant";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { ZoomManager } from "./zoom";
@@ -17,8 +19,7 @@ let extensionAPI: ExtensionAPI | undefined;
 export async function activate(
   context: ExtensionContext
 ): Promise<ExtensionAPI> {
-  defaultExtensionContextManager.value = context;
-  extensionAPI = new ExtensionAPI();
+  extensionAPI = new ExtensionAPI(context);
   await extensionAPI.activate();
   return extensionAPI;
 }
@@ -39,7 +40,7 @@ export class ExtensionAPI {
     this.mergetoolUI.register();
     this.arbitraryFilesMerger.register();
     setTimeout(
-      () => void this.settingsAssistantCreatorFactory().tryLaunch(),
+      () => void this.settingsAssistantProcessFactory().tryLaunch(),
       4000
     );
   }
@@ -58,6 +59,7 @@ export class ExtensionAPI {
   }
 
   public constructor(
+    public readonly context: ExtensionContext,
     vSCodeConfigurator?: VSCodeConfigurator,
     readonlyDocumentProviderManager?: ReadonlyDocumentProviderManager,
     zoomManager?: ZoomManager,
@@ -66,49 +68,52 @@ export class ExtensionAPI {
     diffLayouterManager?: DiffLayouterManager,
     mergetoolUI?: MergetoolUI,
     arbitraryFilesMerger?: ArbitraryFilesMerger,
-    settingsAssistantCreatorFactory?: () => SettingsAssistantCreator
+    optionChangeProtocolExporter?: OptionChangeProtocolExporter,
+    settingsAssistantCreatorFactory?: () => SettingsAssistantProcess
   ) {
     const vSCodeConfiguratorProvider = new Lazy(
       () => vSCodeConfigurator || new VSCodeConfigurator()
     );
     this.readonlyDocumentProviderManager =
-      readonlyDocumentProviderManager !== undefined
-        ? readonlyDocumentProviderManager
-        : new ReadonlyDocumentProviderManager();
-    this.zoomManager =
-      zoomManager !== undefined ? zoomManager : new ZoomManager();
+      readonlyDocumentProviderManager ?? new ReadonlyDocumentProviderManager();
+    this.zoomManager = zoomManager ?? new ZoomManager();
     this.temporarySettingsManager =
-      temporarySettingsManager !== undefined
-        ? temporarySettingsManager
-        : new TemporarySettingsManager(vSCodeConfiguratorProvider.value);
+      temporarySettingsManager ??
+      new TemporarySettingsManager(
+        vSCodeConfiguratorProvider.value,
+        context.globalState
+      );
     this.gitMergetoolReplacement =
-      gitMergetoolReplacement !== undefined
-        ? gitMergetoolReplacement
-        : new GitMergetoolReplacement();
+      gitMergetoolReplacement ?? new GitMergetoolReplacement();
     this.diffLayouterManager =
-      diffLayouterManager !== undefined
-        ? diffLayouterManager
-        : new DiffLayouterManager(
-            vSCodeConfiguratorProvider.value,
-            this.zoomManager,
-            this.temporarySettingsManager,
-            this.gitMergetoolReplacement
-          );
+      diffLayouterManager ??
+      new DiffLayouterManager(
+        vSCodeConfiguratorProvider.value,
+        this.zoomManager,
+        this.temporarySettingsManager,
+        this.gitMergetoolReplacement
+      );
     this.mergetoolUI =
-      mergetoolUI !== undefined
-        ? mergetoolUI
-        : new MergetoolUI(
-            this.diffLayouterManager,
-            vSCodeConfiguratorProvider.value
-          );
+      mergetoolUI ??
+      new MergetoolUI(
+        this.diffLayouterManager,
+        vSCodeConfiguratorProvider.value
+      );
     this.arbitraryFilesMerger =
-      arbitraryFilesMerger !== undefined
-        ? arbitraryFilesMerger
-        : new ArbitraryFilesMerger(this.diffLayouterManager);
-    this.settingsAssistantCreatorFactory =
-      settingsAssistantCreatorFactory !== undefined
-        ? settingsAssistantCreatorFactory
-        : () => new SettingsAssistantCreator(vSCodeConfiguratorProvider.value);
+      arbitraryFilesMerger ??
+      new ArbitraryFilesMerger(
+        this.diffLayouterManager,
+        context.workspaceState
+      );
+    this.optionChangeProtocolExporter =
+      optionChangeProtocolExporter ?? new OptionChangeProtocolExporter();
+    this.settingsAssistantProcessFactory =
+      settingsAssistantCreatorFactory ??
+      (() =>
+        new SettingsAssistantProcess(
+          vSCodeConfiguratorProvider.value,
+          this.optionChangeProtocolExporter
+        ));
   }
 
   public readonly temporarySettingsManager: TemporarySettingsManager;
@@ -117,7 +122,8 @@ export class ExtensionAPI {
   public readonly diffLayouterManager: DiffLayouterManager;
   public readonly mergetoolUI: MergetoolUI;
   public readonly arbitraryFilesMerger: ArbitraryFilesMerger;
-  public readonly settingsAssistantCreatorFactory: () => SettingsAssistantCreator;
+  public readonly optionChangeProtocolExporter: OptionChangeProtocolExporter;
+  public readonly settingsAssistantProcessFactory: () => SettingsAssistantProcess;
   public readonly readonlyDocumentProviderManager: ReadonlyDocumentProviderManager;
   private timer: NodeJS.Timeout | undefined = undefined;
 }

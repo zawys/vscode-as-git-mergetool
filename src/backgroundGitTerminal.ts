@@ -1,7 +1,7 @@
 import { Terminal, TerminalOptions, window } from "vscode";
 import {
   getVSCGitPathInteractively,
-  getWorkingDirectoryUriInteractively,
+  getWorkspaceDirectoryUriInteractively,
 } from "./getPathsWithinVSCode";
 
 export async function createBackgroundGitTerminal(
@@ -11,7 +11,7 @@ export async function createBackgroundGitTerminal(
   if (gitPath === undefined) {
     return;
   }
-  const workingDirectory = getWorkingDirectoryUriInteractively();
+  const workingDirectory = getWorkspaceDirectoryUriInteractively();
   if (workingDirectory === undefined) {
     return;
   }

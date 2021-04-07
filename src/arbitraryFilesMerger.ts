@@ -1,6 +1,6 @@
 import { writeFile } from "fs";
 import path from "path";
-import { commands, Disposable, Uri, window } from "vscode";
+import { commands, Disposable, Memento, Uri, window } from "vscode";
 import { execFilePromise } from "./childProcessHandy";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffFileSelector } from "./diffFileSelector";
@@ -83,7 +83,10 @@ export class ArbitraryFilesMerger implements Disposable {
 
   public constructor(
     private readonly diffLayouterManager: DiffLayouterManager,
-    private diffFileSelectorLazy = new Lazy(() => new DiffFileSelector())
+    private readonly workspaceState: Memento,
+    private diffFileSelectorLazy = new Lazy(
+      () => new DiffFileSelector(workspaceState)
+    )
   ) {}
 
   private disposables: Disposable[] = [];

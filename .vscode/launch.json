@@ -6,7 +6,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "run extension",
+      "name": "debug extension",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
@@ -17,7 +17,10 @@
         "${workspaceFolder}/out/dist/extension.js",
         "${workspaceFolder}/out/src/**/*.js"
       ],
-      "preLaunchTask": "build:dev"
+      "preLaunchTask": "build:dev",
+      "env": {
+        "HOME": "${env:HOME}/temp/vscode_as_git_mergetool"
+      }
     },
     {
       "name": "run extension, start paused",
@@ -32,6 +35,20 @@
         "${workspaceFolder}/out/dist/extension.js",
         "${workspaceFolder}/out/src/**/*.js"
       ],
+      "preLaunchTask": "build:dev"
+    },
+    {
+      "name": "debug extension in selected path",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--inspect-brk-extensions=3714",
+        "--user-data-dir=${input:data-dir}/user-data-dir",
+      ],
+      "sourceMaps": false,
+      "outFiles": ["${workspaceFolder}/dist/extension.js"],
       "preLaunchTask": "build:dev"
     },
     {
@@ -61,5 +78,13 @@
       "type": "pwa-node",
       "preLaunchTask": "test:dev:pre",
     },
+  ],
+  "inputs": [
+    {
+      "id": "data-dir",
+      "type": "promptString",
+      "default": "${workspaceFolder}/.debug",
+      "description": "Select the environment data directory",
+    }
   ]
 }

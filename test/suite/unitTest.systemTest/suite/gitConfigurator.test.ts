@@ -1,6 +1,6 @@
 import assert from "assert";
 import { getGitPath } from "../../../../src/getPaths";
-import { getWorkingDirectoryUri } from "../../../../src/getPathsWithinVSCode";
+import { getWorkspaceDirectoryUri } from "../../../../src/getPathsWithinVSCode";
 import { GitConfigurator } from "../../../../src/settingsAssistant";
 
 suite("GitConfigurator", function () {
@@ -9,7 +9,7 @@ suite("GitConfigurator", function () {
   this.beforeAll(async () => {
     const gitPath = await getGitPath();
     if (gitPath === undefined) throw new Error("gitPath undefined");
-    const workingDirectory = getWorkingDirectoryUri();
+    const workingDirectory = getWorkspaceDirectoryUri();
     if (workingDirectory === undefined) {
       throw new Error("workingDirectory undefined");
     }

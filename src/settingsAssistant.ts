@@ -1,13 +1,17 @@
 import { execFile } from "child_process";
+import { createWriteStream } from "fs";
+import { EOL, homedir } from "os";
+import pDefer from "p-defer";
+import path from "path";
+import { Writable } from "stream";
 import { MessageItem, Uri, window } from "vscode";
 import { formatExecFileError } from "./childProcessHandy";
 import {
   getVSCGitPathInteractively,
-  getWorkingDirectoryUri,
+  getWorkspaceDirectoryUri,
 } from "./getPathsWithinVSCode";
 import { extensionID } from "./ids";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
-import { homedir } from "os";
 
 export const settingsAssistantOnStartupID = `${extensionID}.settingsAssistantOnStartup`;
 
@@ -15,7 +19,7 @@ export class SettingsAssistant {
   public async launch(): Promise<void> {
     let someNeedsChange = false;
     for (const assistant of this.optionsAssistants) {
-      if (await assistant.needsChange()) {
+      if (await assistant.getNeedsChange()) {
         someNeedsChange = true;
         break;
       }
@@ -44,7 +48,7 @@ export class SettingsAssistant {
       let restart = false;
       let abort = false;
       for (const assistant of this.optionsAssistants) {
-        if (!(await assistant.needsChange())) {
+        if (!(await assistant.getNeedsChange())) {
           continue;
         }
         const question = await assistant.provideQuestionData();
@@ -85,59 +89,78 @@ export class SettingsAssistant {
 
   constructor(
     private readonly gitConfigurator: GitConfigurator,
-    private readonly vSCodeConfigurator: VSCodeConfigurator
-  ) {}
+    private readonly vSCodeConfigurator: VSCodeConfigurator,
+    private changeProtocol: OptionChangeProtocol
+  ) {
+    const createGitOptionAssistant = (
+      key: string,
+      targetValue: string,
+      description: string
+    ) =>
+      new GitOptionAssistant(
+        gitConfigurator,
+        key,
+        targetValue,
+        description,
+        changeProtocol
+      );
+    const createVSCodeOptionAssistant = <T>(
+      section: string,
+      targetValue: T,
+      description: string
+    ) =>
+      new VSCodeOptionAssistant<T>(
+        vSCodeConfigurator,
+        section,
+        targetValue,
+        description,
+        changeProtocol
+      );
+    this.optionsAssistants = [
+      createGitOptionAssistant(
+        "mergetool.keepTemporaries",
+        "false",
+        "Remove temporary files after the merge."
+      ),
+      createGitOptionAssistant(
+        "mergetool.keepBackup",
+        "false",
+        "Remove the automatically created backup files after a merge."
+      ),
+      createGitOptionAssistant(
+        "mergetool.code.cmd",
+        `"${process.execPath}" "$BASE"`,
+        "Make VS Code available as merge tool."
+      ),
+      createGitOptionAssistant(
+        "merge.tool",
+        "code",
+        "Set VS Code as merge tool."
+      ),
+      createGitOptionAssistant(
+        "merge.conflictstyle",
+        "merge",
+        "Do not output base hunk in merge conflict files."
+      ),
+      createVSCodeOptionAssistant(
+        "workbench.editor.closeEmptyGroups",
+        true,
+        "Do not keep open empty editor groups when stopping a diff layout."
+      ),
+      createVSCodeOptionAssistant(
+        "merge-conflict.codeLens.enabled",
+        true,
+        "Show action links for selecting changes directly above merge conflict sections."
+      ),
+      createVSCodeOptionAssistant(
+        "diffEditor.codeLens",
+        true,
+        "Show the merge conflict code lens in diff editors."
+      ),
+    ];
+  }
 
-  private readonly optionsAssistants = [
-    new GitOptionAssistant(
-      this.gitConfigurator,
-      "mergetool.keepTemporaries",
-      "false",
-      "Remove temporary files after the merge."
-    ),
-    new GitOptionAssistant(
-      this.gitConfigurator,
-      "mergetool.keepBackup",
-      "false",
-      "Remove the automatically created backup files after a merge."
-    ),
-    new GitOptionAssistant(
-      this.gitConfigurator,
-      "mergetool.code.cmd",
-      `"${process.execPath}" "$BASE"`,
-      "Make VS Code available as merge tool."
-    ),
-    new GitOptionAssistant(
-      this.gitConfigurator,
-      "merge.tool",
-      "code",
-      "Set VS Code as merge tool"
-    ),
-    new GitOptionAssistant(
-      this.gitConfigurator,
-      "merge.conflictstyle",
-      "merge",
-      "Do not output base hunk in merge conflict files."
-    ),
-    new VSCodeOptionAssistant<boolean>(
-      this.vSCodeConfigurator,
-      "workbench.editor.closeEmptyGroups",
-      true,
-      "Do not keep open empty editor groups when stopping a diff layout."
-    ),
-    new VSCodeOptionAssistant<boolean>(
-      this.vSCodeConfigurator,
-      "merge-conflict.codeLens.enabled",
-      true,
-      "Show action links for selecting changes directly above merge conflict sections."
-    ),
-    new VSCodeOptionAssistant<boolean>(
-      this.vSCodeConfigurator,
-      "diffEditor.codeLens",
-      true,
-      "Show the merge conflict code lens in diff editors."
-    ),
-  ];
+  private readonly optionsAssistants: OptionAssistant[];
   private readonly skipOptionItem = new Option("Skip");
   private readonly abortItem = new Option("Abort");
   private readonly completeItem = new Option("Complete");
@@ -152,25 +175,20 @@ export class SettingsAssistant {
 }
 
 interface OptionAssistant {
-  needsChange(): Promise<boolean>;
+  getNeedsChange(): Promise<boolean>;
   provideQuestionData(): Promise<QuestionData>;
   handlePickedOption(item: Option): Promise<void>;
 }
 
-function getBackupConfigKey(key: string): string {
-  return `${key}__vscode_as_git_mergetool_backup`;
-}
-
-const unsetValue = `(${getBackupConfigKey("unset")})`;
-
-class GitOptionAssistant implements OptionAssistant {
+export class GitOptionAssistant implements OptionAssistant {
   constructor(
     private readonly configurator: GitConfigurator,
     private readonly key: string,
     private readonly targetValue: string,
-    private readonly description: string
+    private readonly description: string,
+    private readonly changeProtocol: OptionChangeProtocol
   ) {}
-  async needsChange(): Promise<boolean> {
+  async getNeedsChange(): Promise<boolean> {
     return (await this.configurator.get(this.key)) !== this.targetValue;
   }
 
@@ -200,14 +218,19 @@ class GitOptionAssistant implements OptionAssistant {
     } else {
       return;
     }
-    const backupConfigKey = getBackupConfigKey(this.key);
-    const previousValue = await this.configurator.get(this.key);
-    await this.configurator.set(
-      backupConfigKey,
-      previousValue ?? unsetValue,
-      global
-    );
+    const oldValue = await this.configurator.get(this.key);
     await this.configurator.set(this.key, this.targetValue, global);
+    this.changeProtocol.log({
+      type: `Git option (${
+        global
+          ? "global"
+          : `in repository ${this.configurator.workspaceDirectoryUri.fsPath}`
+      })`,
+      key: this.key,
+      oldValue: oldValue === undefined ? "(unset)" : oldValue,
+      newValue: this.targetValue,
+      reason: this.description,
+    });
   }
 
   private static readonly repositoryValue = "in repository";
@@ -223,7 +246,7 @@ export class GitConfigurator {
         {
           windowsHide: true,
           timeout: 5000,
-          cwd: global ? homedir() : this.workingDirectory.fsPath,
+          cwd: global ? homedir() : this.workspaceDirectoryUri.fsPath,
         },
         (error, stdout) => {
           if (error) {
@@ -250,7 +273,7 @@ export class GitConfigurator {
         this.gitPath,
         arguments_,
         {
-          cwd: this.workingDirectory.fsPath,
+          cwd: this.workspaceDirectoryUri.fsPath,
           timeout: 5000,
         },
         (error, stdout, stderr) => {
@@ -269,7 +292,7 @@ export class GitConfigurator {
 
   constructor(
     private readonly gitPath: string,
-    private readonly workingDirectory: Uri
+    public readonly workspaceDirectoryUri: Uri
   ) {}
 }
 
@@ -278,10 +301,11 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
     private readonly configurator: VSCodeConfigurator,
     private readonly section: string,
     private readonly targetValue: T,
-    private readonly description: string
+    private readonly description: string,
+    private readonly changeProtocol: OptionChangeProtocol
   ) {}
 
-  needsChange(): Promise<boolean> {
+  getNeedsChange(): Promise<boolean> {
     return Promise.resolve(
       this.configurator.get(this.section) !== this.targetValue
     );
@@ -309,33 +333,41 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
     } else {
       return;
     }
-    const backupConfigKey = getBackupConfigKey(this.section);
-    const previousValue = await this.configurator.get(this.section);
-    await this.configurator.set(
-      backupConfigKey,
-      previousValue ?? unsetValue,
-      global
-    );
+    const oldValue = await this.configurator.get(this.section);
     await this.configurator.set(this.section, this.targetValue, global);
+    const workspaceDirectory = getWorkspaceDirectoryUri();
+    this.changeProtocol.log({
+      type: `VSCode option (${
+        global
+          ? "global"
+          : `in workspace ${workspaceDirectory?.fsPath ?? "undefined"}`
+      })`,
+      key: this.section,
+      oldValue: oldValue === undefined ? "(unset)" : oldValue,
+      newValue: this.targetValue,
+      reason: this.description,
+    });
   }
 
   private static readonly globalValue = "globally";
   private static readonly workspaceValue = "in workspace";
 }
 
-export class SettingsAssistantCreator {
+export class SettingsAssistantProcess {
   public async tryLaunch(): Promise<void> {
     if (!this.vSCodeConfigurator.get(settingsAssistantOnStartupID)) {
       return;
     }
     const gitPath = await getVSCGitPathInteractively();
-    const workingDirectory = getWorkingDirectoryUri();
-    if (gitPath === undefined || workingDirectory === undefined) {
+    const workspaceDirectoryUri = getWorkspaceDirectoryUri();
+    if (gitPath === undefined || workspaceDirectoryUri === undefined) {
       return;
     }
+    const optionChangeProtocol = new OptionChangeProtocol();
     const process = new SettingsAssistant(
-      new GitConfigurator(gitPath, workingDirectory),
-      this.vSCodeConfigurator
+      new GitConfigurator(gitPath, workspaceDirectoryUri),
+      this.vSCodeConfigurator,
+      optionChangeProtocol
     );
     try {
       await process.launch();
@@ -344,9 +376,117 @@ export class SettingsAssistantCreator {
         `Error on running the settings assistant: ${JSON.stringify(error)}`
       );
     }
+    if (optionChangeProtocol.entries.length > 0) {
+      await this.writeOptionChangeProtocol(optionChangeProtocol);
+    }
   }
 
-  constructor(private readonly vSCodeConfigurator: VSCodeConfigurator) {}
+  private async writeOptionChangeProtocol(
+    optionChangeProtocol: OptionChangeProtocol
+  ): Promise<void> {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        const destinationUri = await window.showSaveDialog({
+          defaultUri: Uri.file(
+            path.join(
+              homedir(),
+              "vscode-as-git-mergetool_option_change_protocol.yml"
+            )
+          ),
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          filters: { YAML: ["yml", "yaml"] },
+          title: "Save option change protocol (last chance)",
+        });
+        if (destinationUri === undefined) {
+          return;
+        }
+        const destinationPath = destinationUri.fsPath;
+        let writeStream: Writable | undefined = undefined;
+        try {
+          writeStream = createWriteStream(destinationPath, { flags: "a" });
+          await this.optionChangeProtocolExporter.export(
+            writeStream,
+            optionChangeProtocol
+          );
+        } finally {
+          await new Promise((resolve) => writeStream?.end(resolve));
+        }
+        break;
+      } catch (error: unknown) {
+        const retryItem: MessageItem = { title: "Retry" };
+        const cancelItem: MessageItem = { title: "Cancel" };
+        const selectedItem = await window.showErrorMessage(
+          `Saving option change protocol failed: \n${String(error)}`,
+          retryItem,
+          cancelItem
+        );
+        if (selectedItem !== retryItem) {
+          break;
+        }
+      }
+    }
+  }
+
+  constructor(
+    private readonly vSCodeConfigurator: VSCodeConfigurator,
+    private readonly optionChangeProtocolExporter: OptionChangeProtocolExporter
+  ) {}
+}
+
+export interface OptionChangeProtocolEntry {
+  type: string;
+  key: string;
+  oldValue: Exclude<unknown, undefined>;
+  newValue: Exclude<unknown, undefined>;
+  reason: string;
+}
+
+export class OptionChangeProtocol {
+  public log(entry: OptionChangeProtocolEntry): void {
+    this.entries.push(entry);
+  }
+
+  public constructor(public entries: OptionChangeProtocolEntry[] = []) {}
+}
+
+export class OptionChangeProtocolExporter {
+  public async export(
+    destination: Writable,
+    protocol: OptionChangeProtocol
+  ): Promise<void> {
+    const writeLine = (text: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        destination.write(`${text}${EOL}`, (error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+    };
+    const task = async () => {
+      await writeLine("---");
+      for (const entry of protocol.entries) {
+        const data: [string, Exclude<unknown, undefined>][] = [
+          ["- type: ", entry.type],
+          ["  key: ", entry.key],
+          ["  newValue: ", entry.newValue],
+          ["  oldValue: ", entry.oldValue],
+          ["  reason: ", entry.reason],
+        ];
+        for (const [prefix, value] of data) {
+          await writeLine(`${prefix}${JSON.stringify(value)}`);
+        }
+      }
+    };
+    const errorEventDeferred = pDefer();
+    const rejectListener = errorEventDeferred.reject.bind(errorEventDeferred);
+    destination.addListener("error", rejectListener);
+    try {
+      await Promise.race([task(), errorEventDeferred.promise]);
+    } finally {
+      destination.removeListener("error", rejectListener);
+    }
+  }
 }
 
 class Option implements MessageItem {

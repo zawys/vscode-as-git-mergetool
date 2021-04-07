@@ -385,6 +385,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "diff": "^5.0.0",
+    "p-defer": "^3.0.0",
     "regenerator-runtime": "^0.13.7",
     "which": "^2.0.2"
   }

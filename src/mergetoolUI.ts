@@ -12,7 +12,7 @@ import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffLayouterManager } from "./diffLayouterManager";
 import { copy, fileContentsEqual, FileType, getFileType } from "./fsHandy";
-import { getWorkingDirectoryUriInteractively } from "./getPathsWithinVSCode";
+import { getWorkspaceDirectoryUriInteractively } from "./getPathsWithinVSCode";
 import { extensionID, labelsInStatusBarSettingID } from "./ids";
 import { DiffLayouter, SearchType } from "./layouters/diffLayouter";
 import { MergetoolProcessManager } from "./mergetoolProcessManager";
@@ -535,7 +535,7 @@ export class MergetoolUI {
     if (
       this.vSCodeConfigurator.get(editCommitMessageAfterMergetoolSettingID)
     ) {
-      const workspaceRoot = getWorkingDirectoryUriInteractively();
+      const workspaceRoot = getWorkspaceDirectoryUriInteractively();
       if (workspaceRoot !== undefined) {
         const commitMessagePath = Uri.joinPath(
           workspaceRoot,
