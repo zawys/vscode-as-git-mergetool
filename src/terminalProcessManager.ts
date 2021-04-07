@@ -199,23 +199,21 @@ export class TerminalProcessManager implements Pseudoterminal, Disposable {
 export function getCoreNodeModule(
   moduleName: string
 ): { module?: unknown; errors: Error[] } {
+  const paths: string[] = [
+    `${env.appRoot}/node_modules.asar.unpacked/${moduleName}`,
+    `${env.appRoot}/node_modules.asar/${moduleName}`,
+    `${env.appRoot}/node_modules/${moduleName}`,
+  ];
   const errors: Error[] = [];
-  try {
-    return {
-      module: require(`${env.appRoot}/node_modules.asar/${moduleName}`),
-      errors,
-    };
-  } catch (error) {
-    errors.push(error);
-  }
-
-  try {
-    return {
-      module: require(`${env.appRoot}/node_modules/${moduleName}`),
-      errors,
-    };
-  } catch (error) {
-    errors.push(error);
+  for (const path of paths) {
+    try {
+      return {
+        module: require(/* webpackIgnore: true */ path),
+        errors,
+      };
+    } catch (error) {
+      errors.push(error);
+    }
   }
 
   return { errors };
