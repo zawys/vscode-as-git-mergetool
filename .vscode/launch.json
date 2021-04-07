@@ -10,16 +10,14 @@
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
-      ],
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": [
         "${workspaceFolder}/out/dist/extension.js",
         "${workspaceFolder}/out/src/**/*.js"
       ],
-      "preLaunchTask": "build:dev",
+      "preLaunchTask": "debug:pre",
       "env": {
-        "HOME": "${env:HOME}/temp/vscode_as_git_mergetool"
+        "HOME": "${env:HOME}/temp/vscode_as_git_mergetool"
       }
     },
     {
@@ -35,7 +33,7 @@
         "${workspaceFolder}/out/dist/extension.js",
         "${workspaceFolder}/out/src/**/*.js"
       ],
-      "preLaunchTask": "build:dev"
+      "preLaunchTask": "debug:pre"
     },
     {
       "name": "debug extension in selected path",
@@ -45,11 +43,11 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
         "--inspect-brk-extensions=3714",
-        "--user-data-dir=${input:data-dir}/user-data-dir",
+        "--user-data-dir=${input:data-dir}/user-data-dir"
       ],
       "sourceMaps": false,
       "outFiles": ["${workspaceFolder}/dist/extension.js"],
-      "preLaunchTask": "build:dev"
+      "preLaunchTask": "debug:pre"
     },
     {
       "name": "debug opened test",
@@ -72,19 +70,17 @@
       "name": "debug test runner",
       "program": "${workspaceFolder}/out/test/runTests.js",
       "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "type": "pwa-node",
-      "preLaunchTask": "test:dev:pre",
-    },
+      "preLaunchTask": "test:dev:pre"
+    }
   ],
   "inputs": [
     {
       "id": "data-dir",
       "type": "promptString",
       "default": "${workspaceFolder}/.debug",
-      "description": "Select the environment data directory",
+      "description": "Select the environment data directory"
     }
   ]
 }

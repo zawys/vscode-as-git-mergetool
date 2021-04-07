@@ -21,9 +21,9 @@
       }
     },
     {
-      "label": "build:dev",
+      "label": "debug:pre",
       "type": "npm",
-      "script": "build:dev",
+      "script": "debug:pre",
       "group": "build",
       "runOptions": {
         "instanceLimit": 1
@@ -81,7 +81,7 @@
       "script": "test:dev:pre",
       "group": "build",
       "runOptions": {
-        "instanceLimit": 1,
+        "instanceLimit": 1
       },
       "presentation": {
         "echo": true,
