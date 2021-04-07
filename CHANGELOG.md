@@ -24,6 +24,11 @@ and this project adheres to
   - The messages were improved.
 - Switched to Webpack as bundler
 
+### Fixed
+
+- Wrong file paths were opened when `git mergetool` was launched
+  by the extension.
+
 ## [0.13.3] - 2021-02-21
 
 ## Fixed

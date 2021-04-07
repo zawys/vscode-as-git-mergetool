@@ -46,6 +46,8 @@ export class MergetoolProcessManager implements Disposable {
           ...process.env,
           // eslint-disable-next-line @typescript-eslint/naming-convention
           ELECTRON_RUN_AS_NODE: "",
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          VSCODE_CWD: workingDirectory.fsPath,
         },
       },
       false
