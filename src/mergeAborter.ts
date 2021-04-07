@@ -5,7 +5,7 @@ import path from "path";
 import { commands, Disposable, QuickPickItem, window } from "vscode";
 import { createBackgroundGitTerminal } from "./backgroundGitTerminal";
 import { getStats } from "./fsHandy";
-import { getWorkingDirectoryUri } from "./getPathsWithinVSCode";
+import { getWorkspaceDirectoryUri } from "./getPathsWithinVSCode";
 import { RegisterableService } from "./registerableService";
 
 export class MergeAborter implements RegisterableService {
@@ -22,7 +22,7 @@ export class MergeAborter implements RegisterableService {
 
   // by https://stackoverflow.com/a/30783114/1717752
   public async isMergeInProgress(): Promise<boolean | undefined> {
-    const workingDirectoryUri = getWorkingDirectoryUri();
+    const workingDirectoryUri = getWorkspaceDirectoryUri();
     if (workingDirectoryUri === undefined) {
       return undefined;
     }

@@ -1,7 +1,7 @@
 // Copyright (C) 2020  zawys. Licensed under AGPL-3.0-or-later.
 // See LICENSE file in repository root directory.
 
-import { commands, Disposable, Uri, window } from "vscode";
+import { commands, Disposable, Uri, Memento, window } from "vscode";
 import { DiffedURIs } from "./diffedURIs";
 import { DiffFileSelector } from "./diffFileSelector";
 import { DiffLayouterManager } from "./diffLayouterManager";
@@ -69,7 +69,10 @@ export class ArbitraryFilesMerger implements RegisterableService {
   public constructor(
     private readonly diffLayouterManager: DiffLayouterManager,
     private readonly readonlyDocumentProvider: ReadonlyDocumentProvider,
-    private diffFileSelectorLazy = new Lazy(() => new DiffFileSelector())
+    private readonly workspaceState: Memento,
+    private diffFileSelectorLazy = new Lazy(
+      () => new DiffFileSelector(workspaceState)
+    )
   ) {}
 
   private disposables: Disposable[] = [];

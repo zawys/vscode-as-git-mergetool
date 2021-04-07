@@ -158,7 +158,7 @@ export class GitMergetoolReplacement
         return true;
       }
       this.manualMergeProcess;
-      // TODO [2021-03-31]
+      // TODO [2021-04-30]
       throw new Error("Not implemented");
     } finally {
       await this.monitor.leave();
@@ -287,7 +287,7 @@ export class GitMergetoolReplacement
     if (absoluteConflictPath !== absoluteMergedPath) {
       const renameResult = await mkdir(nodePath.dirname(absoluteMergedPath));
       if (isUIError(renameResult)) return renameResult;
-      // TODO [2021-03-31]: Does that work with submodules?
+      // TODO [2021-04-30]: Does that work with submodules?
       const moveResult = await rename(
         absoluteConflictPath,
         absoluteMergedPath

@@ -2,7 +2,7 @@
   "name": "vscode-as-git-mergetool",
   "displayName": "VS Code as Git Mergetool",
   "description": "Diff editor layouts for common-base merging",
-  "version": "0.13.3",
+  "version": "0.14.0",
   "engines": {
     "vscode": "^1.48.0"
   },
@@ -149,6 +149,11 @@
         "command": "vscode-as-git-mergetool.zoomBottom",
         "title": "zoom: bottom",
         "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.runSettingsAssistant",
+        "title": "Launch settings assistant",
+        "category": "Git Mergetool"
       }
     ],
     "configuration": {
@@ -158,7 +163,7 @@
           "type": "boolean",
           "default": true,
           "description": "If the setup assistant for the 'VS Code as Git Mergetool' extension shall be run on next VS Code startup.",
-          "scope": "application"
+          "scope": "window"
         },
         "vscode-as-git-mergetool.editCommitMessageAfterMergetool": {
           "type": "boolean",
@@ -334,7 +339,8 @@
     "bundle:dev": "webpack --mode development",
     "bundle": "webpack --mode production",
     "package": "mkdir packages && vsce package --out=packages/${npm_package_name}-${npm_package_version}.vsix --githubBranch=master --yarn",
-    "build:dev": "yarn run copy_files",
+    "debug:pre": "yarn run copy_files",
+    "build:dev": "yarn install && yarn run clean && yarn run bundle:dev && yarn run package",
     "build": "yarn install && yarn run clean && yarn run bundle && yarn run package",
     "working_dir_is_clean": "git diff --quiet && ! git ls-files -o --exclude-standard | grep '.'",
     "index_is_clean": "git diff --staged --quiet && git diff --quiet && ! git ls-files -o --exclude-standard | grep '.'",
@@ -354,38 +360,39 @@
   "devDependencies": {
     "@types/diff": "^5.0.0",
     "@types/glob": "^7.1.3",
-    "@types/mocha": "^8.0.3",
-    "@types/node": "^14.6.2",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "^14.14.37",
     "@types/tmp": "^0.2.0",
     "@types/vscode": "^1.48.0",
     "@types/which": "^2.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.0.1",
-    "@typescript-eslint/parser": "^4.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.21.0",
+    "@typescript-eslint/parser": "^4.21.0",
     "cpy-cli": "^3.1.1",
     "dotenv": "^8.2.0",
-    "eslint": "^7.8.0",
-    "eslint-config-prettier": "^8.0.0",
+    "eslint": "^7.23.0",
+    "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-header": "^3.1.0",
-    "eslint-plugin-prettier": "^3.1.4",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-unicorn": "^28.0.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-promise": "^4.3.1",
+    "eslint-plugin-unicorn": "^29.0.0",
     "glob": "^7.1.6",
-    "husky": "^5.0.0",
-    "mocha": "^8.1.3",
-    "pinst": "^2.1.4",
-    "prettier": "^2.1.1",
-    "ts-loader": "^8.0.18",
-    "ts-node": "^9.0.0",
-    "typescript": "^4.0.2",
-    "vsce": "^1.79.5",
-    "vscode-test": "^1.4.0",
-    "webpack": "^5.27.1",
-    "webpack-cli": "^4.5.0"
+    "husky": "^6.0.0",
+    "mocha": "^8.3.2",
+    "pinst": "^2.1.6",
+    "prettier": "^2.2.1",
+    "ts-loader": "^8.1.0",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3",
+    "vsce": "^1.87.1",
+    "vscode-test": "^1.5.2",
+    "webpack": "^5.30.0",
+    "webpack-cli": "^4.6.0"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "diff": "^5.0.0",
+    "p-defer": "^3.0.0",
     "regenerator-runtime": "^0.13.7",
     "tmp-promise": "^3.0.2",
     "which": "^2.0.2"

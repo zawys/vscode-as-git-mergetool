@@ -29,6 +29,27 @@ and this project adheres to
   It should be slightly more stable now.
 - Switched to Webpack as bundler
 
+## [0.14.0] - 2021-04-07
+
+### Added
+
+- Command to run the initial settings assistant on demand.
+
+### Changed
+
+- Initial settings assistant
+  - Fixes. It now aggregates the decisions and allows to apply them at the end.
+  - The settings assistant startup is now rather configured per repository.
+  - Malfunctioning creation of backup setting entries
+    was replaced by creating a log file of changes made.
+  - The messages were improved.
+- Switched to Webpack as bundler
+
+### Fixed
+
+- Wrong file paths were opened when `git mergetool` was launched
+  by the extension.
+
 ## [0.13.3] - 2021-02-21
 
 ## Fixed
@@ -328,7 +349,8 @@ This will be the first version published on the
 - Disables line numbers and sets diff layout to “inline”
   while a diff layout is active
 
-[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.13.3...HEAD
+[Unreleased]: https://github.com/zawys/vscode-as-git-mergetool/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.14.0
 [0.13.3]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.3
 [0.13.2]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.2
 [0.13.1]: https://github.com/zawys/vscode-as-git-mergetool/releases/tag/v0.13.1

@@ -4,9 +4,8 @@
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 import { Monitor } from "./monitor";
 import { extensionID } from "./ids";
-import { defaultExtensionContextManager } from "./extensionContextManager";
-import { commands, Disposable } from "vscode";
 import { RegisterableService } from "./registerableService";
+import { commands, Disposable, Memento } from "vscode";
 
 export class TemporarySettingsManager implements RegisterableService {
   public async activateSettings(): Promise<void> {
@@ -87,6 +86,7 @@ export class TemporarySettingsManager implements RegisterableService {
 
   public constructor(
     private readonly vSCodeConfigurator: VSCodeConfigurator,
+    private readonly globalState: Memento,
     private readonly monitor = new Monitor(),
     private readonly targetSettings: StorageState = {
       "diffEditor.renderSideBySide": false,
@@ -94,9 +94,7 @@ export class TemporarySettingsManager implements RegisterableService {
       "workbench.editor.showTabs": false,
       "editor.glyphMargin": false,
       "workbench.activityBar.visible": false,
-    },
-    private readonly storageState = defaultExtensionContextManager.value
-      .globalState
+    }
   ) {
     this.targetIDs = Object.keys(targetSettings);
   }
@@ -105,7 +103,7 @@ export class TemporarySettingsManager implements RegisterableService {
   private disposables: Disposable[] = [];
 
   private getStorageState(key: string): StorageState {
-    const value = this.storageState.get(key);
+    const value = this.globalState.get(key);
     if (typeof value === "object") {
       // workspaceState.get returns JSON serializable objects.
       return value as StorageState;
@@ -117,7 +115,7 @@ export class TemporarySettingsManager implements RegisterableService {
     key: string,
     value: StorageState | undefined
   ): Promise<void> {
-    await this.storageState.update(key, value);
+    await this.globalState.update(key, value);
   }
 }
 

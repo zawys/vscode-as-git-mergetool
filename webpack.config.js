@@ -28,6 +28,11 @@ const config = {
     extensions: [".ts", ".js"],
   },
   module: {
+    parser: {
+      javascript: {
+        commonjsMagicComments: true,
+      }
+    },
     rules: [
       {
         test: /\.ts$/,

@@ -35,6 +35,7 @@
     "postversion",
     "precommit",
     "preversion",
+    "protocolled",
     "quickstart",
     "s",
     "screencast",

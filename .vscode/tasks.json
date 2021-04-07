@@ -21,9 +21,9 @@
       }
     },
     {
-      "label": "build:dev",
+      "label": "debug:pre",
       "type": "npm",
-      "script": "build:dev",
+      "script": "debug:pre",
       "group": "build",
       "runOptions": {
         "instanceLimit": 1
@@ -73,6 +73,23 @@
           "beginsPattern": "$never^",
           "endsPattern": "^Debugging test .+\\. Waiting on port"
         }
+      }
+    },
+    {
+      "label": "test:dev:pre",
+      "type": "npm",
+      "script": "test:dev:pre",
+      "group": "build",
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
       }
     }
   ]

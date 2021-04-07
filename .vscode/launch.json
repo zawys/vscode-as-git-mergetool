@@ -6,21 +6,19 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "run extension",
+      "name": "debug extension",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}"
-      ],
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": [
         "${workspaceFolder}/out/dist/extension.js",
         "${workspaceFolder}/out/src/**/*.js"
       ],
-      "preLaunchTask": "build:dev"
+      "preLaunchTask": "debug:pre"
     },
     {
-      "name": "run extension, start paused",
+      "name": "debug extension, start paused",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
@@ -32,10 +30,29 @@
         "${workspaceFolder}/out/dist/extension.js",
         "${workspaceFolder}/out/src/**/*.js"
       ],
-      "preLaunchTask": "build:dev"
+      "preLaunchTask": "debug:pre"
     },
     {
-      "name": "debug tests",
+      "name": "debug extension in selected path",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--inspect-brk-extensions=3714",
+        "--user-data-dir=${input:data-dir}/user-data-dir"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/out/dist/extension.js",
+        "${workspaceFolder}/out/src/**/*.js"
+      ],
+      "preLaunchTask": "debug:pre",
+      "env": {
+        "HOME": "${input:data-dir}"
+      }
+    },
+    {
+      "name": "debug opened test",
       "port": 3714,
       "request": "attach",
       "skipFiles": ["<node_internals>/**"],
@@ -49,6 +66,22 @@
         "${workspaceFolder}/out/src/**/*.js",
         "${workspaceFolder}/out/test/**/*.js"
       ]
+    },
+    {
+      "name": "debug test runner",
+      "program": "${workspaceFolder}/out/test/runTests.js",
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "pwa-node",
+      "preLaunchTask": "test:dev:pre"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "data-dir",
+      "type": "promptString",
+      "default": "${workspaceFolder}/.debug",
+      "description": "Select the environment data directory"
     }
   ]
 }

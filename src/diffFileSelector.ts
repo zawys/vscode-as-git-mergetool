@@ -3,10 +3,9 @@
 
 import { R_OK, W_OK } from "constants";
 import path from "path";
-import { QuickPickItem, Uri, window } from "vscode";
-import { defaultExtensionContextManager } from "./extensionContextManager";
+import { Memento, QuickPickItem, Uri, window } from "vscode";
 import { FileType, getFileType, getRealPath, testFile } from "./fsHandy";
-import { getWorkingDirectoryUri } from "./getPathsWithinVSCode";
+import { getWorkspaceDirectoryUri } from "./getPathsWithinVSCode";
 import { extensionID, firstLetterUppercase } from "./ids";
 
 export class DiffFileSelector {
@@ -33,11 +32,12 @@ export class DiffFileSelector {
   }
 
   public constructor(
+    private readonly workspaceState: Memento,
     public readonly id: string = `${extensionID}.mergeFileSelector`
   ) {
     this.selector = new MultiFileSelector(
       this.selectableFiles,
-      new FileSelectionStateStore(id)
+      new FileSelectionStateStore(id, workspaceState)
     );
   }
 
@@ -224,7 +224,7 @@ export class MultiFileSelector<TKey extends string> {
         return undefined;
       }
       if (result.startsWith("./") || result.startsWith(".\\")) {
-        const workingDirectory = getWorkingDirectoryUri()?.fsPath;
+        const workingDirectory = getWorkspaceDirectoryUri()?.fsPath;
         if (workingDirectory !== undefined) {
           return path.join(workingDirectory, result);
         }
@@ -376,9 +376,7 @@ export type FileSelectionState = {
 export class FileSelectionStateStore {
   public async getSelection(key: string): Promise<string | undefined> {
     const keyID = this.getKeyID(key);
-    const value = defaultExtensionContextManager.value.workspaceState.get(
-      keyID
-    );
+    const value = this.workspaceState.get(keyID);
     if (value === undefined) {
       return undefined;
     } else if (typeof value === "string") {
@@ -397,8 +395,7 @@ export class FileSelectionStateStore {
 
   public constructor(
     public readonly id: string,
-    public readonly workspaceState = defaultExtensionContextManager.value
-      .workspaceState
+    public readonly workspaceState: Memento
   ) {}
 
   private getKeyID(key: string): string {
