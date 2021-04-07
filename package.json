@@ -158,7 +158,7 @@
           "type": "boolean",
           "default": true,
           "description": "If the setup assistant for the 'VS Code as Git Mergetool' extension shall be run on next VS Code startup.",
-          "scope": "application"
+          "scope": "window"
         },
         "vscode-as-git-mergetool.editCommitMessageAfterMergetool": {
           "type": "boolean",
