@@ -14,8 +14,9 @@ and this project adheres to
 
 - Initial settings assistant
   - Fixes. It now aggregates the decisions and allows to apply them at the end.
+  - The settings assistant startup is now rather configured per repository.
   - Malfunctioning creation of backup setting entries
-    was replaced by creating a log of changes made.
+    was replaced by creating a log file of changes made.
   - The messages were improved.
 - Switched to Webpack as bundler
 
