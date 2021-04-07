@@ -28,8 +28,7 @@ suite("GitOptionAssistant", function () {
       gitConfigurator,
       configKey,
       targetValue,
-      "some text",
-      changeProtocol
+      "some text"
     );
   });
 
@@ -57,8 +56,7 @@ suite("GitOptionAssistant", function () {
       gitConfigurator,
       configKey2,
       actualValue,
-      "",
-      changeProtocol
+      ""
     );
     assert(!(await sut2.getNeedsChange()));
   });
@@ -69,6 +67,9 @@ suite("GitOptionAssistant", function () {
     }
     if (sut === undefined) {
       throw new Error("sut undefined");
+    }
+    if (changeProtocol === undefined) {
+      throw new Error("changeProtocol undefined");
     }
     const oldValue = await gitConfigurator.get(configKey, false);
     if (oldValue === undefined || oldValue == targetValue) {
@@ -85,7 +86,7 @@ suite("GitOptionAssistant", function () {
     if (inRepositoryOption === undefined) {
       throw new Error("assertion did not work?!");
     }
-    await sut.handlePickedOption(inRepositoryOption);
+    await sut.handlePickedOption(inRepositoryOption, changeProtocol);
     const newValue = await gitConfigurator.get(configKey, false);
     assert.strictEqual(newValue, targetValue, "updates the option");
   });

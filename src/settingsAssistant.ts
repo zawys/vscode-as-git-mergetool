@@ -17,93 +17,126 @@ export const settingsAssistantOnStartupID = `${extensionID}.settingsAssistantOnS
 
 export class SettingsAssistant {
   public async launch(): Promise<void> {
-    let someNeedsChange = false;
-    for (const assistant of this.optionsAssistants) {
-      if (await assistant.getNeedsChange()) {
-        someNeedsChange = true;
-        break;
-      }
-    }
-    if (!someNeedsChange) {
+    const { error, apply, pickedOptions } = await this.gatherDecisions();
+    if (error !== undefined) {
+      void window.showErrorMessage(
+        `Error while running the settings assistant. ` +
+          `No changes were made. ${JSON.stringify(error)}`
+      );
       return;
     }
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const nowItem = { title: "Now" };
-      const newerItem = { title: "Never" };
-      const postponeItem = { title: "Postpone to next startup" };
-      const result = await window.showInformationMessage(
-        "Some current settings will not work well with VS Code as merge tool. When do want to change them using dialogs?",
-        nowItem,
-        newerItem,
-        postponeItem
-      );
-      if (result === newerItem) {
-        await this.vSCodeConfigurator.set(settingsAssistantOnStartupID, false);
-        return;
-      }
-      if (result !== nowItem) {
-        return;
-      }
-      let restart = false;
-      let abort = false;
-      for (const assistant of this.optionsAssistants) {
-        if (!(await assistant.getNeedsChange())) {
-          continue;
-        }
-        const question = await assistant.provideQuestionData();
-        question.options.push(
-          this.skipOptionItem,
-          this.abortItem,
-          this.restartItem
-        );
-        const pickedOption = await this.ask(question);
-        if (pickedOption === undefined || pickedOption === this.abortItem) {
-          abort = true;
-          break;
-        } else if (pickedOption === this.skipOptionItem) {
-          continue;
-        } else if (pickedOption === this.restartItem) {
-          restart = true;
-          break;
-        } else {
-          await assistant.handlePickedOption(pickedOption);
-        }
-      }
-      if (abort) {
-        break;
-      }
-      if (restart) {
-        continue;
-      }
-      const pickedItem = await this.ask({
-        question: "Settings assistant finished.",
-        options: [this.completeItem, this.restartItem],
-      });
-      if (pickedItem !== this.restartItem) {
-        await this.vSCodeConfigurator.set(settingsAssistantOnStartupID, false);
-        break;
-      }
-    }
+    if (!apply) return;
+    await this.applyDecisions(pickedOptions);
   }
 
-  constructor(
+  private async gatherDecisions(): Promise<{
+    error: unknown;
+    apply: boolean;
+    pickedOptions: [OptionAssistant, Option][];
+  }> {
+    let apply = false;
+    let pickedOptions: [OptionAssistant, Option][] = [];
+    let error: unknown = undefined;
+    try {
+      let someNeedsChange = false;
+      for (const assistant of this.optionsAssistants) {
+        if (await assistant.getNeedsChange()) {
+          someNeedsChange = true;
+          break;
+        }
+      }
+      if (!someNeedsChange) {
+        return { apply, error, pickedOptions };
+      }
+      const nowItem = new Option("Now");
+      const newerItem = new Option("Never");
+      const postponeItem = new Option("Postpone to next startup");
+      const skipOptionItem = new Option("Skip");
+      const abortItem = new Option("Abort");
+      const discardItem = new Option("Discard");
+      const completeItem = new Option("Complete");
+      const applyItem = new Option("Apply");
+      const restartItem = new Option("Restart");
+
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const result = await window.showInformationMessage(
+          "Some current settings will not work well with VS Code as merge tool. " +
+            "When do want to change them using dialogs?",
+          nowItem,
+          newerItem,
+          postponeItem
+        );
+        if (result === newerItem) {
+          await this.vSCodeConfigurator.set(
+            settingsAssistantOnStartupID,
+            false
+          );
+          return { apply, error, pickedOptions };
+        } else if (result !== nowItem) return { apply, error, pickedOptions };
+
+        let restart = false;
+        let abort = false;
+        pickedOptions = [];
+        for (const assistant of this.optionsAssistants) {
+          if (!(await assistant.getNeedsChange())) continue;
+          const question = await assistant.provideQuestionData();
+          question.options.push(skipOptionItem, abortItem, restartItem);
+          const pickedOption = await this.ask(question);
+          if (pickedOption === undefined || pickedOption === abortItem) {
+            abort = true;
+            break;
+          } else if (pickedOption === skipOptionItem) {
+            continue;
+          } else if (pickedOption === restartItem) {
+            restart = true;
+            break;
+          } else {
+            pickedOptions.push([assistant, pickedOption]);
+          }
+        }
+        if (abort) break;
+        if (restart) continue;
+
+        const pickedItem = await (pickedOptions.length === 0
+          ? this.ask({
+              question:
+                "Settings assistant finished but no changes have been selected.",
+              options: [completeItem, restartItem, abortItem],
+            })
+          : this.ask({
+              question: "Decisions have been gathered.",
+              options: [applyItem, restartItem, discardItem],
+            }));
+        if (pickedItem === completeItem) {
+          await this.vSCodeConfigurator.set(
+            settingsAssistantOnStartupID,
+            false
+          );
+        } else if (pickedItem === applyItem) {
+          apply = true;
+        } else if (pickedItem === restartItem) {
+          continue;
+        }
+        break;
+      }
+    } catch (caughtError) {
+      error = caughtError || "unknown error";
+    }
+    return { apply, error, pickedOptions };
+  }
+
+  public constructor(
     private readonly gitConfigurator: GitConfigurator,
     private readonly vSCodeConfigurator: VSCodeConfigurator,
-    private changeProtocol: OptionChangeProtocol
+    private readonly optionChangeProtocolExporter: OptionChangeProtocolExporter
   ) {
     const createGitOptionAssistant = (
       key: string,
       targetValue: string,
       description: string
     ) =>
-      new GitOptionAssistant(
-        gitConfigurator,
-        key,
-        targetValue,
-        description,
-        changeProtocol
-      );
+      new GitOptionAssistant(gitConfigurator, key, targetValue, description);
     const createVSCodeOptionAssistant = <T>(
       section: string,
       targetValue: T,
@@ -113,8 +146,7 @@ export class SettingsAssistant {
         vSCodeConfigurator,
         section,
         targetValue,
-        description,
-        changeProtocol
+        description
       );
     this.optionsAssistants = [
       createGitOptionAssistant(
@@ -161,10 +193,111 @@ export class SettingsAssistant {
   }
 
   private readonly optionsAssistants: OptionAssistant[];
-  private readonly skipOptionItem = new Option("Skip");
-  private readonly abortItem = new Option("Abort");
-  private readonly completeItem = new Option("Complete");
-  private readonly restartItem = new Option("Restart");
+
+  private async applyDecisions(pickedOptions: [OptionAssistant, Option][]) {
+    const optionChangeProtocol = new OptionChangeProtocol();
+    const { error } = await this.applySelection(
+      pickedOptions,
+      optionChangeProtocol
+    );
+    if (optionChangeProtocol.entries.length > 0) {
+      const saveProtocolOption = new Option("Save change protocol");
+      const discardProtocolOption = new Option("Discard change protocol");
+      const changesMadeStatement = "Changes were made.";
+      const selectedOption = await (error !== undefined
+        ? window.showErrorMessage(
+            `Error on running the settings assistant. ` +
+              `${changesMadeStatement} \n${JSON.stringify(error)}`,
+            saveProtocolOption,
+            discardProtocolOption
+          )
+        : window.showInformationMessage(
+            `Successfully changed the settings.`,
+            saveProtocolOption,
+            discardProtocolOption
+          ));
+      if (selectedOption === saveProtocolOption) {
+        try {
+          await this.writeOptionChangeProtocol(optionChangeProtocol);
+        } catch (error) {
+          void window.showErrorMessage(
+            `Error on writing the change protocol: ${JSON.stringify(error)}`
+          );
+        }
+      }
+    } else {
+      const changesMadeStatement = "but no changes were protocolled.";
+      await (error !== undefined
+        ? window.showErrorMessage(
+            `Error on running the settings assistant ` +
+              `${changesMadeStatement} \n${JSON.stringify(error)}`
+          )
+        : window.showInformationMessage(
+            `Settings assistant completed ${changesMadeStatement}`
+          ));
+    }
+  }
+
+  private async applySelection(
+    pickedOptions: [OptionAssistant, Option][],
+    optionChangeProtocol: OptionChangeProtocol
+  ): Promise<{ error: unknown }> {
+    try {
+      for (const [assistant, pickedOption] of pickedOptions) {
+        await assistant.handlePickedOption(pickedOption, optionChangeProtocol);
+      }
+    } catch (error) {
+      return { error: error || "unknown error" };
+    }
+    return { error: undefined };
+  }
+
+  private async writeOptionChangeProtocol(
+    optionChangeProtocol: OptionChangeProtocol
+  ): Promise<void> {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        const destinationUri = await window.showSaveDialog({
+          defaultUri: Uri.file(
+            path.join(
+              homedir(),
+              "vscode-as-git-mergetool_option_change_protocol.yml"
+            )
+          ),
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          filters: { YAML: ["yml", "yaml"] },
+          title: "Save option change protocol (last chance)",
+        });
+        if (destinationUri === undefined) {
+          return;
+        }
+        const destinationPath = destinationUri.fsPath;
+        let writeStream: Writable | undefined = undefined;
+        try {
+          writeStream = createWriteStream(destinationPath, { flags: "a" });
+          await this.optionChangeProtocolExporter.export(
+            writeStream,
+            optionChangeProtocol
+          );
+        } finally {
+          await new Promise((resolve) => writeStream?.end(resolve));
+        }
+        break;
+      } catch (error: unknown) {
+        const retryItem: MessageItem = { title: "Retry" };
+        const cancelItem: MessageItem = { title: "Cancel" };
+        const selectedItem = await window.showErrorMessage(
+          `Saving option change protocol failed: \n${String(error)}`,
+          retryItem,
+          cancelItem
+        );
+        if (selectedItem !== retryItem) {
+          break;
+        }
+      }
+    }
+  }
 
   private ask(question: QuestionData): Thenable<Option | undefined> {
     return window.showInformationMessage(
@@ -177,7 +310,10 @@ export class SettingsAssistant {
 interface OptionAssistant {
   getNeedsChange(): Promise<boolean>;
   provideQuestionData(): Promise<QuestionData>;
-  handlePickedOption(item: Option): Promise<void>;
+  handlePickedOption(
+    item: Option,
+    changeProtocol: OptionChangeProtocol
+  ): Promise<void>;
 }
 
 export class GitOptionAssistant implements OptionAssistant {
@@ -185,8 +321,7 @@ export class GitOptionAssistant implements OptionAssistant {
     private readonly configurator: GitConfigurator,
     private readonly key: string,
     private readonly targetValue: string,
-    private readonly description: string,
-    private readonly changeProtocol: OptionChangeProtocol
+    private readonly description: string
   ) {}
   async getNeedsChange(): Promise<boolean> {
     return (await this.configurator.get(this.key)) !== this.targetValue;
@@ -196,12 +331,9 @@ export class GitOptionAssistant implements OptionAssistant {
     const currentValue = await this.configurator.get(this.key);
     return {
       question:
-        `Change Git option \`${this.key}\`. \n` +
-        "Current value" +
-        (currentValue === undefined
-          ? " unset. \n"
-          : `: \`${currentValue}\`. \n`) +
-        `New value: ${this.targetValue}. \n` +
+        `Change Git option \`${this.key}\` from ` +
+        (currentValue === undefined ? "unset" : `\`${currentValue}\``) +
+        ` to \`${this.targetValue}\`. \n` +
         `Reason: ${this.description}`,
       options: [
         new Option(`Globally`, GitOptionAssistant.globalValue),
@@ -209,28 +341,29 @@ export class GitOptionAssistant implements OptionAssistant {
       ],
     };
   }
-  async handlePickedOption(item: Option): Promise<void> {
+  async handlePickedOption(
+    item: Option,
+    changeProtocol: OptionChangeProtocol
+  ): Promise<void> {
     let global: boolean;
     if (item.value === GitOptionAssistant.repositoryValue) {
       global = false;
     } else if (item.value === GitOptionAssistant.globalValue) {
       global = true;
     } else {
+      console.error("Unknown option");
       return;
     }
     const oldValue = await this.configurator.get(this.key);
-    await this.configurator.set(this.key, this.targetValue, global);
-    this.changeProtocol.log({
-      type: `Git option (${
-        global
-          ? "global"
-          : `in repository ${this.configurator.workspaceDirectoryUri.fsPath}`
-      })`,
+    changeProtocol.log({
+      type: "Git option",
+      scope: global ? "global" : "in repository",
       key: this.key,
       oldValue: oldValue === undefined ? "(unset)" : oldValue,
       newValue: this.targetValue,
       reason: this.description,
     });
+    await this.configurator.set(this.key, this.targetValue, global);
   }
 
   private static readonly repositoryValue = "in repository";
@@ -301,8 +434,7 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
     private readonly configurator: VSCodeConfigurator,
     private readonly section: string,
     private readonly targetValue: T,
-    private readonly description: string,
-    private readonly changeProtocol: OptionChangeProtocol
+    private readonly description: string
   ) {}
 
   getNeedsChange(): Promise<boolean> {
@@ -314,9 +446,9 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
     const currentValue = this.configurator.get(this.section);
     return Promise.resolve({
       question:
-        `Change VS Code option \`${this.section}\`. \n` +
-        `Current value: \`${JSON.stringify(currentValue)}\`. \n` +
-        `New value: ${JSON.stringify(this.targetValue)}. \n` +
+        `Change VS Code option \`${this.section}\` ` +
+        `from \`${JSON.stringify(currentValue)}\` ` +
+        `to \`${JSON.stringify(this.targetValue)}\`. \n` +
         `Reason: ${this.description}`,
       options: [
         new Option(`Globally`, VSCodeOptionAssistant.globalValue),
@@ -324,29 +456,32 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
       ],
     });
   }
-  async handlePickedOption(item: Option): Promise<void> {
+  async handlePickedOption(
+    item: Option,
+    changeProtocol: OptionChangeProtocol
+  ): Promise<void> {
     let global: boolean;
     if (item.value === VSCodeOptionAssistant.globalValue) {
       global = true;
     } else if (item.value === VSCodeOptionAssistant.workspaceValue) {
       global = false;
     } else {
+      console.error("Unknown option");
       return;
     }
     const oldValue = await this.configurator.get(this.section);
-    await this.configurator.set(this.section, this.targetValue, global);
     const workspaceDirectory = getWorkspaceDirectoryUri();
-    this.changeProtocol.log({
-      type: `VSCode option (${
-        global
-          ? "global"
-          : `in workspace ${workspaceDirectory?.fsPath ?? "undefined"}`
-      })`,
+    changeProtocol.log({
+      type: "VSCode option",
+      scope: global
+        ? "global"
+        : `in workspace ${workspaceDirectory?.fsPath ?? "undefined"}`,
       key: this.section,
       oldValue: oldValue === undefined ? "(unset)" : oldValue,
       newValue: this.targetValue,
       reason: this.description,
     });
+    await this.configurator.set(this.section, this.targetValue, global);
   }
 
   private static readonly globalValue = "globally";
@@ -363,69 +498,12 @@ export class SettingsAssistantProcess {
     if (gitPath === undefined || workspaceDirectoryUri === undefined) {
       return;
     }
-    const optionChangeProtocol = new OptionChangeProtocol();
     const process = new SettingsAssistant(
       new GitConfigurator(gitPath, workspaceDirectoryUri),
       this.vSCodeConfigurator,
-      optionChangeProtocol
+      this.optionChangeProtocolExporter
     );
-    try {
-      await process.launch();
-    } catch (error) {
-      void window.showErrorMessage(
-        `Error on running the settings assistant: ${JSON.stringify(error)}`
-      );
-    }
-    if (optionChangeProtocol.entries.length > 0) {
-      await this.writeOptionChangeProtocol(optionChangeProtocol);
-    }
-  }
-
-  private async writeOptionChangeProtocol(
-    optionChangeProtocol: OptionChangeProtocol
-  ): Promise<void> {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      try {
-        const destinationUri = await window.showSaveDialog({
-          defaultUri: Uri.file(
-            path.join(
-              homedir(),
-              "vscode-as-git-mergetool_option_change_protocol.yml"
-            )
-          ),
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          filters: { YAML: ["yml", "yaml"] },
-          title: "Save option change protocol (last chance)",
-        });
-        if (destinationUri === undefined) {
-          return;
-        }
-        const destinationPath = destinationUri.fsPath;
-        let writeStream: Writable | undefined = undefined;
-        try {
-          writeStream = createWriteStream(destinationPath, { flags: "a" });
-          await this.optionChangeProtocolExporter.export(
-            writeStream,
-            optionChangeProtocol
-          );
-        } finally {
-          await new Promise((resolve) => writeStream?.end(resolve));
-        }
-        break;
-      } catch (error: unknown) {
-        const retryItem: MessageItem = { title: "Retry" };
-        const cancelItem: MessageItem = { title: "Cancel" };
-        const selectedItem = await window.showErrorMessage(
-          `Saving option change protocol failed: \n${String(error)}`,
-          retryItem,
-          cancelItem
-        );
-        if (selectedItem !== retryItem) {
-          break;
-        }
-      }
-    }
+    await process.launch();
   }
 
   constructor(
@@ -436,6 +514,7 @@ export class SettingsAssistantProcess {
 
 export interface OptionChangeProtocolEntry {
   type: string;
+  scope: string;
   key: string;
   oldValue: Exclude<unknown, undefined>;
   newValue: Exclude<unknown, undefined>;
@@ -468,6 +547,7 @@ export class OptionChangeProtocolExporter {
       for (const entry of protocol.entries) {
         const data: [string, Exclude<unknown, undefined>][] = [
           ["- type: ", entry.type],
+          ["  scope: ", entry.scope],
           ["  key: ", entry.key],
           ["  newValue: ", entry.newValue],
           ["  oldValue: ", entry.oldValue],
