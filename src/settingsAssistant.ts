@@ -118,7 +118,8 @@ export class SettingsAssistant {
       }
       const nowItem = new Option("Now");
       const newerItem = new Option("Never");
-      const postponeItem = new Option("Postpone to next startup");
+      const newerWorkspaceItem = new Option("Never in this workspace");
+      const postponeItem = new Option("Postpone");
       const skipOptionItem = new Option("Skip");
       const abortItem = new Option("Abort");
       const discardItem = new Option("Discard");
@@ -133,15 +134,15 @@ export class SettingsAssistant {
             "When do want to change them using dialogs?",
           nowItem,
           newerItem,
+          newerWorkspaceItem,
           postponeItem
         );
-        if (result === newerItem) {
-          await this.vSCodeConfigurator.set(
-            settingsAssistantOnStartupID,
-            false
-          );
+        if (result !== nowItem) {
+          if (result === newerItem || result === newerWorkspaceItem) {
+            await this.setRunOnStartup(false, result === newerItem);
+          }
           return { apply, error, pickedOptions };
-        } else if (result !== nowItem) return { apply, error, pickedOptions };
+        }
 
         let restart = false;
         let abort = false;
@@ -170,17 +171,14 @@ export class SettingsAssistant {
           ? this.ask({
               question:
                 "Settings assistant finished but no changes have been selected.",
-              options: [completeItem, restartItem, abortItem],
+              options: [completeItem, restartItem],
             })
           : this.ask({
               question: "Decisions have been gathered.",
               options: [applyItem, restartItem, discardItem],
             }));
         if (pickedItem === completeItem) {
-          await this.vSCodeConfigurator.set(
-            settingsAssistantOnStartupID,
-            false
-          );
+          await this.setRunOnStartup(false, false);
         } else if (pickedItem === applyItem) {
           apply = true;
         } else if (pickedItem === restartItem) {
@@ -200,6 +198,9 @@ export class SettingsAssistant {
       pickedOptions,
       optionChangeProtocol
     );
+    if (error === undefined) {
+      await this.setRunOnStartup(false, false);
+    }
     if (optionChangeProtocol.entries.length > 0) {
       const saveProtocolOption = new Option("Save change protocol");
       const discardProtocolOption = new Option("Discard change protocol");
@@ -236,6 +237,17 @@ export class SettingsAssistant {
             `Settings assistant completed ${changesMadeStatement}`
           ));
     }
+  }
+
+  private async setRunOnStartup(
+    value: boolean,
+    global: boolean
+  ): Promise<void> {
+    await this.vSCodeConfigurator.set(
+      settingsAssistantOnStartupID,
+      value,
+      global
+    );
   }
 
   private async applySelection(
