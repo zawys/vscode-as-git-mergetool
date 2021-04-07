@@ -8,7 +8,7 @@ import { MergetoolUI } from "./mergetoolUI";
 import { ReadonlyDocumentProviderManager } from "./readonlyDocumentProvider";
 import {
   OptionChangeProtocolExporter,
-  SettingsAssistantProcess,
+  SettingsAssistantLauncher,
 } from "./settingsAssistant";
 import { TemporarySettingsManager } from "./temporarySettingsManager";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
@@ -39,8 +39,9 @@ export class ExtensionAPI {
     await this.diffLayouterManager.register();
     this.mergetoolUI.register();
     this.arbitraryFilesMerger.register();
+    this.settingsAssistantLauncher.register();
     setTimeout(
-      () => void this.settingsAssistantProcessFactory().tryLaunch(),
+      () => void this.settingsAssistantLauncher.tryLaunchOnStartup(),
       4000
     );
   }
@@ -50,6 +51,7 @@ export class ExtensionAPI {
       clearTimeout(this.timer);
     }
     // inverse order as above
+    this.settingsAssistantLauncher.dispose();
     this.arbitraryFilesMerger.dispose();
     this.mergetoolUI.dispose();
     this.diffLayouterManager.dispose();
@@ -69,7 +71,7 @@ export class ExtensionAPI {
     mergetoolUI?: MergetoolUI,
     arbitraryFilesMerger?: ArbitraryFilesMerger,
     optionChangeProtocolExporter?: OptionChangeProtocolExporter,
-    settingsAssistantCreatorFactory?: () => SettingsAssistantProcess
+    settingsAssistantLauncher?: SettingsAssistantLauncher
   ) {
     const vSCodeConfiguratorProvider = new Lazy(
       () => vSCodeConfigurator || new VSCodeConfigurator()
@@ -107,13 +109,12 @@ export class ExtensionAPI {
       );
     this.optionChangeProtocolExporter =
       optionChangeProtocolExporter ?? new OptionChangeProtocolExporter();
-    this.settingsAssistantProcessFactory =
-      settingsAssistantCreatorFactory ??
-      (() =>
-        new SettingsAssistantProcess(
-          vSCodeConfiguratorProvider.value,
-          this.optionChangeProtocolExporter
-        ));
+    this.settingsAssistantLauncher =
+      settingsAssistantLauncher ??
+      new SettingsAssistantLauncher(
+        vSCodeConfiguratorProvider.value,
+        this.optionChangeProtocolExporter
+      );
   }
 
   public readonly temporarySettingsManager: TemporarySettingsManager;
@@ -123,7 +124,7 @@ export class ExtensionAPI {
   public readonly mergetoolUI: MergetoolUI;
   public readonly arbitraryFilesMerger: ArbitraryFilesMerger;
   public readonly optionChangeProtocolExporter: OptionChangeProtocolExporter;
-  public readonly settingsAssistantProcessFactory: () => SettingsAssistantProcess;
+  public readonly settingsAssistantLauncher: SettingsAssistantLauncher;
   public readonly readonlyDocumentProviderManager: ReadonlyDocumentProviderManager;
   private timer: NodeJS.Timeout | undefined = undefined;
 }

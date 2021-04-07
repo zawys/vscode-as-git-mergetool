@@ -10,7 +10,11 @@ and this project adheres to
 
 ## [Unreleased]
 
-## Changed
+### Added
+
+- Command to run the initial settings assistant on demand.
+
+### Changed
 
 - Initial settings assistant
   - Fixes. It now aggregates the decisions and allows to apply them at the end.

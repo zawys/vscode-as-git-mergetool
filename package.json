@@ -149,6 +149,11 @@
         "command": "vscode-as-git-mergetool.zoomBottom",
         "title": "zoom: bottom",
         "category": "Git Mergetool"
+      },
+      {
+        "command": "vscode-as-git-mergetool.runSettingsAssistant",
+        "title": "Launch settings assistant",
+        "category": "Git Mergetool"
       }
     ],
     "configuration": {

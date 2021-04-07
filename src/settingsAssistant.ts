@@ -4,16 +4,19 @@ import { EOL, homedir } from "os";
 import pDefer from "p-defer";
 import path from "path";
 import { Writable } from "stream";
-import { MessageItem, Uri, window } from "vscode";
+import { commands } from "vscode";
+import { Disposable, MessageItem, Uri, window } from "vscode";
 import { formatExecFileError } from "./childProcessHandy";
 import {
   getVSCGitPathInteractively,
   getWorkspaceDirectoryUri,
 } from "./getPathsWithinVSCode";
 import { extensionID } from "./ids";
+import { Monitor } from "./monitor";
 import { VSCodeConfigurator } from "./vSCodeConfigurator";
 
-export const settingsAssistantOnStartupID = `${extensionID}.settingsAssistantOnStartup`;
+export const settingsAssistantOnStartupSettingID = `${extensionID}.settingsAssistantOnStartup`;
+export const runSettingsAssistantCommandID = `${extensionID}.runSettingsAssistant`;
 
 export class SettingsAssistant {
   public async launch(): Promise<void> {
@@ -244,7 +247,7 @@ export class SettingsAssistant {
     global: boolean
   ): Promise<void> {
     await this.vSCodeConfigurator.set(
-      settingsAssistantOnStartupID,
+      settingsAssistantOnStartupSettingID,
       value,
       global
     );
@@ -500,28 +503,60 @@ class VSCodeOptionAssistant<T> implements OptionAssistant {
   private static readonly workspaceValue = "in workspace";
 }
 
-export class SettingsAssistantProcess {
-  public async tryLaunch(): Promise<void> {
-    if (!this.vSCodeConfigurator.get(settingsAssistantOnStartupID)) {
-      return;
-    }
-    const gitPath = await getVSCGitPathInteractively();
-    const workspaceDirectoryUri = getWorkspaceDirectoryUri();
-    if (gitPath === undefined || workspaceDirectoryUri === undefined) {
-      return;
-    }
-    const process = new SettingsAssistant(
-      new GitConfigurator(gitPath, workspaceDirectoryUri),
-      this.vSCodeConfigurator,
-      this.optionChangeProtocolExporter
+export class SettingsAssistantLauncher implements Disposable {
+  public register(): void {
+    this.disposables.push(
+      commands.registerCommand(
+        runSettingsAssistantCommandID,
+        this.tryLaunch.bind(this)
+      )
     );
-    await process.launch();
   }
 
-  constructor(
+  public dispose(): void {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+  }
+
+  public async tryLaunchOnStartup(): Promise<void> {
+    if (this.vSCodeConfigurator.get(settingsAssistantOnStartupSettingID)) {
+      await this.tryLaunch();
+    }
+  }
+
+  public async tryLaunch(): Promise<void> {
+    if (this.monitor.inUse) {
+      void window.showWarningMessage(
+        "The settings assistant is already running."
+      );
+      return;
+    }
+    try {
+      await this.monitor.enter();
+      const gitPath = await getVSCGitPathInteractively();
+      const workspaceDirectoryUri = getWorkspaceDirectoryUri();
+      if (gitPath === undefined || workspaceDirectoryUri === undefined) {
+        return;
+      }
+      const process = new SettingsAssistant(
+        new GitConfigurator(gitPath, workspaceDirectoryUri),
+        this.vSCodeConfigurator,
+        this.optionChangeProtocolExporter
+      );
+      await process.launch();
+    } finally {
+      await this.monitor.leave();
+    }
+  }
+
+  public constructor(
     private readonly vSCodeConfigurator: VSCodeConfigurator,
     private readonly optionChangeProtocolExporter: OptionChangeProtocolExporter
   ) {}
+
+  private readonly monitor = new Monitor();
+  private disposables: Disposable[] = [];
 }
 
 export interface OptionChangeProtocolEntry {
