@@ -29,6 +29,74 @@ export class SettingsAssistant {
     await this.applyDecisions(pickedOptions);
   }
 
+  public constructor(
+    private readonly gitConfigurator: GitConfigurator,
+    private readonly vSCodeConfigurator: VSCodeConfigurator,
+    private readonly optionChangeProtocolExporter: OptionChangeProtocolExporter
+  ) {
+    const createGitOptionAssistant = (
+      key: string,
+      targetValue: string,
+      description: string
+    ) =>
+      new GitOptionAssistant(gitConfigurator, key, targetValue, description);
+    const createVSCodeOptionAssistant = <T>(
+      section: string,
+      targetValue: T,
+      description: string
+    ) =>
+      new VSCodeOptionAssistant<T>(
+        vSCodeConfigurator,
+        section,
+        targetValue,
+        description
+      );
+    this.optionsAssistants = [
+      createGitOptionAssistant(
+        "mergetool.keepTemporaries",
+        "false",
+        "Remove temporary files after the merge."
+      ),
+      createGitOptionAssistant(
+        "mergetool.keepBackup",
+        "false",
+        "Remove the automatically created backup files after a merge."
+      ),
+      createGitOptionAssistant(
+        "mergetool.code.cmd",
+        `"${process.execPath}" "$BASE"`,
+        "Make VS Code available as merge tool."
+      ),
+      createGitOptionAssistant(
+        "merge.tool",
+        "code",
+        "Set VS Code as merge tool."
+      ),
+      createGitOptionAssistant(
+        "merge.conflictstyle",
+        "merge",
+        "Do not output base hunk in merge conflict files."
+      ),
+      createVSCodeOptionAssistant(
+        "workbench.editor.closeEmptyGroups",
+        true,
+        "Do not keep open empty editor groups when stopping a diff layout."
+      ),
+      createVSCodeOptionAssistant(
+        "merge-conflict.codeLens.enabled",
+        true,
+        "Show action links for selecting changes directly above merge conflict sections."
+      ),
+      createVSCodeOptionAssistant(
+        "diffEditor.codeLens",
+        true,
+        "Show the merge conflict code lens in diff editors."
+      ),
+    ];
+  }
+
+  private readonly optionsAssistants: OptionAssistant[];
+
   private async gatherDecisions(): Promise<{
     error: unknown;
     apply: boolean;
@@ -125,74 +193,6 @@ export class SettingsAssistant {
     }
     return { apply, error, pickedOptions };
   }
-
-  public constructor(
-    private readonly gitConfigurator: GitConfigurator,
-    private readonly vSCodeConfigurator: VSCodeConfigurator,
-    private readonly optionChangeProtocolExporter: OptionChangeProtocolExporter
-  ) {
-    const createGitOptionAssistant = (
-      key: string,
-      targetValue: string,
-      description: string
-    ) =>
-      new GitOptionAssistant(gitConfigurator, key, targetValue, description);
-    const createVSCodeOptionAssistant = <T>(
-      section: string,
-      targetValue: T,
-      description: string
-    ) =>
-      new VSCodeOptionAssistant<T>(
-        vSCodeConfigurator,
-        section,
-        targetValue,
-        description
-      );
-    this.optionsAssistants = [
-      createGitOptionAssistant(
-        "mergetool.keepTemporaries",
-        "false",
-        "Remove temporary files after the merge."
-      ),
-      createGitOptionAssistant(
-        "mergetool.keepBackup",
-        "false",
-        "Remove the automatically created backup files after a merge."
-      ),
-      createGitOptionAssistant(
-        "mergetool.code.cmd",
-        `"${process.execPath}" "$BASE"`,
-        "Make VS Code available as merge tool."
-      ),
-      createGitOptionAssistant(
-        "merge.tool",
-        "code",
-        "Set VS Code as merge tool."
-      ),
-      createGitOptionAssistant(
-        "merge.conflictstyle",
-        "merge",
-        "Do not output base hunk in merge conflict files."
-      ),
-      createVSCodeOptionAssistant(
-        "workbench.editor.closeEmptyGroups",
-        true,
-        "Do not keep open empty editor groups when stopping a diff layout."
-      ),
-      createVSCodeOptionAssistant(
-        "merge-conflict.codeLens.enabled",
-        true,
-        "Show action links for selecting changes directly above merge conflict sections."
-      ),
-      createVSCodeOptionAssistant(
-        "diffEditor.codeLens",
-        true,
-        "Show the merge conflict code lens in diff editors."
-      ),
-    ];
-  }
-
-  private readonly optionsAssistants: OptionAssistant[];
 
   private async applyDecisions(pickedOptions: [OptionAssistant, Option][]) {
     const optionChangeProtocol = new OptionChangeProtocol();
