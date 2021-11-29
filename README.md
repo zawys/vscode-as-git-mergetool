@@ -132,9 +132,10 @@ which provide no additional information or ideas.
 
 ## Build
 
-1. [Install Yarn globally](https://classic.yarnpkg.com/en/docs/install)
-2. `yarn`
-3. `yarn run build`
+1. Ensure you have a [stable version of `node`](https://nodejs.org/en/)
+2. [Install Yarn globally](https://classic.yarnpkg.com/en/docs/install)
+3. `yarn`
+4. `yarn run build`
 
    The generated VSIX should then be in `packages/`.
 
