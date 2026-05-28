@@ -4,7 +4,7 @@
   "description": "Diff editor layouts for common-base merging",
   "version": "0.14.0",
   "engines": {
-    "vscode": "^1.48.0"
+    "vscode": "^1.56.0"
   },
   "publisher": "zawys",
   "repository": {
