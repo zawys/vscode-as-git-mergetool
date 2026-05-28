@@ -1,3 +1,11 @@
+<div style="color: red">
+
+**This extension is no longer maintained.**
+**It might not work with newer VS Code or Git versions.**
+**New issues and feature requests are unlikely to be addressed.**
+
+</div>
+
 <div align="center">
 <img width="64" height="64" src="media/packaged/icon.png">
 
